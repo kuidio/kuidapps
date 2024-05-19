@@ -1,0 +1,27 @@
+apiVersion: topo.app.kuid.dev/v1alpha1
+kind: Topology
+metadata:
+  name: topo3nodesrl
+spec:
+  region: region1
+  site: site1
+  containerLab: |-
+    name: topo3nodesrl
+    
+    topology:
+      kinds:
+        nokia_srlinux:
+          image: ghcr.io/nokia/srlinux
+      nodes:
+        edge01:
+          kind: nokia_srlinux
+          type: ixrd2
+        edge02:
+          kind: nokia_srlinux
+          type: ixrd2
+        core01:
+          kind: nokia_srlinux
+          type: ixrd2
+      links:
+        - endpoints: ["edge01:e1-1", "core01:e1-1"]
+        - endpoints: ["edge02:e1-1", "core01:e1-2"]

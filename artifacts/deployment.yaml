@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuidapps
+  namespace: kuid-system
+  labels:
+    app.kubernetes.io/name: kuidapps
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kuidapps
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kuidapps
+    spec:
+      securityContext:
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
+      serviceAccountName: kuidapps
+      containers:
+      - name: kuidapps
+        image: europe-docker.pkg.dev/srlinux/eu.gcr.io/kuidapps:latest
+        imagePullPolicy: Always
+        command:
+        - /app/kuidapps
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: "NODE_NAME"
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: "NODE_IP"
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: ENABLE_TOPOLOGY
+          value: "true"

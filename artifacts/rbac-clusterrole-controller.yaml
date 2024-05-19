@@ -1,0 +1,22 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kuidapps
+  name: kuidapps-clusterrole
+rules:
+- apiGroups: [""]
+  resources: [events, configmaps]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [coordination.k8s.io]
+  resources: [leases]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [topo.app.kuid.dev]
+  resources: [topologies, topologies/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [infra.be.kuid.dev]
+  resources: [nodes, nodes/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [infra.be.kuid.dev]
+  resources: [links, links/status]
+  verbs: [get, watch, list, create, update, patch, delete]
