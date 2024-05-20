@@ -26,7 +26,7 @@ import (
 
 var (
 	// SchemeGroupVersion contains the API group and version information for the types in this package.
-	SchemeGroupVersion = schema.GroupVersion{Group: "topo.app.kuid.dev", Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "network.app.kuid.dev", Version: "v1alpha1"}
 	// AddToScheme applies all the stored functions to the scheme. A non-nil error
 	// indicates that one function failed and the attempt was abandoned.
 	//AddToScheme = (&runtime.SchemeBuilder{}).AddToScheme
@@ -51,8 +51,10 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	// +kubebuilder:scaffold:install
 
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Topology{},
-		&TopologyList{},
+		&Network{},
+		&NetworkList{},
+		&NetworkConfig{},
+		&NetworkConfigList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)

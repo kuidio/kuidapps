@@ -31,7 +31,7 @@ import (
 	"github.com/kuidio/kuidapps/pkg/clab"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
-	"github.com/kuidio/kuidapps/pkg/resources"
+	"github.com/kuidio/kuid/pkg/resources"
 	perrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -106,7 +106,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	cr = cr.DeepCopy()
 
 	if !cr.GetDeletionTimestamp().IsZero() {
-		if err := r.deleteTopologyResources(ctx, cr); err != nil {
+		if err := r.deleteResources(ctx, cr); err != nil {
 			r.handleError(ctx, cr, "canot delete resources", err)
 			return reconcile.Result{Requeue: true}, perrors.Wrap(r.Status().Update(ctx, cr), errUpdateStatus)
 		}
@@ -129,8 +129,8 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	if err := r.applyTopologyResources(ctx, cr); err != nil {
-		if errd := r.deleteTopologyResources(ctx, cr); errd != nil {
+	if err := r.applyResources(ctx, cr); err != nil {
+		if errd := r.deleteResources(ctx, cr); errd != nil {
 			err = errors.Join(err, errd)
 			r.handleError(ctx, cr, "cannot delete resources after populate failed", err)
 			return reconcile.Result{Requeue: true}, perrors.Wrap(r.Status().Update(ctx, cr), errUpdateStatus)
@@ -157,7 +157,7 @@ func (r *reconciler) handleError(ctx context.Context, cr *topov1alpha1.Topology,
 	}
 }
 
-func (r *reconciler) applyTopologyResources(ctx context.Context, cr *topov1alpha1.Topology) error {
+func (r *reconciler) applyResources(ctx context.Context, cr *topov1alpha1.Topology) error {
 	resources := resources.New(r.Client, resources.Config{
 		Owns: []backend.GenericObject{
 			&infrabev1alpha1.Node{},
@@ -184,7 +184,7 @@ func (r *reconciler) applyTopologyResources(ctx context.Context, cr *topov1alpha
 	return resources.APIApply(ctx, cr)
 }
 
-func (r *reconciler) deleteTopologyResources(ctx context.Context, cr *topov1alpha1.Topology) error {
+func (r *reconciler) deleteResources(ctx context.Context, cr *topov1alpha1.Topology) error {
 	resources := resources.New(r.Client, resources.Config{
 		Owns: []backend.GenericObject{
 			&infrabev1alpha1.Node{},

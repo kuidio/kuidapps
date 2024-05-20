@@ -18,11 +18,8 @@ package eventhandler
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/henderiw/logger/log"
 	"github.com/kuidio/kuid/apis/backend"
-	topov1alpha1 "github.com/kuidio/kuidapps/apis/topo/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,7 +28,7 @@ import (
 
 type ASEntryEventHandler struct {
 	Client  client.Client
-	ObjList backend.ObjectList
+	ObjList backend.Object
 }
 
 // Create enqueues a request
@@ -56,27 +53,28 @@ func (r *ASEntryEventHandler) Generic(ctx context.Context, evt event.GenericEven
 }
 
 func (r *ASEntryEventHandler) add(ctx context.Context, obj runtime.Object, queue adder) {
-	cr, ok := obj.(*topov1alpha1.Topology)
-	if !ok {
-		return
-	}
+	/*
+		cr, ok := obj.(*topov1alpha1.Topology)
+		if !ok {
+			return
+		}
 
-	log := log.FromContext(ctx)
-	//log.Info("event", "gvk", ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPEntryKind).String(), "name", cr.GetName())
+		log := log.FromContext(ctx)
+		//log.Info("event", "gvk", ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPEntryKind).String(), "name", cr.GetName())
 
-	opts := []client.ListOption{
-		client.InNamespace(cr.Namespace),
-	}
-	objList := r.ObjList
-	if err := r.Client.List(ctx, objList, opts...); err != nil {
-		log.Error("cannot list object", "error", err)
-		return
-	}
-	for _, obj := range objList.GetItems() {
-		fmt.Println(obj)
-		// check if the connection profile is referenced in the discoveryProfile
-		//log.Info("event", "objOwnerRef", obj.GetOwnerReference().String(), "crOwnerRef", cr.GetOwnerReference().String())
-		/*
+		opts := []client.ListOption{
+			client.InNamespace(cr.Namespace),
+		}
+		objList := r.ObjList
+		if err := r.Client.List(ctx, objList, opts...); err != nil {
+			log.Error("cannot list object", "error", err)
+			return
+		}
+		for _, obj := range objList.GetItems() {
+			fmt.Println(obj)
+			// check if the connection profile is referenced in the discoveryProfile
+			//log.Info("event", "objOwnerRef", obj.GetOwnerReference().String(), "crOwnerRef", cr.GetOwnerReference().String())
+
 			if *obj.GetOwnerReference() == *cr.GetOwnerReference() {
 				key := types.NamespacedName{
 					Namespace: obj.GetNamespace(),
@@ -85,6 +83,7 @@ func (r *ASEntryEventHandler) add(ctx context.Context, obj runtime.Object, queue
 				queue.Add(reconcile.Request{NamespacedName: key})
 				continue
 			}
-		*/
-	}
+
+		}
+	*/
 }

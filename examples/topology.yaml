@@ -7,7 +7,7 @@ spec:
   site: site1
   containerLab: |-
     name: topo3nodesrl
-    
+
     topology:
       kinds:
         nokia_srlinux:
@@ -15,13 +15,13 @@ spec:
       nodes:
         edge01:
           kind: nokia_srlinux
-          type: ixrd2
+          type: ixr3dl
         edge02:
           kind: nokia_srlinux
-          type: ixrd2
+          type: ixr3dl
         core01:
           kind: nokia_srlinux
-          type: ixrd2
+          type: ixr3dl
       links:
         - endpoints: ["edge01:e1-1", "core01:e1-1"]
         - endpoints: ["edge02:e1-1", "core01:e1-2"]

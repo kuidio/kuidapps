@@ -49,28 +49,14 @@ reinstall: docker
 apiserver-logs:
 	kubectl logs -l apiserver=true --container apiserver -n kuid-system -f --tail 1000
 
-codegen:
-	(which apiserver-runtime-gen || go get sigs.k8s.io/apiserver-runtime/tools/apiserver-runtime-gen)
-	go generate
-
-genclients:
-	go run ./tools/apiserver-runtime-gen \
-		-g deepcopy-gen \
-		-g client-gen \
-		-g informer-gen \
-		-g lister-gen \
-		-g openapi-gen \
-		--module $(REPO) \
-		--versions $(REPO)/apis/topo/v1alpha1
-
 .PHONY: generate
 generate: controller-gen 
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/..."
 
 .PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: controller-gen generate ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	mkdir -p artifacts
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/topo/..." output:crd:artifacts:config=artifacts
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/..." output:crd:artifacts:config=artifacts
 
 
 .PHONY: artifacts

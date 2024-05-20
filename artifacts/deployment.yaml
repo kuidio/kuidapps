@@ -50,3 +50,5 @@ spec:
               fieldPath: status.hostIP
         - name: ENABLE_TOPOLOGY
           value: "true"
+        - name: ENABLE_LINK
+          value: "true"

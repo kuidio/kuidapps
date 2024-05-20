@@ -26,7 +26,6 @@ import (
 
 	"github.com/henderiw/logger/log"
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
-	"github.com/kuidio/kuidapps/apis/generated/clientset/versioned/scheme"
 	topov1alpha1 "github.com/kuidio/kuidapps/apis/topo/v1alpha1"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/all"
@@ -58,10 +57,12 @@ func main() {
 
 	// setup controllers
 	runScheme := runtime.NewScheme()
-	if err := scheme.AddToScheme(runScheme); err != nil {
-		log.Error("cannot initialize schema", "error", err)
-		os.Exit(1)
-	}
+	/*
+		if err := scheme.AddToScheme(runScheme); err != nil {
+			log.Error("cannot initialize schema", "error", err)
+			os.Exit(1)
+		}
+	*/
 	// add the core object to the scheme
 	for _, api := range (runtime.SchemeBuilder{
 		clientgoscheme.AddToScheme,

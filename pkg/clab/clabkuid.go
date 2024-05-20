@@ -37,23 +37,19 @@ func (r *clabkuid) GetNodes(ctx context.Context) []backend.GenericObject {
 	nodes := make([]backend.GenericObject, 0, len(r.cfg.Topology.Nodes))
 	for nodeName, n := range r.cfg.Topology.Nodes {
 		nodeKind, nodeType := r.cfg.Topology.GetNodeKindType(nodeName)
-		nodegroupID := r.getNodeGroupID(n.Labels)
-		nodeID := infrav1alpha1.NodeID{
-			NodeGroupID: nodegroupID,
-			Node:        nodeName,
-		}
+		nodeGroupNodeID := r.getNodeGroupNodeID(nodeName, n.Labels)
 
 		nodes = append(nodes, infrav1alpha1.BuildNode(
 			metav1.ObjectMeta{
-				Name:      nodeID.KuidString(),
+				Name:      nodeGroupNodeID.KuidString(),
 				Namespace: "default",
 			},
 			&infrav1alpha1.NodeSpec{
-				NodeGroupID: nodegroupID,
-				Rack:        r.getRack(n.Labels),
-				Position:    r.getPosition(n.Labels),
-				Location:    r.getLocation(n.Labels),
-				Provider:    r.getProvider(nodeKind),
+				NodeGroupNodeID: nodeGroupNodeID,
+				Rack:            r.getRack(n.Labels),
+				Position:        r.getPosition(n.Labels),
+				Location:        r.getLocation(n.Labels),
+				Provider:        r.getProvider(nodeKind),
 				UserDefinedLabels: v1alpha1.UserDefinedLabels{
 					Labels: map[string]string{
 						backend.KuidINVNodeTypeKey: nodeType,
@@ -94,9 +90,9 @@ func (r *clabkuid) GetLinks(ctx context.Context) []backend.GenericObject {
 	return links
 }
 
-func (r *clabkuid) getEndpoints(ctx context.Context, l *containerlab.LinkDefinition) []*infrav1alpha1.EndpointID {
+func (r *clabkuid) getEndpoints(ctx context.Context, l *containerlab.LinkDefinition) []*infrav1alpha1.NodeGroupEndpointID {
 	log := log.FromContext(ctx)
-	endpoints := make([]*infrav1alpha1.EndpointID, 0, 2)
+	endpoints := make([]*infrav1alpha1.NodeGroupEndpointID, 0, 2)
 	if len(l.Endpoints) != 2 {
 		return nil
 	}
@@ -116,24 +112,29 @@ func (r *clabkuid) getEndpoints(ctx context.Context, l *containerlab.LinkDefinit
 			return nil
 		}
 
-		endpoints = append(endpoints, &infrav1alpha1.EndpointID{
-			NodeID: infrav1alpha1.NodeID{
-				NodeGroupID: r.getNodeGroupID(n.Labels),
-				Node:        nodeName,
+		nodeGroupNodeID := r.getNodeGroupNodeID(nodeName, n.Labels)
+
+		endpoints = append(endpoints, &infrav1alpha1.NodeGroupEndpointID{
+			NodeGroup: r.cfg.Name,
+			EndpointID: infrav1alpha1.EndpointID{
+				NodeID:   nodeGroupNodeID.NodeID,
+				Endpoint: epName,
 			},
-			Endpoint: epName,
 		})
 
 	}
 	return endpoints
 }
 
-func (r *clabkuid) getNodeGroupID(labels map[string]string) infrav1alpha1.NodeGroupID {
-	return infrav1alpha1.NodeGroupID{
+func (r *clabkuid) getNodeGroupNodeID(nodeName string, labels map[string]string) infrav1alpha1.NodeGroupNodeID {
+	return infrav1alpha1.NodeGroupNodeID{
 		NodeGroup: r.cfg.Name, // topologyName
-		SiteID: infrav1alpha1.SiteID{
-			Region: r.getRegion(labels),
-			Site:   r.getSite(labels),
+		NodeID: infrav1alpha1.NodeID{
+			SiteID: infrav1alpha1.SiteID{
+				Region: r.getRegion(labels),
+				Site:   r.getSite(labels),
+			},
+			Node: nodeName,
 		},
 	}
 }
@@ -188,7 +189,7 @@ func (r *clabkuid) getLocation(labels map[string]string) *infrav1alpha1.Location
 func (r *clabkuid) getProvider(nodeKind string) string {
 	switch nodeKind {
 	case "nokia_srlinux":
-		return "srl.nokia.com"
+		return "srlinux.nokia.com"
 	case "nokia_sros":
 		return "sros.nokia.com"
 	}

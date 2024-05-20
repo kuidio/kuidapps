@@ -18,4 +18,5 @@ package all
 
 import (
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/topology"
+	_ "github.com/kuidio/kuidapps/pkg/reconcilers/link"
 )
