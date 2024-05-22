@@ -358,19 +358,22 @@ spec:
                   - type
                   type: object
                 type: array
-              routingPolicy:
-                properties:
-                  ipv4Prefixes:
-                    items:
+              routingPolicies:
+                description: RoutingPolicies defines the routingPolicies of the device config
+                items:
+                  properties:
+                    ipv4Prefixes:
+                      items:
+                        type: string
+                      type: array
+                    ipv6Prefixes:
+                      items:
+                        type: string
+                      type: array
+                    name:
                       type: string
-                    type: array
-                  ipv6Prefixes:
-                    items:
-                      type: string
-                    type: array
-                  name:
-                    type: string
-                type: object
+                  type: object
+                type: array
               topology:
                 type: string
               tunnelInterfaces:

@@ -720,10 +720,16 @@ func (in *NetworkDeviceSpec) DeepCopyInto(out *NetworkDeviceSpec) {
 			}
 		}
 	}
-	if in.RoutingPolicy != nil {
-		in, out := &in.RoutingPolicy, &out.RoutingPolicy
-		*out = new(NetworkDeviceRoutingPolicy)
-		(*in).DeepCopyInto(*out)
+	if in.RoutingPolicies != nil {
+		in, out := &in.RoutingPolicies, &out.RoutingPolicies
+		*out = make([]*NetworkDeviceRoutingPolicy, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(NetworkDeviceRoutingPolicy)
+				(*in).DeepCopyInto(*out)
+			}
+		}
 	}
 }
 
