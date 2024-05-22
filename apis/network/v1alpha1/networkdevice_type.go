@@ -39,7 +39,10 @@ type NetworkDeviceInterface struct {
 	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
 	// tunnel, regular, etc
 	InterfaceType string                               `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
-	SubInterfaces []NetworkDeviceInterfaceSubInterface `json:"subInterfaces,omitempty" yaml:"subInterfaces,omitempty" protobuf:"bytes,3,rep,name=subInterfaces"`
+	SubInterfaces []*NetworkDeviceInterfaceSubInterface `json:"subInterfaces,omitempty" yaml:"subInterfaces,omitempty" protobuf:"bytes,3,rep,name=subInterfaces"`
+	VLANTagging   bool                                 `json:"vlanTagging" yaml:"vlanTagging" protobuf:"bytes,4,opt,name=vlanTagging"`
+	Speed         string                               `json:"speed" yaml:"speed" protobuf:"bytes,5,opt,name=speed"`
+	LAGMember     bool                                 `json:"lagMember" yaml:"lagMember" protobuf:"bytes,6,opt,name=lagMember"`
 }
 
 type NetworkDeviceInterfaceSubInterface struct {
@@ -65,7 +68,7 @@ type NetworkDeviceNetworkInstance struct {
 	NetworkInstanceType NetworkInstanceType                    `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
 	Protocols           *NetworkDeviceNetworkInstanceProtocols `json:"protocols,omitempty" yaml:"protocols,omitempty" protobuf:"bytes,3,opt,name=protocols"`
 	Interfaces          []string                               `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,4,opt,name=interfaces"`
-	VXLANInterfaces     []string                               `json:"vxlanInterfaces,omitempty" yaml:"vxlanInterfaces,omitempty" protobuf:"bytes,5,opt,name=vxlanInterfaces"`
+	VXLANInterface      string                                 `json:"vxlanInterface,omitempty" yaml:"vxlanInterface,omitempty" protobuf:"bytes,5,opt,name=vxlanInterface"`
 }
 
 type NetworkDeviceNetworkInstanceProtocols struct {

@@ -374,9 +374,13 @@ func (in *NetworkDeviceInterface) DeepCopyInto(out *NetworkDeviceInterface) {
 	*out = *in
 	if in.SubInterfaces != nil {
 		in, out := &in.SubInterfaces, &out.SubInterfaces
-		*out = make([]NetworkDeviceInterfaceSubInterface, len(*in))
+		*out = make([]*NetworkDeviceInterfaceSubInterface, len(*in))
 		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(NetworkDeviceInterfaceSubInterface)
+				(*in).DeepCopyInto(*out)
+			}
 		}
 	}
 }
@@ -505,11 +509,6 @@ func (in *NetworkDeviceNetworkInstance) DeepCopyInto(out *NetworkDeviceNetworkIn
 	}
 	if in.Interfaces != nil {
 		in, out := &in.Interfaces, &out.Interfaces
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
-	if in.VXLANInterfaces != nil {
-		in, out := &in.VXLANInterfaces, &out.VXLANInterfaces
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

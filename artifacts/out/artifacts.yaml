@@ -233,7 +233,11 @@ spec:
                 items:
                   description: TODO LAG, etc
                   properties:
+                    lagMember:
+                      type: boolean
                     name:
+                      type: string
+                    speed:
                       type: string
                     subInterfaces:
                       items:
@@ -273,9 +277,14 @@ spec:
                     type:
                       description: tunnel, regular, etc
                       type: string
+                    vlanTagging:
+                      type: boolean
                   required:
+                  - lagMember
                   - name
+                  - speed
                   - type
+                  - vlanTagging
                   type: object
                 type: array
               networkInstances:
@@ -343,10 +352,8 @@ spec:
                     type:
                       description: mac-vrf, ip-vrf
                       type: string
-                    vxlanInterfaces:
-                      items:
-                        type: string
-                      type: array
+                    vxlanInterface:
+                      type: string
                   required:
                   - name
                   - type
