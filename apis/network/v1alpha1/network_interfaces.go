@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"strings"
+
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -55,4 +57,17 @@ func BuildNetwork(meta metav1.ObjectMeta, spec *NetworkSpec, status *NetworkStat
 		Spec:       aspec,
 		Status:     astatus,
 	}
+}
+
+func (r *Network) GetNetworkName() string {
+	parts := strings.Split(r.Name, ".")
+	if len(parts) > 0 {
+		return parts[len(parts)-1]
+	}
+	return ""
+}
+
+func (r *Network) IsDefaultNetwork() bool {
+	networkName := r.GetNetworkName()
+	return networkName == DefaultNetwork
 }

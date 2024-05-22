@@ -20,18 +20,14 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/henderiw/logger/log"
-	"github.com/kuidio/kuid/apis/backend"
-	asbev1alpha1 "github.com/kuidio/kuid/apis/backend/as/v1alpha1"
-	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
-	ipambev1alpha1 "github.com/kuidio/kuid/apis/backend/ipam/v1alpha1"
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
 	"github.com/kuidio/kuid/pkg/reconcilers/resource"
 	"github.com/kuidio/kuid/pkg/resources"
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
+	"github.com/kuidio/kuidapps/pkg/devbuilder"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/eventhandler"
@@ -135,10 +131,10 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	defaultNetwork := isDefaultNetwork(cr.Name)
+	//defaultNetwork := isDefaultNetwork(cr.Name)
 	nc, err := r.getNetworkConfig(ctx, cr)
 	if err != nil {
-		if defaultNetwork {
+		if cr.IsDefaultNetwork() {
 			// we need networkconfig for the default network
 			// we do not release resources at this stage -> decision do far is no
 			r.handleError(ctx, cr, "network config not provided, needed for a default network", nil)
@@ -191,26 +187,36 @@ func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network, nc *ne
 		},
 	})
 
-	var links []*infrabev1alpha1.Link
-	var err error
-	if isDefaultNetwork(cr.Name) {
-		links, err = r.GetLinks(ctx, cr)
-		if err != nil {
-			return err
-		}
-	}
-
-	nodes, err := r.GetNodes(ctx, cr)
-	if err != nil {
+	b := devbuilder.New(r.Client, types.NamespacedName{Namespace: cr.Namespace, Name: cr.Name})
+	if err := b.Build(ctx, cr, nc); err != nil {
 		return err
 	}
-	for _, n := range nodes {
-		nd, err := r.getNetworkDeviceConfig(ctx, cr, nc, n, links)
+	for _, nd := range b.GetNetworkDeviceConfigs() {
+		res.AddNewResource(ctx, cr, nd)
+	}
+
+	/*
+		var links []*infrabev1alpha1.Link
+		var err error
+		if isDefaultNetwork(cr.Name) {
+			links, err = r.GetLinks(ctx, cr)
+			if err != nil {
+				return err
+			}
+		}
+
+		nodes, err := r.GetNodes(ctx, cr)
 		if err != nil {
 			return err
 		}
-		res.AddNewResource(ctx, cr, nd)
-	}
+		for _, n := range nodes {
+			nd, err := r.getNetworkDeviceConfig(ctx, cr, nc, n, links)
+			if err != nil {
+				return err
+			}
+			res.AddNewResource(ctx, cr, nd)
+		}
+	*/
 
 	if err := res.APIApply(ctx, cr); err != nil {
 		return err
@@ -232,20 +238,7 @@ func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.Network) error
 	return nil
 }
 
-func (r *reconciler) getNetworkConfig(ctx context.Context, cr *netwv1alpha1.Network) (*netwv1alpha1.NetworkConfig, error) {
-	//log := log.FromContext((ctx))
-	key := types.NamespacedName{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}
-
-	o := &netwv1alpha1.NetworkConfig{}
-	if err := r.Client.Get(ctx, key, o); err != nil {
-		return nil, err
-	}
-	return o, nil
-}
-
+/*
 func isDefaultNetwork(crName string) bool {
 	parts := strings.Split(crName, ".")
 	networkName := crName
@@ -285,39 +278,6 @@ func (r *reconciler) GetNodes(ctx context.Context, cr *netwv1alpha1.Network) ([]
 	}
 	return nodes, nil
 }
-
-//KuidINVLinkTypeKey
-/*
-func (r *reconciler) GetLinks(ctx context.Context, cr *netwv1alpha1.Network) ([]*infrabev1alpha1.Link, error) {
-	links := make([]*infrabev1alpha1.Link, 0)
-	topology := cr.Spec.Topology
-
-	opts := []client.ListOption{
-		client.InNamespace(cr.Namespace),
-	}
-	linkList := &infrabev1alpha1.LinkList{}
-	if err := r.Client.List(ctx, linkList, opts...); err != nil {
-		return nil, err
-	}
-
-	for _, l := range linkList.Items {
-		linkType, ok := l.Spec.UserDefinedLabels.Labels[backend.KuidINVLinkTypeKey]
-		if !ok {
-			continue
-		}
-		if linkType != "infra" {
-			continue
-		}
-		for _, ep := range l.Spec.Endpoints {
-			if ep.NodeGroup != topology {
-				continue
-			}
-		}
-		links = append(links, &l)
-	}
-	return links, nil
-}
-*/
 
 func (r *reconciler) getNetworkDeviceConfig(
 	ctx context.Context,
@@ -506,12 +466,13 @@ func (r *reconciler) GetLinks(ctx context.Context, cr *netwv1alpha1.Network) ([]
 }
 
 type link struct {
-	epName  string
-	id      uint32
-	localAS uint32
-	peerAS  uint32
-	ipv4    *linkIP
-	ipv6    *linkIP
+	id          uint32
+	localEPName string
+	peerEPName  string
+	localAS     uint32
+	peerAS      uint32
+	ipv4        *linkIP
+	ipv6        *linkIP
 }
 
 type linkIP struct {
@@ -539,11 +500,12 @@ func (r *reconciler) getInterfaces(
 			localID = 1
 		}
 		if found {
-			link := link{
-				epName: l.Spec.Endpoints[localID].Endpoint,
-				id:     0,
-			}
 			remoteID := localID ^ 1
+			link := link{
+				localEPName: l.Spec.Endpoints[localID].Endpoint,
+				peerEPName:  l.Spec.Endpoints[remoteID].Endpoint,
+				id:          0, // TODO change this in case of VLANs
+			}
 
 			var err error
 			link.peerAS, err = r.getASClaim(ctx, types.NamespacedName{
@@ -626,4 +588,22 @@ func (r *reconciler) getASClaim(ctx context.Context, nsn types.NamespacedName) (
 		return 0, fmt.Errorf("asclaim %s id not found ", nsn.String())
 	}
 	return *claim.Status.ID, nil
+}
+
+
+*/
+
+
+func (r *reconciler) getNetworkConfig(ctx context.Context, cr *netwv1alpha1.Network) (*netwv1alpha1.NetworkConfig, error) {
+	//log := log.FromContext((ctx))
+	key := types.NamespacedName{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}
+
+	o := &netwv1alpha1.NetworkConfig{}
+	if err := r.Client.Get(ctx, key, o); err != nil {
+		return nil, err
+	}
+	return o, nil
 }

@@ -25,3 +25,10 @@ const (
 	NetworkInstanceType_IPVRF   NetworkInstanceType = "ip-vrf"
 	NetworkInstanceType_DEFAULT NetworkInstanceType = "default"
 )
+
+type SubInterfaceType string
+
+const (
+	SubInterfaceType_Routed  SubInterfaceType = "routed"
+	SubInterfaceType_Bridged SubInterfaceType = "brdiged"
+)

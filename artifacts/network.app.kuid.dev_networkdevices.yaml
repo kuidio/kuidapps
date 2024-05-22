@@ -81,6 +81,8 @@ spec:
                             required:
                             - addresses
                             type: object
+                          peerName:
+                            type: string
                           type:
                             description: routed or bridged
                             type: string
@@ -89,19 +91,16 @@ spec:
                             type: integer
                         required:
                         - id
+                        - peerName
                         - type
                         type: object
                       type: array
-                    type:
-                      description: tunnel, regular, etc
-                      type: string
                     vlanTagging:
                       type: boolean
                   required:
                   - lagMember
                   - name
                   - speed
-                  - type
                   - vlanTagging
                   type: object
                 type: array
@@ -178,8 +177,80 @@ spec:
                   - type
                   type: object
                 type: array
+              routingPolicy:
+                properties:
+                  ipv4Prefixes:
+                    items:
+                      type: string
+                    type: array
+                  ipv6Prefixes:
+                    items:
+                      type: string
+                    type: array
+                  name:
+                    type: string
+                type: object
               topology:
                 type: string
+              tunnelInterfaces:
+                description: TunnelInterfaces defines the unnelInterfaces of the device
+                  config
+                items:
+                  description: TODO LAG, etc
+                  properties:
+                    lagMember:
+                      type: boolean
+                    name:
+                      type: string
+                    speed:
+                      type: string
+                    subInterfaces:
+                      items:
+                        properties:
+                          id:
+                            format: int32
+                            type: integer
+                          ipv4:
+                            properties:
+                              addresses:
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - addresses
+                            type: object
+                          ipv6:
+                            properties:
+                              addresses:
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - addresses
+                            type: object
+                          peerName:
+                            type: string
+                          type:
+                            description: routed or bridged
+                            type: string
+                          vlan:
+                            format: int32
+                            type: integer
+                        required:
+                        - id
+                        - peerName
+                        - type
+                        type: object
+                      type: array
+                    vlanTagging:
+                      type: boolean
+                  required:
+                  - lagMember
+                  - name
+                  - speed
+                  - vlanTagging
+                  type: object
+                type: array
             required:
             - topology
             type: object

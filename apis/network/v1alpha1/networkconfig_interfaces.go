@@ -369,3 +369,18 @@ func BuildNetworkConfig(meta metav1.ObjectMeta, spec *NetworkConfigSpec, status 
 		Status:     astatus,
 	}
 }
+
+func (r *NetworkConfig) IsEBGPEnabled() bool {
+	return r.Spec.Protocols != nil && r.Spec.Protocols.EBGP != nil
+}
+
+func (r *NetworkConfig) GetIBGPAS() uint32 {
+	if r.Spec.Protocols != nil && r.Spec.Protocols.IBGP != nil && r.Spec.Protocols.IBGP.AS != nil {
+		return *r.Spec.Protocols.IBGP.AS
+	}
+	return 0
+}
+
+func (r *NetworkConfig) IsIBGPEnabled() bool {
+	return r.Spec.Protocols != nil && r.Spec.Protocols.IBGP != nil
+}
