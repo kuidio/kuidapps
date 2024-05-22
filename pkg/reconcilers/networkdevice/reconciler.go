@@ -351,22 +351,26 @@ func (r *reconciler) getNetworkDeviceConfig(
 
 		interfaces := make([]string, 0, len(links))
 		for _, l := range links {
-			var ipv4 []*netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv4
+			var ipv4 *netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv4
 			if l.ipv4 != nil {
-				ipv4 = append(ipv4, &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv4{
-					Prefix: l.ipv4.localIP,
-				})
+				ipv4 = &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv4{
+					Addresses: []string{
+						l.ipv4.localIP,
+					},
+				}
 			}
-			var ipv6 []*netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv6
+			var ipv6 *netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv6
 			if l.ipv6 != nil {
-				ipv6 = append(ipv6, &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv6{
-					Prefix: l.ipv6.localIP,
-				})
+				ipv6 = &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv6{
+					Addresses: []string{
+						l.ipv6.localIP,
+					},
+				}
 			}
 			deviceSpec.Interfaces = append(deviceSpec.Interfaces, &netwv1alpha1.NetworkDeviceInterface{
 				Name:          l.epName,
 				InterfaceType: "regular",
-				SubInterfaces: []netwv1alpha1.NetworkDeviceInterfaceSubInterface{
+				SubInterfaces: []*netwv1alpha1.NetworkDeviceInterfaceSubInterface{
 					{
 						ID:               l.id,
 						SubInterfaceType: "routed",

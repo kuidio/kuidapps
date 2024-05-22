@@ -246,23 +246,23 @@ spec:
                             format: int32
                             type: integer
                           ipv4:
-                            items:
-                              properties:
-                                prefix:
+                            properties:
+                              addresses:
+                                items:
                                   type: string
-                              required:
-                              - prefix
-                              type: object
-                            type: array
+                                type: array
+                            required:
+                            - addresses
+                            type: object
                           ipv6:
-                            items:
-                              properties:
-                                prefix:
+                            properties:
+                              addresses:
+                                items:
                                   type: string
-                              required:
-                              - prefix
-                              type: object
-                            type: array
+                                type: array
+                            required:
+                            - addresses
+                            type: object
                           type:
                             description: routed or bridged
                             type: string
