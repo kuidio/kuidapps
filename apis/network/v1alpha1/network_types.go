@@ -101,6 +101,7 @@ type NetworkStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="DEVICECONFIGREADY",type="string",JSONPath=".status.conditions[?(@.type=='DeviceConfigReady')].status"
 // +kubebuilder:resource:categories={kuid, net}
 // Network is the Network for the Network API
 // +k8s:openapi-gen=true

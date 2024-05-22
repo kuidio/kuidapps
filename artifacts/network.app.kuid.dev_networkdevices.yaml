@@ -21,6 +21,9 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: READY
       type: string
+    - jsonPath: .spec.provider
+      name: PROVIDER
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -177,6 +180,9 @@ spec:
                   - type
                   type: object
                 type: array
+              provider:
+                description: Provider defines the provider implementing this resource.
+                type: string
               routingPolicies:
                 description: RoutingPolicies defines the routingPolicies of the device
                   config
@@ -256,6 +262,7 @@ spec:
                   type: object
                 type: array
             required:
+            - provider
             - topology
             type: object
           status:

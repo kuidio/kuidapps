@@ -203,6 +203,9 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: READY
       type: string
+    - jsonPath: .spec.provider
+      name: PROVIDER
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -358,6 +361,9 @@ spec:
                   - type
                   type: object
                 type: array
+              provider:
+                description: Provider defines the provider implementing this resource.
+                type: string
               routingPolicies:
                 description: RoutingPolicies defines the routingPolicies of the device config
                 items:
@@ -435,6 +441,7 @@ spec:
                   type: object
                 type: array
             required:
+            - provider
             - topology
             type: object
           status:
@@ -529,6 +536,9 @@ spec:
   - additionalPrinterColumns:
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='DeviceConfigReady')].status
+      name: DEVICECONFIGREADY
       type: string
     name: v1alpha1
     schema:

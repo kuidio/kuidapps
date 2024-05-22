@@ -107,14 +107,12 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 		if err := r.delete(ctx, cr); err != nil {
 			r.handleError(ctx, cr, "canot delete resources", err)
-			//return reconcile.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-			return reconcile.Result{Requeue: true}, nil
+			return reconcile.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		}
 
 		if err := r.finalizer.RemoveFinalizer(ctx, cr); err != nil {
 			r.handleError(ctx, cr, "cannot remove finalizer", err)
-			//return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		}
 		log.Debug("Successfully deleted resource")
 		return ctrl.Result{}, nil
@@ -122,13 +120,12 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	if err := r.finalizer.AddFinalizer(ctx, cr); err != nil {
 		r.handleError(ctx, cr, "cannot add finalizer", err)
-		//return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
+	// check if the processing was done properly
 	if cr.GetCondition(conditionv1alpha1.ConditionTypeReady).Status == metav1.ConditionFalse {
-		//return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
 	//defaultNetwork := isDefaultNetwork(cr.Name)
@@ -162,7 +159,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	cr.SetConditions(conditionv1alpha1.Ready())
+	cr.SetConditions(conditionv1alpha1.DeviceConfigReady()) // This is the DeviceConfigReady condition, not the Ready condition
 	r.recorder.Eventf(cr, corev1.EventTypeNormal, crName, "ready")
 	return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 }
@@ -170,11 +167,11 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.Network, msg string, err error) {
 	log := log.FromContext(ctx)
 	if err == nil {
-		//cr.SetConditions(conditionv1alpha1.Failed(msg))
+		cr.SetConditions(conditionv1alpha1.DeviceConfigFailed(msg))
 		log.Error(msg)
 		r.recorder.Eventf(cr, corev1.EventTypeWarning, crName, msg)
 	} else {
-		//cr.SetConditions(conditionv1alpha1.Failed(err.Error()))
+		cr.SetConditions(conditionv1alpha1.DeviceConfigFailed(err.Error()))
 		log.Error(msg, "error", err)
 		r.recorder.Eventf(cr, corev1.EventTypeWarning, crName, fmt.Sprintf("%s, err: %s", msg, err.Error()))
 	}

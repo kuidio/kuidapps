@@ -31,6 +31,16 @@ func (r *Devices) GetNetworkDeviceConfigs() []*netwv1alpha1.NetworkDevice {
 	return dc
 }
 
+func (r *Devices) AddProvider(nodeName, provider string) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.AddProvider(provider)
+}
+
 func (r *Devices) AddAS(nodeName, niName string, as uint32) {
 	r.m.Lock()
 	defer r.m.Unlock()
@@ -142,4 +152,17 @@ func (r *Devices) GetSystemIP(nodeName, ifName string, id uint32, ipv4 bool) str
 		}
 	}
 	return ""
+}
+
+func (r *Devices) AddRoutingPolicy(nodeName, policyName string, ipv4, ipv6 []string) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	rp := d.GetOrCreateRoutingPolicy(policyName)
+	rp.IPv4Prefixes = ipv4
+	rp.IPv6Prefixes = ipv6
+	
 }

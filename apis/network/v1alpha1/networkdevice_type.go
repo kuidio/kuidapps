@@ -26,18 +26,20 @@ import (
 // NetworkDeviceDeviceSpec defines the desired state of NetworkDevice
 type NetworkDeviceSpec struct {
 	Topology string `json:"topology" yaml:"topology" protobuf:"bytes,1,opt,name=topology"`
+	// Provider defines the provider implementing this resource.
+	Provider string `json:"provider" yaml:"provider" protobuf:"bytes,2,opt,name=provider"`
 	// Interfaces defines the interfaces of the device config
 	// +optional
-	Interfaces []*NetworkDeviceInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,2,rep,name=interfaces"`
+	Interfaces []*NetworkDeviceInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,3,rep,name=interfaces"`
 	// NetworkInstances defines the network instances of the device config
 	// +optional
-	NetworkInstances []*NetworkDeviceNetworkInstance `json:"networkInstances,omitempty" yaml:"networkInstances,omitempty" protobuf:"bytes,3,rep,name=networkInstances"`
+	NetworkInstances []*NetworkDeviceNetworkInstance `json:"networkInstances,omitempty" yaml:"networkInstances,omitempty" protobuf:"bytes,4,rep,name=networkInstances"`
 	// TunnelInterfaces defines the unnelInterfaces of the device config
 	// +optional
-	TunnelInterfaces []*NetworkDeviceInterface `json:"tunnelInterfaces,omitempty" yaml:"tunnelInterfaces,omitempty" protobuf:"bytes,4,rep,name=tunnelInterfaces"`
+	TunnelInterfaces []*NetworkDeviceInterface `json:"tunnelInterfaces,omitempty" yaml:"tunnelInterfaces,omitempty" protobuf:"bytes,5,rep,name=tunnelInterfaces"`
 	// RoutingPolicies defines the routingPolicies of the device config
 	// +optional
-	RoutingPolicies []*NetworkDeviceRoutingPolicy `json:"routingPolicies,omitempty" yaml:"routingPolicies,omitempty" protobuf:"bytes,5,opt,name=routingPolicies"`
+	RoutingPolicies []*NetworkDeviceRoutingPolicy `json:"routingPolicies,omitempty" yaml:"routingPolicies,omitempty" protobuf:"bytes,6,opt,name=routingPolicies"`
 }
 
 type NetworkDeviceRoutingPolicy struct {
@@ -124,6 +126,7 @@ type NetworkDeviceStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="PROVIDER",type="string",JSONPath=".spec.provider"
 // +kubebuilder:resource:categories={kuid, net}
 // NetworkDevice is the NetworkDevice for the NetworkDevice API
 // +k8s:openapi-gen=true

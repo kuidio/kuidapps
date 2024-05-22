@@ -44,6 +44,10 @@ type Device struct {
 	nd *NetworkDevice
 }
 
+func (r *Device) AddProvider(provider string) {
+	r.nd.Spec.Provider = provider
+}
+
 func (r *Device) GetNetworkDevice() *NetworkDevice {
 	return r.nd
 }
@@ -208,4 +212,32 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNeighbor(peerAddres
 	}
 	r.Neighbors = append(r.Neighbors, newNeighbor)
 	return newNeighbor
+}
+
+func (r *Device) AddOrUpdateRoutingPolicy(new *NetworkDeviceRoutingPolicy) {
+	if r.nd.Spec.RoutingPolicies == nil {
+		r.nd.Spec.RoutingPolicies = []*NetworkDeviceRoutingPolicy{}
+	}
+	if new == nil {
+		return
+	}
+	if new.Name == "" {
+		return
+	}
+	x := r.GetOrCreateRoutingPolicy(new.Name)
+	x.IPv4Prefixes = new.IPv4Prefixes
+	x.IPv6Prefixes = new.IPv6Prefixes
+}
+
+func (r *Device) GetOrCreateRoutingPolicy(name string) *NetworkDeviceRoutingPolicy {
+	for _, rp := range r.nd.Spec.RoutingPolicies {
+		if rp.Name == name {
+			return rp
+		}
+	}
+	newrp := &NetworkDeviceRoutingPolicy{
+		Name: name,
+	}
+	r.nd.Spec.RoutingPolicies = append(r.nd.Spec.RoutingPolicies, newrp)
+	return newrp
 }

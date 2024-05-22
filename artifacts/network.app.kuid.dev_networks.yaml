@@ -21,6 +21,9 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: READY
       type: string
+    - jsonPath: .status.conditions[?(@.type=='DeviceConfigReady')].status
+      name: DEVICECONFIGREADY
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:

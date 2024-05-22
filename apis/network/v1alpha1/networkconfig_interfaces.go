@@ -384,3 +384,24 @@ func (r *NetworkConfig) GetIBGPAS() uint32 {
 func (r *NetworkConfig) IsIBGPEnabled() bool {
 	return r.Spec.Protocols != nil && r.Spec.Protocols.IBGP != nil
 }
+
+func (r *NetworkConfig) GetLoopbackPrefixes() ([]string, []string) {
+	ipv4Prefixes := []string{}
+	ipv6Prefixes := []string{}
+	for _, prefix := range r.Spec.Prefixes {
+		pi, err := iputil.New(prefix.Prefix)
+		if err != nil {
+			continue
+		}
+		if pi.IsIpv4() {
+			if prefix.Labels[backend.KuidINVPurpose] == "loopback" {
+				ipv4Prefixes = append(ipv4Prefixes, prefix.Prefix)
+			}
+		} else {
+			if prefix.Labels[backend.KuidINVPurpose] == "loopback" {
+				ipv6Prefixes = append(ipv6Prefixes, prefix.Prefix)
+			}
+		}
+	}
+	return ipv4Prefixes, ipv6Prefixes
+}

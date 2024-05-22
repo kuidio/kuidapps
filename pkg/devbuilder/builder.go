@@ -48,8 +48,11 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 	}
 
 	for _, n := range nodes {
+		r.devices.AddProvider(n.Spec.Node, n.Spec.Provider)
 		if cr.IsDefaultNetwork() {
 			r.UpdateNetworkInstance(ctx, cr, n, netwv1alpha1.NetworkInstanceType_DEFAULT)
+
+			r.UpdateRoutingPolicies(ctx, cr, nc, n)	
 		}
 
 		if err := r.UpdateNodeAS(ctx, cr, nc, n); err != nil {
@@ -145,7 +148,7 @@ func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, cr *netwv1alpha1.Netwo
 	})
 	r.devices.AddSubInterface(nodeName, SystemInterfaceName, &netwv1alpha1.NetworkDeviceInterfaceSubInterface{
 		ID:               0,
-		SubInterfaceType: netwv1alpha1.SubInterfaceType_Routed,
+		//SubInterfaceType: netwv1alpha1.SubInterfaceType_Routed, A type is not possible here
 	}, ipv4, ipv6)
 	r.devices.AddNetworkInstanceSubInterface(nodeName, networkName, fmt.Sprintf("%s.0", SystemInterfaceName))
 	return nil
@@ -299,6 +302,18 @@ func (r *DeviceBuilder) UpdateProtocols(ctx context.Context, cr *netwv1alpha1.Ne
 				PeerAS:       *nc.Spec.Protocols.IBGP.AS,
 			})
 		}
+	}
+	return nil
+}
+
+
+func (r *DeviceBuilder) UpdateRoutingPolicies(ctx context.Context, cr *netwv1alpha1.Network, nc *netwv1alpha1.NetworkConfig, n *infrabev1alpha1.Node) error {
+	nodeID := infrabev1alpha1.String2NodeGroupNodeID(n.GetName())
+	nodeName := nodeID.Node
+	if cr.IsDefaultNetwork() {
+		ipv4, ipv6 := nc.GetLoopbackPrefixes()
+		r.devices.AddRoutingPolicy(nodeName, "underlay", ipv4, ipv6)
+		r.devices.AddRoutingPolicy(nodeName, "overlay", nil, nil)
 	}
 	return nil
 }
