@@ -47,6 +47,7 @@ spec:
             description: NetworkConfigSpec defines the desired state of NetworkConfig
             properties:
               addressing:
+                default: dualstack
                 description: Addressing defines the addressing used in this network
                 enum:
                 - dualstack
@@ -183,6 +184,253 @@ spec:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  name: networkdevices.network.app.kuid.dev
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.15.0
+spec:
+  group: network.app.kuid.dev
+  names:
+    categories:
+    - kuid
+    - net
+    kind: NetworkDevice
+    listKind: NetworkDeviceList
+    plural: networkdevices
+    singular: networkdevice
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NetworkDevice is the NetworkDevice for the NetworkDevice API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NetworkDeviceDeviceSpec defines the desired state of NetworkDevice
+            properties:
+              interfaces:
+                description: Interfaces defines the interfaces of the device config
+                items:
+                  description: TODO LAG, etc
+                  properties:
+                    name:
+                      type: string
+                    subInterfaces:
+                      items:
+                        properties:
+                          id:
+                            format: int32
+                            type: integer
+                          ipv4:
+                            items:
+                              properties:
+                                prefix:
+                                  type: string
+                              required:
+                              - prefix
+                              type: object
+                            type: array
+                          ipv6:
+                            items:
+                              properties:
+                                prefix:
+                                  type: string
+                              required:
+                              - prefix
+                              type: object
+                            type: array
+                          type:
+                            description: routed or bridged
+                            type: string
+                          vlan:
+                            format: int32
+                            type: integer
+                        required:
+                        - id
+                        - type
+                        type: object
+                      type: array
+                    type:
+                      description: tunnel, regular, etc
+                      type: string
+                  required:
+                  - name
+                  - type
+                  type: object
+                type: array
+              networkInstances:
+                description: NetworkInstances defines the network instances of the device config
+                items:
+                  properties:
+                    interfaces:
+                      items:
+                        type: string
+                      type: array
+                    name:
+                      type: string
+                    protocols:
+                      properties:
+                        bgp:
+                          properties:
+                            as:
+                              format: int32
+                              type: integer
+                            neighbors:
+                              items:
+                                properties:
+                                  localAS:
+                                    format: int32
+                                    type: integer
+                                  localAddress:
+                                    type: string
+                                  peerAS:
+                                    format: int32
+                                    type: integer
+                                  peerAddress:
+                                    type: string
+                                  peerGroup:
+                                    type: string
+                                required:
+                                - localAS
+                                - localAddress
+                                - peerAS
+                                - peerAddress
+                                - peerGroup
+                                type: object
+                              type: array
+                            peerGroups:
+                              items:
+                                properties:
+                                  addressFamilies:
+                                    items:
+                                      type: string
+                                    type: array
+                                  name:
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                            routerID:
+                              type: string
+                          required:
+                          - as
+                          - routerID
+                          type: object
+                        evpn:
+                          type: object
+                      type: object
+                    type:
+                      description: mac-vrf, ip-vrf
+                      type: string
+                    vxlanInterfaces:
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - name
+                  - type
+                  type: object
+                type: array
+              topology:
+                type: string
+            required:
+            - topology
+            type: object
+          status:
+            description: NetworkDeviceStatus defines the observed state of NetworkDevice
+            properties:
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        ---
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                        useful (see .node.status.conditions), the ability to deconflict is important.
+                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
   name: networks.network.app.kuid.dev
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
@@ -246,7 +494,7 @@ spec:
                             description: |-
                               BridgeDomain defines the name of the bridgeDomain belonging to the interface
                               A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
-                              defines interface Identifier
+                              defined interface Identifier
                             type: string
                           endpoint:
                             description: Endpoint defines the name of the endpoint
@@ -365,7 +613,7 @@ spec:
                             description: |-
                               BridgeDomain defines the name of the bridgeDomain belonging to the interface
                               A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
-                              defines interface Identifier
+                              defined interface Identifier
                             type: string
                           endpoint:
                             description: Endpoint defines the name of the endpoint
@@ -733,6 +981,12 @@ spec:
           value: "true"
         - name: ENABLE_LINK
           value: "true"
+        - name: ENABLE_NETWORKCONFIG
+          value: "true"
+        - name: ENABLE_NETWORK
+          value: "true"
+        - name: ENABLE_NETWORKDEVICE
+          value: "true"
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -759,6 +1013,33 @@ rules:
   verbs: [get, watch, list, create, update, patch, delete]
 - apiGroups: [infra.be.kuid.dev]
   resources: [endpoints, endpoints/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [ipam.be.kuid.dev]
+  resources: [ipindices, ipindices/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [ipam.be.kuid.dev]
+  resources: [ipclaims, ipclaims/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [as.be.kuid.dev]
+  resources: [asindices, asindices/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [as.be.kuid.dev]
+  resources: [asclaims, asclaims/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [genid.be.kuid.dev]
+  resources: [genidindices, genidindices/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [genid.be.kuid.dev]
+  resources: [genidclaims, genidclaims/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [network.app.kuid.dev]
+  resources: [networkconfigs, networkconfigs/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [network.app.kuid.dev]
+  resources: [networks, networks/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [network.app.kuid.dev]
+  resources: [networkdevices, networkdevices/status]
   verbs: [get, watch, list, create, update, patch, delete]
 
 ---

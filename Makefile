@@ -36,7 +36,7 @@ docker-build: ## Build docker image with the manager.
 	docker build --build-arg USERID=$(USERID) . -t ${IMG} --ssh default=$(SSH_AUTH_SOCK)
 
 .PHONY: docker-push
-docker-push:  docker-build ## Push docker image with the manager.
+docker-push: artifacts docker-build ## Push docker image with the manager.
 	docker push ${IMG}
 
 install: docker

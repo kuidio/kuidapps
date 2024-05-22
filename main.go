@@ -25,8 +25,12 @@ import (
 	"strings"
 
 	"github.com/henderiw/logger/log"
+	asbev1alpha1 "github.com/kuidio/kuid/apis/backend/as/v1alpha1"
+	genidbev1alpha1 "github.com/kuidio/kuid/apis/backend/genid/v1alpha1"
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
+	ipambev1alpha1 "github.com/kuidio/kuid/apis/backend/ipam/v1alpha1"
 	topov1alpha1 "github.com/kuidio/kuidapps/apis/topo/v1alpha1"
+	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/all"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
@@ -67,7 +71,11 @@ func main() {
 	for _, api := range (runtime.SchemeBuilder{
 		clientgoscheme.AddToScheme,
 		infrabev1alpha1.AddToScheme,
+		genidbev1alpha1.AddToScheme,
 		topov1alpha1.AddToScheme,
+		asbev1alpha1.AddToScheme,
+		ipambev1alpha1.AddToScheme,
+		netwv1alpha1.AddToScheme,
 	}) {
 		if err := api(runScheme); err != nil {
 			log.Error("cannot add scheme", "err", err)

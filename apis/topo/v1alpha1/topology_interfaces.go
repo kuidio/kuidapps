@@ -17,6 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+
+	genidbev1alpha1 "github.com/kuidio/kuid/apis/backend/genid/v1alpha1"
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,4 +80,17 @@ func BuildTopology(meta metav1.ObjectMeta, spec *TopologySpec, status *TopologyS
 		Spec:       aspec,
 		Status:     astatus,
 	}
+}
+
+func (r *Topology) GetGENIDIndex() *genidbev1alpha1.GENIDIndex {
+	return genidbev1alpha1.BuildGENIDIndex(
+		metav1.ObjectMeta{
+			Namespace: r.Namespace,
+			Name:      fmt.Sprintf("network.%s", r.Name), // network.topology
+		},
+		&genidbev1alpha1.GENIDIndexSpec{
+			Type: "16bit",
+		},
+		nil,
+	)
 }

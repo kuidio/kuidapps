@@ -24,4 +24,8 @@ spec:
           type: ixr3dl
       links:
         - endpoints: ["edge01:e1-1", "core01:e1-1"]
+          labels: 
+            infra.be.kuid.dev/link-type: infra
         - endpoints: ["edge02:e1-1", "core01:e1-2"]
+          labels: 
+            infra.be.kuid.dev/link-type: infra

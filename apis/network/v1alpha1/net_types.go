@@ -14,12 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package all
+package v1alpha1
 
-import (
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/topology"
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/link"
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkconfig"
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/network"
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkdevice"
+const DefaultNetwork = "default"
+
+type NetworkInstanceType string
+
+const (
+	NetworkInstanceType_MACVRF  NetworkInstanceType = "mac-vrf"
+	NetworkInstanceType_IPVRF   NetworkInstanceType = "ip-vrf"
+	NetworkInstanceType_DEFAULT NetworkInstanceType = "default"
 )

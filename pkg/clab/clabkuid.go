@@ -66,7 +66,6 @@ func (r *clabkuid) GetLinks(ctx context.Context) []backend.GenericObject {
 	log := log.FromContext(ctx)
 	links := make([]backend.GenericObject, 0, len(r.cfg.Topology.Links))
 	for _, l := range r.cfg.Topology.Links {
-
 		eps := r.getEndpoints(ctx, l)
 		if eps == nil {
 			return nil
@@ -83,6 +82,9 @@ func (r *clabkuid) GetLinks(ctx context.Context) []backend.GenericObject {
 			},
 			&infrav1alpha1.LinkSpec{
 				Endpoints: eps,
+				UserDefinedLabels: v1alpha1.UserDefinedLabels{
+					Labels: l.Labels,
+				},
 			},
 			nil,
 		))

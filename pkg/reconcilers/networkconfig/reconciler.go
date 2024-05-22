@@ -14,26 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package topology
+package networkconfig
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/henderiw/logger/log"
+	asbev1alpha1 "github.com/kuidio/kuid/apis/backend/as/v1alpha1"
 	genidbev1alpha1 "github.com/kuidio/kuid/apis/backend/genid/v1alpha1"
-	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
+	ipambev1alpha1 "github.com/kuidio/kuid/apis/backend/ipam/v1alpha1"
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
 	"github.com/kuidio/kuid/pkg/reconcilers/resource"
 	"github.com/kuidio/kuid/pkg/resources"
+	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
 	topov1alpha1 "github.com/kuidio/kuidapps/apis/topo/v1alpha1"
-	"github.com/kuidio/kuidapps/pkg/clab"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
+	"github.com/kuidio/kuidapps/pkg/reconcilers/eventhandler"
 	perrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,13 +48,13 @@ import (
 )
 
 func init() {
-	reconcilers.Register("topology", &reconciler{})
+	reconcilers.Register("networkconfig", &reconciler{})
 }
 
 const (
-	crName         = "topology"
-	controllerName = "TopologyController"
-	finalizer      = "topology.topo.app.kuid.dev/finalizer"
+	crName         = "networkconfig"
+	controllerName = "NetworkConfigController"
+	finalizer      = "networkconfig.network.app.kuid.dev/finalizer"
 	// errors
 	errGetCr        = "cannot get cr"
 	errUpdateStatus = "cannot update status"
@@ -63,22 +69,21 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 	}
 
 	r.Client = mgr.GetClient()
-	//r.APIPatchingApplicator = resource.NewAPIPatchingApplicator(mgr.GetClient())
 	r.finalizer = resource.NewAPIFinalizer(mgr.GetClient(), finalizer)
 	r.recorder = mgr.GetEventRecorderFor(controllerName)
 
 	return nil, ctrl.NewControllerManagedBy(mgr).
 		Named(controllerName).
-		For(&topov1alpha1.Topology{}).
-		Owns(&infrabev1alpha1.Node{}).
-		Owns(&infrabev1alpha1.Link{}).
-		Owns(&genidbev1alpha1.GENIDIndex{}).
-		/*Watches(&vxlanbev1alpha1.VXLANIndex{},
-		&eventhandler.IPEntryEventHandler{
-			Client:  mgr.GetClient(),
-			ObjList: &vxlanbev1alpha1.VXLANIndexList{},
-		}).
-		*/
+		For(&netwv1alpha1.NetworkConfig{}).
+		Owns(&ipambev1alpha1.IPClaim{}).
+		Owns(&asbev1alpha1.ASClaim{}).
+		Owns(&asbev1alpha1.ASIndex{}).
+		Owns(&genidbev1alpha1.GENIDClaim{}).
+		Watches(&topov1alpha1.Topology{},
+			&eventhandler.TopologyEventHandler{
+				Client:  mgr.GetClient(),
+				ObjList: &netwv1alpha1.NetworkConfigList{},
+			}).
 		Complete(r)
 }
 
@@ -94,7 +99,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	log := log.FromContext(ctx)
 	log.Info("reconcile")
 
-	cr := &topov1alpha1.Topology{}
+	cr := &netwv1alpha1.NetworkConfig{}
 	if err := r.Client.Get(ctx, req.NamespacedName, cr); err != nil {
 		// if the resource no longer exists the reconcile loop is done
 		if resource.IgnoreNotFound(err) != nil {
@@ -106,9 +111,10 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	cr = cr.DeepCopy()
 
 	if !cr.GetDeletionTimestamp().IsZero() {
+
 		if err := r.delete(ctx, cr); err != nil {
 			r.handleError(ctx, cr, "canot delete resources", err)
-			return reconcile.Result{Requeue: true}, perrors.Wrap(r.Status().Update(ctx, cr), errUpdateStatus)
+			return reconcile.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		}
 
 		if err := r.finalizer.RemoveFinalizer(ctx, cr); err != nil {
@@ -124,22 +130,21 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	if cr.Spec.ContainerLab == nil {
-		r.handleError(ctx, cr, "no containerlab topology provided", nil)
+	if !r.isTopologyReady(ctx, cr) {
+		// we do not release resources at this stage
+		cr.SetConditions(conditionv1alpha1.Failed("topology not ready"))
+		r.recorder.Eventf(cr, corev1.EventTypeWarning, crName, "topology not ready")
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
 	if err := r.apply(ctx, cr); err != nil {
-		// TODO should be put back -> debugging error
-		/*
-			if errd := r.delete(ctx, cr); errd != nil {
-				err = errors.Join(err, errd)
-				r.handleError(ctx, cr, "cannot delete resources after populate failed", err)
-				return reconcile.Result{Requeue: true}, perrors.Wrap(r.Status().Update(ctx, cr), errUpdateStatus)
-			}
-		*/
-		r.handleError(ctx, cr, "cannot apply topology resources", err)
-		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		if errd := r.delete(ctx, cr); errd != nil {
+			err = errors.Join(err, errd)
+			r.handleError(ctx, cr, "cannot delete resource after apply failed", err)
+			return reconcile.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		}
+		r.handleError(ctx, cr, "cannot apply resource", err)
+		return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
 	cr.SetConditions(conditionv1alpha1.Ready())
@@ -147,7 +152,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 }
 
-func (r *reconciler) handleError(ctx context.Context, cr *topov1alpha1.Topology, msg string, err error) {
+func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.NetworkConfig, msg string, err error) {
 	log := log.FromContext(ctx)
 	if err == nil {
 		cr.SetConditions(conditionv1alpha1.Failed(msg))
@@ -160,39 +165,75 @@ func (r *reconciler) handleError(ctx context.Context, cr *topov1alpha1.Topology,
 	}
 }
 
-func (r *reconciler) apply(ctx context.Context, cr *topov1alpha1.Topology) error {
-	resources := resources.New(r.Client, resources.Config{
+func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.NetworkConfig) error {
+	// First claim the global identifiers
+	// the ASClaim depends on ASIndex
+	res := resources.New(r.Client, resources.Config{
 		Owns: []schema.GroupVersionKind{
-			genidbev1alpha1.SchemeGroupVersion.WithKind(genidbev1alpha1.GENIDIndexKind),
-			infrabev1alpha1.SchemeGroupVersion.WithKind(infrabev1alpha1.NodeKind),
-			infrabev1alpha1.SchemeGroupVersion.WithKind(infrabev1alpha1.LinkKind),
+			genidbev1alpha1.SchemeGroupVersion.WithKind(genidbev1alpha1.GENIDClaimKind),
+			asbev1alpha1.SchemeGroupVersion.WithKind(asbev1alpha1.ASIndexKind),
 		},
 	})
 
-	clab, err := clab.NewClabKuid(cr.GetSiteID(), *cr.Spec.ContainerLab)
-	if err != nil {
-		return fmt.Errorf("parsing clab topo failed: %s", err.Error())
+	res.AddNewResource(ctx, cr, cr.GetASIndex())
+
+	//if err := res.AddNewResource(ctx, cr, cr.GetGENIDClaim()); err != nil {
+	//	return err
+	//}
+
+	if err := res.APIApply(ctx, cr); err != nil {
+		return err
 	}
 
-	for _, o := range clab.GetNodes(ctx) {
-		resources.AddNewResource(ctx, cr, o)
+	res = resources.New(r.Client, resources.Config{
+		Owns: []schema.GroupVersionKind{
+			asbev1alpha1.SchemeGroupVersion.WithKind(asbev1alpha1.ASClaimKind),
+			ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPClaimKind),
+		},
+	})
+	for _, o := range cr.GetIPClaims() {
+		res.AddNewResource(ctx, cr, o)
 	}
-	for _, o := range clab.GetLinks(ctx) {
-		resources.AddNewResource(ctx, cr, o)
+	for _, o := range cr.GetASClaims() {
+		res.AddNewResource(ctx, cr, o)
 	}
-	resources.AddNewResource(ctx, cr, cr.GetGENIDIndex())
-
-	return resources.APIApply(ctx, cr)
+	if err := res.APIApply(ctx, cr); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (r *reconciler) delete(ctx context.Context, cr *topov1alpha1.Topology) error {
-	resources := resources.New(r.Client, resources.Config{
+func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.NetworkConfig) error {
+	// First claim the global identifiers
+	res := resources.New(r.Client, resources.Config{
 		Owns: []schema.GroupVersionKind{
-			genidbev1alpha1.SchemeGroupVersion.WithKind(genidbev1alpha1.GENIDIndexKind),
-			infrabev1alpha1.SchemeGroupVersion.WithKind(infrabev1alpha1.NodeKind),
-			infrabev1alpha1.SchemeGroupVersion.WithKind(infrabev1alpha1.LinkKind),
+			genidbev1alpha1.SchemeGroupVersion.WithKind(genidbev1alpha1.GENIDClaimKind),
+			asbev1alpha1.SchemeGroupVersion.WithKind(asbev1alpha1.ASIndexKind),
+			asbev1alpha1.SchemeGroupVersion.WithKind(asbev1alpha1.ASIndexKind),
+			ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPClaimKind),
 		},
 	})
 
-	return resources.APIDelete(ctx, cr)
+	if err := res.APIDelete(ctx, cr); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *reconciler) isTopologyReady(ctx context.Context, cr *netwv1alpha1.NetworkConfig) bool {
+	log := log.FromContext((ctx))
+	key := types.NamespacedName{
+		Namespace: cr.Namespace,
+		Name:      cr.Spec.Topology,
+	}
+
+	topo := &topov1alpha1.Topology{}
+	if err := r.Client.Get(ctx, key, topo); err != nil {
+		if resource.IgnoreNotFound(err) != nil {
+			log.Error("cannot get topology", "error", err)
+		}
+		return false
+	}
+
+	return topo.GetCondition(conditionv1alpha1.ConditionTypeReady).Status == metav1.ConditionTrue
 }

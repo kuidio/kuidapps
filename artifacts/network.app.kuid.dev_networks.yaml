@@ -66,7 +66,7 @@ spec:
                             description: |-
                               BridgeDomain defines the name of the bridgeDomain belonging to the interface
                               A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
-                              defines interface Identifier
+                              defined interface Identifier
                             type: string
                           endpoint:
                             description: Endpoint defines the name of the endpoint
@@ -195,7 +195,7 @@ spec:
                             description: |-
                               BridgeDomain defines the name of the bridgeDomain belonging to the interface
                               A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
-                              defines interface Identifier
+                              defined interface Identifier
                             type: string
                           endpoint:
                             description: Endpoint defines the name of the endpoint

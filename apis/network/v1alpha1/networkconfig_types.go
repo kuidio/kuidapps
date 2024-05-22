@@ -24,6 +24,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type Addressing string
+
+const (
+	Addressing_DualStack Addressing = "dualstack"
+	Addressing_IPv4Only  Addressing = "ipv4only"
+	Addressing_IPv6Only  Addressing = "ipv6only"
+)
+
 // NetworkConfigSpec defines the desired state of NetworkConfig
 type NetworkConfigSpec struct {
 	Topology string `json:"topology" yaml:"topology" protobuf:"bytes,1,opt,name=topology"`
@@ -32,7 +40,8 @@ type NetworkConfigSpec struct {
 	Prefixes []ipambev1alpha1.Prefix `json:"prefixes,omitempty" yaml:"prefixes,omitempty" protobuf:"bytes,2,rep,name=prefixes"`
 	// Addressing defines the addressing used in this network
 	// +kubebuilder:validation:Enum=dualstack;ipv4only;ipv6only
-	Addressing *string `json:"addressing,omitempty" yaml:"addressing,omitempty" protobuf:"bytes,3,opt,name=addressing"`
+	// +kubebuilder:default=dualstack
+	Addressing Addressing `json:"addressing,omitempty" yaml:"addressing,omitempty" protobuf:"bytes,3,opt,name=addressing"`
 	// Protocols define the network wide protocol parameters
 	Protocols *NetworkConfigProtocols `json:"protocols,omitempty" yaml:"protocols,,omitempty" protobuf:"bytes,4,opt,name=protocols"`
 	// VLANTagging defines if VLAN tagging should be used or not

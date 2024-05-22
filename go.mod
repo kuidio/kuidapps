@@ -3,8 +3,9 @@ module github.com/kuidio/kuidapps
 go 1.22.2
 
 require (
+	github.com/henderiw/iputil v0.0.0-20231218081610-37f78ad9c81c
 	github.com/henderiw/logger v0.0.0-20230911123436-8655829b1abe
-	github.com/kuidio/kuid v0.0.2-0.20240520064807-c083e4d184ae
+	github.com/kuidio/kuid v0.0.2-0.20240521072019-8ba1ea69743c
 	github.com/pkg/errors v0.9.1
 	github.com/srl-labs/clabernetes v0.0.30
 	go.uber.org/zap v1.27.0
@@ -47,7 +48,6 @@ require (
 	github.com/henderiw/apiserver-builder v0.0.2-0.20240414132730-35630f41575d // indirect
 	github.com/henderiw/apiserver-store v0.0.0-20240419050621-a69e6046534c // indirect
 	github.com/henderiw/idxtable v0.0.0-20240507134400-54d7d0b2a708 // indirect
-	github.com/henderiw/iputil v0.0.0-20231218081610-37f78ad9c81c // indirect
 	github.com/henderiw/store v0.0.0-20240513051819-0202d08d7b42 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

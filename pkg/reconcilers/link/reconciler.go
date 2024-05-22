@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/henderiw/logger/log"
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
@@ -122,7 +123,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		if errd, _ := r.delete(ctx, cr); errd != nil {
 			err = errors.Join(err, errd)
 			r.handleError(ctx, cr, "cannot delete resource after apply failed", err)
-			return reconcile.Result{Requeue: requeue}, perrors.Wrap(r.Update(ctx, cr), errUpdateStatus)
+			return reconcile.Result{Requeue: requeue, RequeueAfter: 1 * time.Second}, perrors.Wrap(r.Update(ctx, cr), errUpdateStatus)
 		}
 		r.handleError(ctx, cr, "cannot apply resource", err)
 		return ctrl.Result{Requeue: requeue}, perrors.Wrap(r.Client.Update(ctx, cr), errUpdateStatus)
@@ -182,7 +183,7 @@ func (r *reconciler) claimEndpoint(ctx context.Context, cr *infrabev1alpha1.Link
 		if resource.IgnoreNotFound(err) != nil {
 			return err, true
 		}
-		return err, false
+		return err, true
 	}
 
 	owned, ref := ep.IsClaimed(cr)

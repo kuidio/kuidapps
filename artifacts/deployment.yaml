@@ -52,3 +52,9 @@ spec:
           value: "true"
         - name: ENABLE_LINK
           value: "true"
+        - name: ENABLE_NETWORKCONFIG
+          value: "true"
+        - name: ENABLE_NETWORK
+          value: "true"
+        - name: ENABLE_NETWORKDEVICE
+          value: "true"

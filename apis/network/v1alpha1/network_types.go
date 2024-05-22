@@ -62,7 +62,7 @@ type NetworkRoutingTable struct {
 type NetworkInterface struct {
 	// BridgeDomain defines the name of the bridgeDomain belonging to the interface
 	// A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
-	// defines interface Identifier
+	// defined interface Identifier
 	BridgeDomain *string `json:"bridgeDomain,omitempty" yaml:"bridgeDomain,omitempty" protobuf:"bytes,1,opt,name=bridgeDomain"`
 	// EndpointID defines the name of the interface
 	infrabev1alpha1.EndpointID `json:",inline" yaml:",inline" protobuf:"bytes,2,opt,name=endpointID"`
