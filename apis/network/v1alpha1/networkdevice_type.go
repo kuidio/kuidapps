@@ -43,6 +43,7 @@ type NetworkDeviceInterface struct {
 	VLANTagging   bool                                 `json:"vlanTagging" yaml:"vlanTagging" protobuf:"bytes,4,opt,name=vlanTagging"`
 	Speed         string                               `json:"speed" yaml:"speed" protobuf:"bytes,5,opt,name=speed"`
 	LAGMember     bool                                 `json:"lagMember" yaml:"lagMember" protobuf:"bytes,6,opt,name=lagMember"`
+
 }
 
 type NetworkDeviceInterfaceSubInterface struct {
@@ -50,16 +51,16 @@ type NetworkDeviceInterfaceSubInterface struct {
 	// routed or bridged
 	SubInterfaceType string                                    `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
 	VLAN             *uint32                                   `json:"vlan,omitempty" yaml:"vlan,omitempty" protobuf:"bytes,3,opt,name=vlan"`
-	IPv4             []*NetworkDeviceInterfaceSubInterfaceIPv4 `json:"ipv4,omitempty" yaml:"ipv4,omitempty" protobuf:"bytes,4,rep,name=ipv4"`
-	IPv6             []*NetworkDeviceInterfaceSubInterfaceIPv6 `json:"ipv6,omitempty" yaml:"ipv6,omitempty" protobuf:"bytes,5,rep,name=ipv6"`
+	IPv4             *NetworkDeviceInterfaceSubInterfaceIPv4 `json:"ipv4,omitempty" yaml:"ipv4,omitempty" protobuf:"bytes,4,rep,name=ipv4"`
+	IPv6             *NetworkDeviceInterfaceSubInterfaceIPv6 `json:"ipv6,omitempty" yaml:"ipv6,omitempty" protobuf:"bytes,5,rep,name=ipv6"`
 }
 
 type NetworkDeviceInterfaceSubInterfaceIPv4 struct {
-	Prefix string `json:"prefix" yaml:"prefix" protobuf:"bytes,1,opt,name=prefix"`
+	Addresses []string `json:"addresses" yaml:"addresses" protobuf:"bytes,1,opt,name=addresses"`
 }
 
 type NetworkDeviceInterfaceSubInterfaceIPv6 struct {
-	Prefix string `json:"prefix" yaml:"prefix" protobuf:"bytes,1,opt,name=prefix"`
+	Addresses []string `json:"addresses" yaml:"addresses" protobuf:"bytes,1,opt,name=addresses"`
 }
 
 type NetworkDeviceNetworkInstance struct {
