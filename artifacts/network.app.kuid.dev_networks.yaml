@@ -103,8 +103,9 @@ spec:
                               to
                             type: string
                           selector:
-                            description: Selector defines the selector criterias for
-                              the interface selection
+                            description: |-
+                              Selector defines the selector criterias for the interface selection
+                              Used for dynamic interface selection
                             properties:
                               matchExpressions:
                                 description: matchExpressions is a list of label selector
@@ -157,8 +158,9 @@ spec:
                             description: VLANID defines the VLAN ID on the interface
                             type: integer
                           vlanTagging:
-                            description: VLANTagging defines if the interface is vlanTagged
-                              or not
+                            description: |-
+                              VLANTagging defines if the interface is vlanTagged or not
+                              Used for dynamic interface selection
                             type: boolean
                         required:
                         - endpoint
@@ -232,8 +234,9 @@ spec:
                               to
                             type: string
                           selector:
-                            description: Selector defines the selector criterias for
-                              the interface selection
+                            description: |-
+                              Selector defines the selector criterias for the interface selection
+                              Used for dynamic interface selection
                             properties:
                               matchExpressions:
                                 description: matchExpressions is a list of label selector
@@ -286,8 +289,9 @@ spec:
                             description: VLANID defines the VLAN ID on the interface
                             type: integer
                           vlanTagging:
-                            description: VLANTagging defines if the interface is vlanTagged
-                              or not
+                            description: |-
+                              VLANTagging defines if the interface is vlanTagged or not
+                              Used for dynamic interface selection
                             type: boolean
                         required:
                         - endpoint

@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	github.com/henderiw/iputil v0.0.0-20231218081610-37f78ad9c81c
 	github.com/henderiw/logger v0.0.0-20230911123436-8655829b1abe
-	github.com/kuidio/kuid v0.0.2-0.20240523105755-4b5ffa81735a
+	github.com/kuidio/kuid v0.0.2-0.20240523134935-4f56db31978b
 	github.com/pkg/errors v0.9.1
 	github.com/srl-labs/clabernetes v0.0.30
 	go.uber.org/zap v1.27.0

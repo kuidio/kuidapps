@@ -357,14 +357,46 @@ spec:
                           - as
                           - routerID
                           type: object
-                        evpn:
+                        bgpEVPN:
+                          properties:
+                            ecmp:
+                              format: int32
+                              type: integer
+                            evi:
+                              format: int32
+                              type: integer
+                            vxlanInterface:
+                              type: string
+                          required:
+                          - ecmp
+                          - evi
+                          - vxlanInterface
+                          type: object
+                        bgpVPN:
+                          properties:
+                            exportRouteTarget:
+                              type: string
+                            importRouteTarget:
+                              type: string
+                          required:
+                          - exportRouteTarget
+                          - importRouteTarget
                           type: object
                       type: object
                     type:
                       description: mac-vrf, ip-vrf
                       type: string
                     vxlanInterface:
-                      type: string
+                      properties:
+                        id:
+                          format: int32
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - id
+                      - name
+                      type: object
                   required:
                   - name
                   - type
@@ -394,13 +426,8 @@ spec:
               tunnelInterfaces:
                 description: TunnelInterfaces defines the unnelInterfaces of the device config
                 items:
-                  description: TODO LAG, etc
                   properties:
-                    lagMember:
-                      type: boolean
                     name:
-                      type: string
-                    speed:
                       type: string
                     subInterfaces:
                       items:
@@ -408,45 +435,16 @@ spec:
                           id:
                             format: int32
                             type: integer
-                          ipv4:
-                            properties:
-                              addresses:
-                                items:
-                                  type: string
-                                type: array
-                            required:
-                            - addresses
-                            type: object
-                          ipv6:
-                            properties:
-                              addresses:
-                                items:
-                                  type: string
-                                type: array
-                            required:
-                            - addresses
-                            type: object
-                          peerName:
-                            type: string
                           type:
                             description: routed or bridged
                             type: string
-                          vlan:
-                            format: int32
-                            type: integer
                         required:
                         - id
-                        - peerName
                         - type
                         type: object
                       type: array
-                    vlanTagging:
-                      type: boolean
                   required:
-                  - lagMember
                   - name
-                  - speed
-                  - vlanTagging
                   type: object
                 type: array
             required:
@@ -623,7 +621,9 @@ spec:
                             description: Region defines the region this sites belongs to
                             type: string
                           selector:
-                            description: Selector defines the selector criterias for the interface selection
+                            description: |-
+                              Selector defines the selector criterias for the interface selection
+                              Used for dynamic interface selection
                             properties:
                               matchExpressions:
                                 description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
@@ -673,7 +673,9 @@ spec:
                             description: VLANID defines the VLAN ID on the interface
                             type: integer
                           vlanTagging:
-                            description: VLANTagging defines if the interface is vlanTagged or not
+                            description: |-
+                              VLANTagging defines if the interface is vlanTagged or not
+                              Used for dynamic interface selection
                             type: boolean
                         required:
                         - endpoint
@@ -742,7 +744,9 @@ spec:
                             description: Region defines the region this sites belongs to
                             type: string
                           selector:
-                            description: Selector defines the selector criterias for the interface selection
+                            description: |-
+                              Selector defines the selector criterias for the interface selection
+                              Used for dynamic interface selection
                             properties:
                               matchExpressions:
                                 description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
@@ -792,7 +796,9 @@ spec:
                             description: VLANID defines the VLAN ID on the interface
                             type: integer
                           vlanTagging:
-                            description: VLANTagging defines if the interface is vlanTagged or not
+                            description: |-
+                              VLANTagging defines if the interface is vlanTagged or not
+                              Used for dynamic interface selection
                             type: boolean
                         required:
                         - endpoint

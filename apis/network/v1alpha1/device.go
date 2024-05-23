@@ -81,6 +81,32 @@ func (r *Device) GetOrCreateInterface(name string) *NetworkDeviceInterface {
 	return newItfce
 }
 
+func (r *Device) AddOrUpdateTunnelInterface(new *NetworkDeviceTunnelInterface) {
+	if r.nd.Spec.TunnelInterfaces == nil {
+		r.nd.Spec.TunnelInterfaces = []*NetworkDeviceTunnelInterface{}
+	}
+	if new == nil {
+		return
+	}
+	if new.Name == "" {
+		return
+	}
+	_ = r.GetOrCreateTunnelInterface(new.Name)
+}
+
+func (r *Device) GetOrCreateTunnelInterface(name string) *NetworkDeviceTunnelInterface {
+	for _, tunn := range r.nd.Spec.TunnelInterfaces {
+		if tunn.Name == name {
+			return tunn
+		}
+	}
+	newTun := &NetworkDeviceTunnelInterface{
+		Name: name,
+	}
+	r.nd.Spec.TunnelInterfaces = append(r.nd.Spec.TunnelInterfaces, newTun)
+	return newTun
+}
+
 func (r *NetworkDeviceInterface) AddOrUpdateSubInterface(new *NetworkDeviceInterfaceSubInterface) {
 	if r.SubInterfaces == nil {
 		r.SubInterfaces = []*NetworkDeviceInterfaceSubInterface{}
@@ -88,7 +114,7 @@ func (r *NetworkDeviceInterface) AddOrUpdateSubInterface(new *NetworkDeviceInter
 	x := r.GetOrCreateSubInterface(new.ID)
 	x.PeerName = new.PeerName
 	x.VLAN = new.VLAN
-	x.SubInterfaceType = new.SubInterfaceType
+	x.Type = new.Type
 }
 
 func (r *NetworkDeviceInterface) GetOrCreateSubInterface(id uint32) *NetworkDeviceInterfaceSubInterface {
@@ -98,6 +124,27 @@ func (r *NetworkDeviceInterface) GetOrCreateSubInterface(id uint32) *NetworkDevi
 		}
 	}
 	newSI := &NetworkDeviceInterfaceSubInterface{
+		ID: id,
+	}
+	r.SubInterfaces = append(r.SubInterfaces, newSI)
+	return newSI
+}
+
+func (r *NetworkDeviceTunnelInterface) AddOrUpdateSubInterface(new *NetworkDeviceTunnelInterfaceSubInterface) {
+	if r.SubInterfaces == nil {
+		r.SubInterfaces = []*NetworkDeviceTunnelInterfaceSubInterface{}
+	}
+	x := r.GetOrCreateSubInterface(new.ID)
+	x.Type = new.Type
+}
+
+func (r *NetworkDeviceTunnelInterface) GetOrCreateSubInterface(id uint32) *NetworkDeviceTunnelInterfaceSubInterface {
+	for _, si := range r.SubInterfaces {
+		if si.ID == id {
+			return si
+		}
+	}
+	newSI := &NetworkDeviceTunnelInterfaceSubInterface{
 		ID: id,
 	}
 	r.SubInterfaces = append(r.SubInterfaces, newSI)
@@ -118,12 +165,12 @@ func (r *NetworkDeviceInterfaceSubInterface) GetOrCreateIPv6() *NetworkDeviceInt
 	return r.IPv6
 }
 
-func (r *Device) AddNetworkInstance(name string, niType NetworkInstanceType, interfaces []*NetworkDeviceNetworkInstanceInterface, vxlanItfce *string) {
+func (r *Device) AddNetworkInstance(name string, niType NetworkInstanceType, interfaces []*NetworkDeviceNetworkInstanceInterface, vxlanItfce *NetworkDeviceNetworkInstanceInterface) {
 	if r.nd.Spec.NetworkInstances == nil {
 		r.nd.Spec.NetworkInstances = []*NetworkDeviceNetworkInstance{}
 	}
 	ni := r.GetOrCreateNetworkInstance(name)
-	ni.NetworkInstanceType = niType
+	ni.Type = niType
 	ni.VXLANInterface = vxlanItfce
 	ni.Interfaces = interfaces // This might need to be optimized going further
 }
@@ -153,6 +200,20 @@ func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateBGP() *NetworkDeviceN
 		r.BGP = &NetworkDeviceNetworkInstanceProtocolBGP{}
 	}
 	return r.BGP
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateBGPEVPN() *NetworkDeviceNetworkInstanceProtocolBGPEVPN {
+	if r.BGPEVPN == nil {
+		r.BGPEVPN = &NetworkDeviceNetworkInstanceProtocolBGPEVPN{}
+	}
+	return r.BGPEVPN
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateBGPVPN() *NetworkDeviceNetworkInstanceProtocolBGPVPN {
+	if r.BGPVPN == nil {
+		r.BGPVPN = &NetworkDeviceNetworkInstanceProtocolBGPVPN{}
+	}
+	return r.BGPVPN
 }
 
 func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdatePeerGroup(new *NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {

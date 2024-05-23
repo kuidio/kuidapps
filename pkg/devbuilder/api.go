@@ -92,3 +92,12 @@ func (r *DeviceBuilder) getASClaim(ctx context.Context, nsn types.NamespacedName
 	}
 	return *claim.Status.ID, nil
 }
+
+func (r *DeviceBuilder) getEndpoint(ctx context.Context, nsn types.NamespacedName) (*infrabev1alpha1.Endpoint, error) {
+	ep := &infrabev1alpha1.Endpoint{}
+	if err := r.Client.Get(ctx, nsn, ep); err != nil {
+		return nil, err
+	}
+	return ep, nil
+	
+}

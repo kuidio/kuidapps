@@ -71,6 +71,16 @@ func (r *Devices) AddInterface(nodeName string, x *netwv1alpha1.NetworkDeviceInt
 	d.AddOrUpdateInterface(x)
 }
 
+func (r *Devices) AddTunnelInterface(nodeName string, x *netwv1alpha1.NetworkDeviceTunnelInterface) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.AddOrUpdateTunnelInterface(x)
+}
+
 func (r *Devices) AddSubInterface(nodeName, ifName string, x *netwv1alpha1.NetworkDeviceInterfaceSubInterface, ipv4, ipv6 []string) {
 	r.m.Lock()
 	defer r.m.Unlock()
@@ -89,6 +99,19 @@ func (r *Devices) AddSubInterface(nodeName, ifName string, x *netwv1alpha1.Netwo
 	}
 }
 
+func (r *Devices) AddTunnelSubInterface(nodeName, ifName string, x *netwv1alpha1.NetworkDeviceTunnelInterfaceSubInterface) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	itfce := d.GetOrCreateTunnelInterface(ifName)
+	itfce.AddOrUpdateSubInterface(x)
+	si := itfce.GetOrCreateSubInterface(x.ID)
+	si.Type = x.Type
+}
+
 func (r *Devices) AddNetworkInstance(nodeName string, newNI *netwv1alpha1.NetworkDeviceNetworkInstance) {
 	r.m.Lock()
 	defer r.m.Unlock()
@@ -98,7 +121,7 @@ func (r *Devices) AddNetworkInstance(nodeName string, newNI *netwv1alpha1.Networ
 	d := r.devices[nodeName]
 
 	ni := d.GetOrCreateNetworkInstance(newNI.Name)
-	ni.NetworkInstanceType = newNI.NetworkInstanceType
+	ni.Type = newNI.Type
 }
 
 func (r *Devices) AddNetworkInstanceSubInterface(nodeName, niName string, niItfce *netwv1alpha1.NetworkDeviceNetworkInstanceInterface) {
@@ -109,9 +132,28 @@ func (r *Devices) AddNetworkInstanceSubInterface(nodeName, niName string, niItfc
 	}
 	d := r.devices[nodeName]
 	if len(d.GetOrCreateNetworkInstance(niName).Interfaces) == 0 {
-		d.GetOrCreateNetworkInstance(niName).Interfaces =  []*netwv1alpha1.NetworkDeviceNetworkInstanceInterface{}
+		d.GetOrCreateNetworkInstance(niName).Interfaces = []*netwv1alpha1.NetworkDeviceNetworkInstanceInterface{}
+	}
+	for i, itfce := range d.GetOrCreateNetworkInstance(niName).Interfaces {
+		if itfce.Name == niItfce.Name && itfce.ID == niItfce.ID {
+			d.GetOrCreateNetworkInstance(niName).Interfaces[i] = niItfce
+			return
+		}
 	}
 	d.GetOrCreateNetworkInstance(niName).Interfaces = append(d.GetOrCreateNetworkInstance(niName).Interfaces, niItfce)
+}
+
+func (r *Devices) AddNetworkInstanceSubInterfaceVXLAN(nodeName, niName string, vxlanItfce *netwv1alpha1.NetworkDeviceNetworkInstanceInterface) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	if len(d.GetOrCreateNetworkInstance(niName).Interfaces) == 0 {
+		d.GetOrCreateNetworkInstance(niName).Interfaces = []*netwv1alpha1.NetworkDeviceNetworkInstanceInterface{}
+	}
+	d.GetOrCreateNetworkInstance(niName).VXLANInterface = vxlanItfce
 }
 
 func (r *Devices) AddBGPNeighbor(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor) {
@@ -164,5 +206,30 @@ func (r *Devices) AddRoutingPolicy(nodeName, policyName string, ipv4, ipv6 []str
 	rp := d.GetOrCreateRoutingPolicy(policyName)
 	rp.IPv4Prefixes = ipv4
 	rp.IPv6Prefixes = ipv6
-	
+
+}
+
+func (r *Devices) AddBGPVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	bgpvpn := d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGPVPN()
+	bgpvpn.ExportRouteTarget = x.ExportRouteTarget
+	bgpvpn.ImportRouteTarget = x.ImportRouteTarget
+}
+
+func (r *Devices) AddBGPEVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	bgpevpn := d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGPEVPN()
+	bgpevpn.ECMP = x.ECMP
+	bgpevpn.EVI = x.EVI
+	bgpevpn.VXLANInterface = x.VXLANInterface
 }

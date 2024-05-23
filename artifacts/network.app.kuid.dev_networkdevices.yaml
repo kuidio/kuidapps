@@ -176,14 +176,46 @@ spec:
                           - as
                           - routerID
                           type: object
-                        evpn:
+                        bgpEVPN:
+                          properties:
+                            ecmp:
+                              format: int32
+                              type: integer
+                            evi:
+                              format: int32
+                              type: integer
+                            vxlanInterface:
+                              type: string
+                          required:
+                          - ecmp
+                          - evi
+                          - vxlanInterface
+                          type: object
+                        bgpVPN:
+                          properties:
+                            exportRouteTarget:
+                              type: string
+                            importRouteTarget:
+                              type: string
+                          required:
+                          - exportRouteTarget
+                          - importRouteTarget
                           type: object
                       type: object
                     type:
                       description: mac-vrf, ip-vrf
                       type: string
                     vxlanInterface:
-                      type: string
+                      properties:
+                        id:
+                          format: int32
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - id
+                      - name
+                      type: object
                   required:
                   - name
                   - type
@@ -215,13 +247,8 @@ spec:
                 description: TunnelInterfaces defines the unnelInterfaces of the device
                   config
                 items:
-                  description: TODO LAG, etc
                   properties:
-                    lagMember:
-                      type: boolean
                     name:
-                      type: string
-                    speed:
                       type: string
                     subInterfaces:
                       items:
@@ -229,45 +256,16 @@ spec:
                           id:
                             format: int32
                             type: integer
-                          ipv4:
-                            properties:
-                              addresses:
-                                items:
-                                  type: string
-                                type: array
-                            required:
-                            - addresses
-                            type: object
-                          ipv6:
-                            properties:
-                              addresses:
-                                items:
-                                  type: string
-                                type: array
-                            required:
-                            - addresses
-                            type: object
-                          peerName:
-                            type: string
                           type:
                             description: routed or bridged
                             type: string
-                          vlan:
-                            format: int32
-                            type: integer
                         required:
                         - id
-                        - peerName
                         - type
                         type: object
                       type: array
-                    vlanTagging:
-                      type: boolean
                   required:
-                  - lagMember
                   - name
-                  - speed
-                  - vlanTagging
                   type: object
                 type: array
             required:

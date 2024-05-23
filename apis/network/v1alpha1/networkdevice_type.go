@@ -36,7 +36,7 @@ type NetworkDeviceSpec struct {
 	NetworkInstances []*NetworkDeviceNetworkInstance `json:"networkInstances,omitempty" yaml:"networkInstances,omitempty" protobuf:"bytes,4,rep,name=networkInstances"`
 	// TunnelInterfaces defines the unnelInterfaces of the device config
 	// +optional
-	TunnelInterfaces []*NetworkDeviceInterface `json:"tunnelInterfaces,omitempty" yaml:"tunnelInterfaces,omitempty" protobuf:"bytes,5,rep,name=tunnelInterfaces"`
+	TunnelInterfaces []*NetworkDeviceTunnelInterface `json:"tunnelInterfaces,omitempty" yaml:"tunnelInterfaces,omitempty" protobuf:"bytes,5,rep,name=tunnelInterfaces"`
 	// RoutingPolicies defines the routingPolicies of the device config
 	// +optional
 	RoutingPolicies []*NetworkDeviceRoutingPolicy `json:"routingPolicies,omitempty" yaml:"routingPolicies,omitempty" protobuf:"bytes,6,opt,name=routingPolicies"`
@@ -57,14 +57,25 @@ type NetworkDeviceInterface struct {
 	LAGMember     bool                                  `json:"lagMember" yaml:"lagMember" protobuf:"bytes,6,opt,name=lagMember"`
 }
 
+type NetworkDeviceTunnelInterface struct {
+	Name          string                                      `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
+	SubInterfaces []*NetworkDeviceTunnelInterfaceSubInterface `json:"subInterfaces,omitempty" yaml:"subInterfaces,omitempty" protobuf:"bytes,2,rep,name=subInterfaces"`
+}
+
 type NetworkDeviceInterfaceSubInterface struct {
 	PeerName string `json:"peerName" yaml:"peerName" protobuf:"bytes,1,opt,name=peerName"`
 	ID       uint32 `json:"id" yaml:"id" protobuf:"bytes,2,opt,name=id"`
 	// routed or bridged
-	SubInterfaceType SubInterfaceType                        `json:"type" yaml:"type" protobuf:"bytes,3,opt,name=type"`
-	VLAN             *uint32                                 `json:"vlan,omitempty" yaml:"vlan,omitempty" protobuf:"bytes,4,opt,name=vlan"`
-	IPv4             *NetworkDeviceInterfaceSubInterfaceIPv4 `json:"ipv4,omitempty" yaml:"ipv4,omitempty" protobuf:"bytes,5,rep,name=ipv4"`
-	IPv6             *NetworkDeviceInterfaceSubInterfaceIPv6 `json:"ipv6,omitempty" yaml:"ipv6,omitempty" protobuf:"bytes,6,rep,name=ipv6"`
+	Type SubInterfaceType                        `json:"type" yaml:"type" protobuf:"bytes,3,opt,name=type"`
+	VLAN *uint32                                 `json:"vlan,omitempty" yaml:"vlan,omitempty" protobuf:"bytes,4,opt,name=vlan"`
+	IPv4 *NetworkDeviceInterfaceSubInterfaceIPv4 `json:"ipv4,omitempty" yaml:"ipv4,omitempty" protobuf:"bytes,5,rep,name=ipv4"`
+	IPv6 *NetworkDeviceInterfaceSubInterfaceIPv6 `json:"ipv6,omitempty" yaml:"ipv6,omitempty" protobuf:"bytes,6,rep,name=ipv6"`
+}
+
+type NetworkDeviceTunnelInterfaceSubInterface struct {
+	ID uint32 `json:"id" yaml:"id" protobuf:"bytes,1,opt,name=id"`
+	// routed or bridged
+	Type SubInterfaceType `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
 }
 
 type NetworkDeviceInterfaceSubInterfaceIPv4 struct {
@@ -78,10 +89,10 @@ type NetworkDeviceInterfaceSubInterfaceIPv6 struct {
 type NetworkDeviceNetworkInstance struct {
 	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
 	// mac-vrf, ip-vrf
-	NetworkInstanceType NetworkInstanceType                      `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
-	Protocols           *NetworkDeviceNetworkInstanceProtocols   `json:"protocols,omitempty" yaml:"protocols,omitempty" protobuf:"bytes,3,opt,name=protocols"`
-	Interfaces          []*NetworkDeviceNetworkInstanceInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,4,opt,name=interfaces"`
-	VXLANInterface      *string                                  `json:"vxlanInterface,omitempty" yaml:"vxlanInterface,omitempty" protobuf:"bytes,5,opt,name=vxlanInterface"`
+	Type           NetworkInstanceType                      `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
+	Protocols      *NetworkDeviceNetworkInstanceProtocols   `json:"protocols,omitempty" yaml:"protocols,omitempty" protobuf:"bytes,3,opt,name=protocols"`
+	Interfaces     []*NetworkDeviceNetworkInstanceInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,4,opt,name=interfaces"`
+	VXLANInterface *NetworkDeviceNetworkInstanceInterface   `json:"vxlanInterface,omitempty" yaml:"vxlanInterface,omitempty" protobuf:"bytes,5,opt,name=vxlanInterface"`
 }
 
 type NetworkDeviceNetworkInstanceInterface struct {
@@ -90,8 +101,9 @@ type NetworkDeviceNetworkInstanceInterface struct {
 }
 
 type NetworkDeviceNetworkInstanceProtocols struct {
-	BGP  *NetworkDeviceNetworkInstanceProtocolBGP  `json:"bgp,omitempty" yaml:"bgp,omitempty" protobuf:"bytes,1,opt,name=bgp"`
-	EVPN *NetworkDeviceNetworkInstanceProtocolEVPN `json:"evpn,omitempty" yaml:"evpn,omitempty" protobuf:"bytes,2,opt,name=evpn"`
+	BGP     *NetworkDeviceNetworkInstanceProtocolBGP     `json:"bgp,omitempty" yaml:"bgp,omitempty" protobuf:"bytes,1,opt,name=bgp"`
+	BGPEVPN *NetworkDeviceNetworkInstanceProtocolBGPEVPN `json:"bgpEVPN,omitempty" yaml:"bgpEVPN,omitempty" protobuf:"bytes,2,opt,name=bgpEVPN"`
+	BGPVPN  *NetworkDeviceNetworkInstanceProtocolBGPVPN  `json:"bgpVPN,omitempty" yaml:"bgpVPN,omitempty" protobuf:"bytes,2,opt,name=bgpVPN"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGP struct {
@@ -101,7 +113,15 @@ type NetworkDeviceNetworkInstanceProtocolBGP struct {
 	Neighbors  []*NetworkDeviceNetworkInstanceProtocolBGPNeighbor  `json:"neighbors,omitempty" yaml:"neighbors,omitempty" protobuf:"bytes,4,opt,name=neighbors"`
 }
 
-type NetworkDeviceNetworkInstanceProtocolEVPN struct {
+type NetworkDeviceNetworkInstanceProtocolBGPEVPN struct {
+	EVI            uint32 `json:"evi" yaml:"evi" protobuf:"bytes,1,opt,name=evi"`
+	ECMP           uint32 `json:"ecmp" yaml:"ecmp" protobuf:"bytes,2,opt,name=ecmp"`
+	VXLANInterface string `json:"vxlanInterface" yaml:"vxlanInterface" protobuf:"bytes,2,opt,name=vxlanInterface"`
+}
+
+type NetworkDeviceNetworkInstanceProtocolBGPVPN struct {
+	ImportRouteTarget string `json:"importRouteTarget" yaml:"importRouteTarget" protobuf:"bytes,1,opt,name=importRouteTarget"`
+	ExportRouteTarget string `json:"exportRouteTarget" yaml:"exportRouteTarget" protobuf:"bytes,2,opt,name=exportRouteTarget"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPPeerGroup struct {

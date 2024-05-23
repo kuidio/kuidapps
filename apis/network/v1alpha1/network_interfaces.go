@@ -71,3 +71,11 @@ func (r *Network) IsDefaultNetwork() bool {
 	networkName := r.GetNetworkName()
 	return networkName == DefaultNetwork
 }
+
+
+func (r *NetworkInterface) IsDynamic() bool {
+	if r.Selector != nil {
+		return true
+	}
+	return false
+}

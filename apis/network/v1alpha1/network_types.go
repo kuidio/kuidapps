@@ -30,12 +30,12 @@ type NetworkSpec struct {
 	// BridgeDomains define a set of logical ports that share the same
 	// flooding or broadcast characteristics. Like a virtual LAN (VLAN),
 	// a bridge domain spans one or more ports of multiple devices.
-	BridgeDomains []NetworkBridgeDomain `json:"bridgeDomains,omitempty" yaml:"bridgeDomains,omitempty" protobuf:"bytes,2,rep,name=bridgeDomains"`
+	BridgeDomains []*NetworkBridgeDomain `json:"bridgeDomains,omitempty" yaml:"bridgeDomains,omitempty" protobuf:"bytes,2,rep,name=bridgeDomains"`
 	// RoutingTables defines a set of routes belonging to a given routing instance
 	// Multiple routing tables are also called virtual routing instances. Each virtual
 	// routing instance can hold overlapping IP information
 	// A routing table supports both ipv4 and ipv6
-	RoutingTables []NetworkRoutingTable `json:"routingTables,omitempty" yaml:"routingTables,omitempty" protobuf:"bytes,3,rep,name=routingTables"`
+	RoutingTables []*NetworkRoutingTable `json:"routingTables,omitempty" yaml:"routingTables,omitempty" protobuf:"bytes,3,rep,name=routingTables"`
 }
 
 type NetworkBridgeDomain struct {
@@ -44,7 +44,7 @@ type NetworkBridgeDomain struct {
 	// NetworkID defines the id of the bridge domain
 	NetworkID int `json:"networkID,omitempty" yaml:"networkID,omitempty" protobuf:"bytes,2,opt,name=networkID"`
 	// Interfaces defines the interfaces belonging to the bridge domain
-	Interfaces []NetworkInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty"`
+	Interfaces []*NetworkInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty"`
 }
 
 type NetworkRoutingTable struct {
@@ -53,7 +53,7 @@ type NetworkRoutingTable struct {
 	// NetworkID defines the id of the bridge domain
 	NetworkID int `json:"networkID,omitempty" yaml:"networkID,omitempty" protobuf:"bytes,2,opt,name=networkID"`
 	// Interfaces defines the interfaces belonging to the routing table
-	Interfaces []NetworkInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty"`
+	Interfaces []*NetworkInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty"`
 }
 
 // Network defines the interface parameters
@@ -71,8 +71,10 @@ type NetworkInterface struct {
 	// VLANID defines the VLAN ID on the interface
 	VLANID *uint16 `json:"vlanID,omitempty" yaml:"vlanID,omitempty" protobuf:"bytes,2,opt,name=vlanID"`
 	// Selector defines the selector criterias for the interface selection
+	// Used for dynamic interface selection
 	Selector *metav1.LabelSelector `json:"selector,omitempty" yaml:"selector,omitempty"`
 	// VLANTagging defines if the interface is vlanTagged or not
+	// Used for dynamic interface selection
 	VLANTagging bool `json:"vlanTagging,omitempty" yaml:"vlanTagging,,omitempty" protobuf:"bytes,5,opt,name=vlanTagging"`
 	// Protocols define the protocols parameters for this interface
 	Protocols *NetworkInterfaceProtocols `json:"protocols,omitempty" yaml:"protocols,,omitempty" protobuf:"bytes,4,opt,name=protocols"`
