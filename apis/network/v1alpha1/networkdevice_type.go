@@ -61,7 +61,7 @@ type NetworkDeviceInterfaceSubInterface struct {
 	PeerName string `json:"peerName" yaml:"peerName" protobuf:"bytes,1,opt,name=peerName"`
 	ID       uint32 `json:"id" yaml:"id" protobuf:"bytes,2,opt,name=id"`
 	// routed or bridged
-	SubInterfaceType SubInterfaceType                                  `json:"type" yaml:"type" protobuf:"bytes,3,opt,name=type"`
+	SubInterfaceType SubInterfaceType                        `json:"type" yaml:"type" protobuf:"bytes,3,opt,name=type"`
 	VLAN             *uint32                                 `json:"vlan,omitempty" yaml:"vlan,omitempty" protobuf:"bytes,4,opt,name=vlan"`
 	IPv4             *NetworkDeviceInterfaceSubInterfaceIPv4 `json:"ipv4,omitempty" yaml:"ipv4,omitempty" protobuf:"bytes,5,rep,name=ipv4"`
 	IPv6             *NetworkDeviceInterfaceSubInterfaceIPv6 `json:"ipv6,omitempty" yaml:"ipv6,omitempty" protobuf:"bytes,6,rep,name=ipv6"`
@@ -78,10 +78,15 @@ type NetworkDeviceInterfaceSubInterfaceIPv6 struct {
 type NetworkDeviceNetworkInstance struct {
 	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
 	// mac-vrf, ip-vrf
-	NetworkInstanceType NetworkInstanceType                    `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
-	Protocols           *NetworkDeviceNetworkInstanceProtocols `json:"protocols,omitempty" yaml:"protocols,omitempty" protobuf:"bytes,3,opt,name=protocols"`
-	Interfaces          []string                               `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,4,opt,name=interfaces"`
-	VXLANInterface      *string                                `json:"vxlanInterface,omitempty" yaml:"vxlanInterface,omitempty" protobuf:"bytes,5,opt,name=vxlanInterface"`
+	NetworkInstanceType NetworkInstanceType                      `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
+	Protocols           *NetworkDeviceNetworkInstanceProtocols   `json:"protocols,omitempty" yaml:"protocols,omitempty" protobuf:"bytes,3,opt,name=protocols"`
+	Interfaces          []*NetworkDeviceNetworkInstanceInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,4,opt,name=interfaces"`
+	VXLANInterface      *string                                  `json:"vxlanInterface,omitempty" yaml:"vxlanInterface,omitempty" protobuf:"bytes,5,opt,name=vxlanInterface"`
+}
+
+type NetworkDeviceNetworkInstanceInterface struct {
+	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
+	ID   uint32 `json:"id" yaml:"id" protobuf:"bytes,2,opt,name=id"`
 }
 
 type NetworkDeviceNetworkInstanceProtocols struct {

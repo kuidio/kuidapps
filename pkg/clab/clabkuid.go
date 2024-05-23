@@ -39,6 +39,13 @@ func (r *clabkuid) GetNodes(ctx context.Context) []backend.GenericObject {
 		nodeKind, nodeType := r.cfg.Topology.GetNodeKindType(nodeName)
 		nodeGroupNodeID := r.getNodeGroupNodeID(nodeName, n.Labels)
 
+		labels := map[string]string{
+			backend.KuidINVNodeTypeKey: nodeType,
+		}
+		for k, v := range n.Labels {
+			labels[k] = v
+		}
+
 		nodes = append(nodes, infrav1alpha1.BuildNode(
 			metav1.ObjectMeta{
 				Name:      nodeGroupNodeID.KuidString(),
@@ -51,9 +58,7 @@ func (r *clabkuid) GetNodes(ctx context.Context) []backend.GenericObject {
 				Location:        r.getLocation(n.Labels),
 				Provider:        r.getProvider(nodeKind),
 				UserDefinedLabels: v1alpha1.UserDefinedLabels{
-					Labels: map[string]string{
-						backend.KuidINVNodeTypeKey: nodeType,
-					},
+					Labels: labels,
 				},
 			},
 			nil,

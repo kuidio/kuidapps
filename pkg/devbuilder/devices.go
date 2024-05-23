@@ -101,7 +101,7 @@ func (r *Devices) AddNetworkInstance(nodeName string, newNI *netwv1alpha1.Networ
 	ni.NetworkInstanceType = newNI.NetworkInstanceType
 }
 
-func (r *Devices) AddNetworkInstanceSubInterface(nodeName, niName, ifName string) {
+func (r *Devices) AddNetworkInstanceSubInterface(nodeName, niName string, niItfce *netwv1alpha1.NetworkDeviceNetworkInstanceInterface) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
@@ -109,9 +109,9 @@ func (r *Devices) AddNetworkInstanceSubInterface(nodeName, niName, ifName string
 	}
 	d := r.devices[nodeName]
 	if len(d.GetOrCreateNetworkInstance(niName).Interfaces) == 0 {
-		d.GetOrCreateNetworkInstance(niName).Interfaces = []string{}
+		d.GetOrCreateNetworkInstance(niName).Interfaces =  []*netwv1alpha1.NetworkDeviceNetworkInstanceInterface{}
 	}
-	d.GetOrCreateNetworkInstance(niName).Interfaces = append(d.GetOrCreateNetworkInstance(niName).Interfaces, ifName)
+	d.GetOrCreateNetworkInstance(niName).Interfaces = append(d.GetOrCreateNetworkInstance(niName).Interfaces, niItfce)
 }
 
 func (r *Devices) AddBGPNeighbor(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor) {

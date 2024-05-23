@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/henderiw/iputil"
+	"github.com/kuidio/kuid/apis/backend"
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
@@ -52,7 +53,7 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 		if cr.IsDefaultNetwork() {
 			r.UpdateNetworkInstance(ctx, cr, n, netwv1alpha1.NetworkInstanceType_DEFAULT)
 
-			r.UpdateRoutingPolicies(ctx, cr, nc, n)	
+			r.UpdateRoutingPolicies(ctx, cr, nc, n)
 		}
 
 		if err := r.UpdateNodeAS(ctx, cr, nc, n); err != nil {
@@ -120,7 +121,7 @@ func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, cr *netwv1alpha1.Netwo
 			return err
 		}
 		ipv4 = append(ipv4, ip)
-		
+
 		pi, _ := iputil.New(ip)
 		r.devices.AddRouterID(nodeID.Node, networkName, pi.GetIPAddress().String())
 	} else {
@@ -147,10 +148,13 @@ func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, cr *netwv1alpha1.Netwo
 		Name: SystemInterfaceName,
 	})
 	r.devices.AddSubInterface(nodeName, SystemInterfaceName, &netwv1alpha1.NetworkDeviceInterfaceSubInterface{
-		ID:               0,
+		ID: 0,
 		//SubInterfaceType: netwv1alpha1.SubInterfaceType_Routed, A type is not possible here
 	}, ipv4, ipv6)
-	r.devices.AddNetworkInstanceSubInterface(nodeName, networkName, fmt.Sprintf("%s.0", SystemInterfaceName))
+	r.devices.AddNetworkInstanceSubInterface(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+		Name: SystemInterfaceName,
+		ID:   0,
+	})
 	return nil
 }
 
@@ -220,8 +224,8 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, cr *netwv1alpha1.N
 			}
 
 			r.devices.AddInterface(nodeName, &netwv1alpha1.NetworkDeviceInterface{
-				Name:  epName,
-				Speed: "100G",
+				Name: epName,
+				//Speed: "100G", -> to be changed and look at the inventory
 			})
 			r.devices.AddSubInterface(nodeName, epName, &netwv1alpha1.NetworkDeviceInterfaceSubInterface{
 				PeerName:         fmt.Sprintf("%s.%s", peerNodeName, peerEPName),
@@ -229,7 +233,10 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, cr *netwv1alpha1.N
 				SubInterfaceType: netwv1alpha1.SubInterfaceType_Routed,
 			}, ipv4, ipv6)
 
-			r.devices.AddNetworkInstanceSubInterface(nodeName, netwv1alpha1.DefaultNetwork, fmt.Sprintf("%s.0", epName))
+			r.devices.AddNetworkInstanceSubInterface(nodeName, netwv1alpha1.DefaultNetwork, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+				Name: epName,
+				ID:   0,
+			})
 
 			if nc.IsEBGPEnabled() {
 				afs := []string{}
@@ -243,7 +250,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, cr *netwv1alpha1.N
 						LocalAS:      as[i],
 						PeerAS:       as[j],
 					})
-					afs = append(afs, iputil.AddressFamilyIpv4.String())
+					afs = append(afs, "ipv4-unicast")
 				}
 				if nc.IsIPv6Enabled() {
 					pii, _ := iputil.New(usedipv6[i])
@@ -255,7 +262,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, cr *netwv1alpha1.N
 						LocalAS:      as[i],
 						PeerAS:       as[j],
 					})
-					afs = append(afs, iputil.AddressFamilyIpv6.String())
+					afs = append(afs, "ipv6-unicast")
 				}
 				r.devices.AddBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 					Name:            BGPUnderlayPeerGroupName,
@@ -294,18 +301,24 @@ func (r *DeviceBuilder) UpdateProtocols(ctx context.Context, cr *netwv1alpha1.Ne
 				pi, _ := iputil.New(systemPrefix)
 				localAddress = pi.GetIPAddress().String()
 			}
-			r.devices.AddBGPNeighbor(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
-				LocalAddress: localAddress,
-				PeerAddress:  peerPrefix.GetIPAddress().String(),
-				PeerGroup:    BGPOverlayPeerGroupName,
-				LocalAS:      *nc.Spec.Protocols.IBGP.AS,
-				PeerAS:       *nc.Spec.Protocols.IBGP.AS,
-			})
+
+			netwworkDeviceType, ok := n.Spec.UserDefinedLabels.Labels[backend.KuidINVNetworkDeviceType]
+			if !ok {
+				return nil
+			}
+			if netwworkDeviceType == "edge" || netwworkDeviceType == "pe" {
+				r.devices.AddBGPNeighbor(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
+					LocalAddress: localAddress,
+					PeerAddress:  peerPrefix.GetIPAddress().String(),
+					PeerGroup:    BGPOverlayPeerGroupName,
+					LocalAS:      *nc.Spec.Protocols.IBGP.AS,
+					PeerAS:       *nc.Spec.Protocols.IBGP.AS,
+				})
+			}
 		}
 	}
 	return nil
 }
-
 
 func (r *DeviceBuilder) UpdateRoutingPolicies(ctx context.Context, cr *netwv1alpha1.Network, nc *netwv1alpha1.NetworkConfig, n *infrabev1alpha1.Node) error {
 	nodeID := infrabev1alpha1.String2NodeGroupNodeID(n.GetName())

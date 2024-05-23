@@ -295,7 +295,16 @@ spec:
                   properties:
                     interfaces:
                       items:
-                        type: string
+                        properties:
+                          id:
+                            format: int32
+                            type: integer
+                          name:
+                            type: string
+                        required:
+                        - id
+                        - name
+                        type: object
                       type: array
                     name:
                       type: string

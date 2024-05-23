@@ -118,14 +118,14 @@ func (r *NetworkDeviceInterfaceSubInterface) GetOrCreateIPv6() *NetworkDeviceInt
 	return r.IPv6
 }
 
-func (r *Device) AddNetworkInstance(name string, niType NetworkInstanceType, interfaces []string, vxlanItfce *string) {
+func (r *Device) AddNetworkInstance(name string, niType NetworkInstanceType, interfaces []*NetworkDeviceNetworkInstanceInterface, vxlanItfce *string) {
 	if r.nd.Spec.NetworkInstances == nil {
 		r.nd.Spec.NetworkInstances = []*NetworkDeviceNetworkInstance{}
 	}
 	ni := r.GetOrCreateNetworkInstance(name)
 	ni.NetworkInstanceType = niType
 	ni.VXLANInterface = vxlanItfce
-	ni.Interfaces = interfaces
+	ni.Interfaces = interfaces // This might need to be optimized going further
 }
 
 func (r *Device) GetOrCreateNetworkInstance(name string) *NetworkDeviceNetworkInstance {
