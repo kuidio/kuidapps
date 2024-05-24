@@ -40,6 +40,8 @@ type NetworkDeviceSpec struct {
 	// RoutingPolicies defines the routingPolicies of the device config
 	// +optional
 	RoutingPolicies []*NetworkDeviceRoutingPolicy `json:"routingPolicies,omitempty" yaml:"routingPolicies,omitempty" protobuf:"bytes,6,opt,name=routingPolicies"`
+	// System defines the system parameters of the device config
+	System *NetworkDeviceSystem `json:"system,omitempty" yaml:"system,omitempty" protobuf:"bytes,7,opt,name=system"`
 }
 
 type NetworkDeviceRoutingPolicy struct {
@@ -136,6 +138,22 @@ type NetworkDeviceNetworkInstanceProtocolBGPNeighbor struct {
 	LocalAS      uint32 `json:"localAS" yaml:"localAS" protobuf:"bytes,2,opt,name=localAS"`
 	LocalAddress string `json:"localAddress" yaml:"localAddress" protobuf:"bytes,2,opt,name=localAddress"`
 }
+
+type NetworkDeviceSystem struct {
+	Protocols *NetworkDeviceSystemProtocols `json:"protocols,omitempty" yaml:"protocols,omitempty" protobuf:"bytes,7,opt,name=protocols"`
+}
+
+type NetworkDeviceSystemProtocols struct {
+	BGPVPN *NetworkDeviceSystemProtocolsBGPVPN `json:"bgpVPN,omitempty" yaml:"bgpVPN,omitempty" protobuf:"bytes,7,opt,name=bgpVPN"`
+	BGPEVPN *NetworkDeviceSystemProtocolsBGPEVPN `json:"bgpEVPN,omitempty" yaml:"bgpEVPN,omitempty" protobuf:"bytes,7,opt,name=bgpEVPN"`
+}
+
+type NetworkDeviceSystemProtocolsBGPVPN struct {
+}
+
+type NetworkDeviceSystemProtocolsBGPEVPN struct {
+}
+
 
 // NetworkDeviceStatus defines the observed state of NetworkDevice
 type NetworkDeviceStatus struct {

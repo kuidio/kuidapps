@@ -93,7 +93,10 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 					nodeName := itfce.Node
 					// static interface
 					// check if the endpoint exists in the inventory
-					ep, err := r.getEndpoint(ctx, types.NamespacedName{})
+					ep, err := r.getEndpoint(ctx, types.NamespacedName{
+						Namespace: r.nsn.Namespace,
+						Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, itfce.EndpointID.KuidString()),
+					})
 					if err != nil {
 						return err
 					}

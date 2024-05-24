@@ -421,6 +421,17 @@ spec:
                       type: string
                   type: object
                 type: array
+              system:
+                description: System defines the system parameters of the device config
+                properties:
+                  protocols:
+                    properties:
+                      bgpEVPN:
+                        type: object
+                      bgpVPN:
+                        type: object
+                    type: object
+                type: object
               topology:
                 type: string
               tunnelInterfaces:
