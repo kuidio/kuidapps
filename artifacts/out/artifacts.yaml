@@ -641,20 +641,27 @@ spec:
                           An interface can be attached to a routingTable and a bridgeDomain.
                           Dynamic or static assignments are possible
                         properties:
+                          addresses:
+                            description: IPs define the list of IP addresses on the interface
+                            items:
+                              properties:
+                                address:
+                                  type: string
+                                attribute:
+                                  type: string
+                              required:
+                              - address
+                              type: object
+                            type: array
                           bridgeDomain:
                             description: |-
                               BridgeDomain defines the name of the bridgeDomain belonging to the interface
                               A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
-                              defined interface Identifier
+                              defined Endpoint
                             type: string
                           endpoint:
-                            description: Endpoint defines the name of the endpoint
+                            description: Endpoint
                             type: string
-                          ips:
-                            description: IPs define the list of IP addresses on the interface
-                            items:
-                              type: string
-                            type: array
                           node:
                             description: Node defines the node the resource belongs to.
                             type: string
@@ -725,6 +732,7 @@ spec:
                             type: string
                           vlanID:
                             description: VLANID defines the VLAN ID on the interface
+                            format: int32
                             type: integer
                           vlanTagging:
                             description: |-
@@ -732,7 +740,6 @@ spec:
                               Used for dynamic interface selection
                             type: boolean
                         required:
-                        - endpoint
                         - node
                         - region
                         - site
@@ -764,20 +771,27 @@ spec:
                           An interface can be attached to a routingTable and a bridgeDomain.
                           Dynamic or static assignments are possible
                         properties:
+                          addresses:
+                            description: IPs define the list of IP addresses on the interface
+                            items:
+                              properties:
+                                address:
+                                  type: string
+                                attribute:
+                                  type: string
+                              required:
+                              - address
+                              type: object
+                            type: array
                           bridgeDomain:
                             description: |-
                               BridgeDomain defines the name of the bridgeDomain belonging to the interface
                               A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
-                              defined interface Identifier
+                              defined Endpoint
                             type: string
                           endpoint:
-                            description: Endpoint defines the name of the endpoint
+                            description: Endpoint
                             type: string
-                          ips:
-                            description: IPs define the list of IP addresses on the interface
-                            items:
-                              type: string
-                            type: array
                           node:
                             description: Node defines the node the resource belongs to.
                             type: string
@@ -848,6 +862,7 @@ spec:
                             type: string
                           vlanID:
                             description: VLANID defines the VLAN ID on the interface
+                            format: int32
                             type: integer
                           vlanTagging:
                             description: |-
@@ -855,7 +870,6 @@ spec:
                               Used for dynamic interface selection
                             type: boolean
                         required:
-                        - endpoint
                         - node
                         - region
                         - site

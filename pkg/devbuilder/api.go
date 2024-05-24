@@ -101,3 +101,12 @@ func (r *DeviceBuilder) getEndpoint(ctx context.Context, nsn types.NamespacedNam
 	return ep, nil
 	
 }
+
+func (r *DeviceBuilder) getNode(ctx context.Context, nsn types.NamespacedName) (*infrabev1alpha1.Node, error) {
+	n := &infrabev1alpha1.Node{}
+	if err := r.Client.Get(ctx, nsn, n); err != nil {
+		return nil, err
+	}
+	return n, nil
+	
+}

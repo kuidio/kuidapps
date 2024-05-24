@@ -89,6 +89,9 @@ func (r *Devices) AddSubInterface(nodeName, ifName string, x *netwv1alpha1.Netwo
 	}
 	d := r.devices[nodeName]
 	itfce := d.GetOrCreateInterface(ifName)
+	if x.VLAN != nil {
+		itfce.VLANTagging = true // HACK need to be properly fixed
+	}
 	itfce.AddOrUpdateSubInterface(x)
 	si := itfce.GetOrCreateSubInterface(x.ID)
 	if len(ipv4) != 0 {
@@ -219,7 +222,7 @@ func (r *Devices) AddRoutingPolicy(nodeName, policyName string, ipv4, ipv6 []str
 
 }
 
-func (r *Devices) AddNetworkInstanceprotocolsBGPVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN) {
+func (r *Devices) AddNetworkInstanceProtocolsBGPVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
@@ -231,7 +234,7 @@ func (r *Devices) AddNetworkInstanceprotocolsBGPVPN(nodeName, niName string, x *
 	bgpvpn.ImportRouteTarget = x.ImportRouteTarget
 }
 
-func (r *Devices) AddNetworkInstanceprotocolsBGPEVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN) {
+func (r *Devices) AddNetworkInstanceProtocolsBGPEVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {

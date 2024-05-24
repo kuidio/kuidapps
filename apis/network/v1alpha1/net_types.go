@@ -30,5 +30,5 @@ type SubInterfaceType string
 
 const (
 	SubInterfaceType_Routed  SubInterfaceType = "routed"
-	SubInterfaceType_Bridged SubInterfaceType = "brdiged"
+	SubInterfaceType_Bridged SubInterfaceType = "bridged"
 )

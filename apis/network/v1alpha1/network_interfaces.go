@@ -72,7 +72,15 @@ func (r *Network) IsDefaultNetwork() bool {
 	return networkName == DefaultNetwork
 }
 
-
 func (r *NetworkInterface) IsDynamic() bool {
-	return r.Selector != nil 
+	return r.Selector != nil
+}
+
+func (r *Network) IsBridgeDomainPresent(name string) bool {
+	for _, bd := range r.Spec.BridgeDomains {
+		if bd.Name == name {
+			return true
+		}
+	}
+	return false
 }

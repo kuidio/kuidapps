@@ -49,11 +49,11 @@ type NetworkBridgeDomain struct {
 
 type NetworkRoutingTable struct {
 	// Name defines the name of the routing table
-	Name string `json:"name" yaml:"name"`
+	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
 	// NetworkID defines the id of the bridge domain
 	NetworkID int `json:"networkID,omitempty" yaml:"networkID,omitempty" protobuf:"bytes,2,opt,name=networkID"`
 	// Interfaces defines the interfaces belonging to the routing table
-	Interfaces []*NetworkInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty"`
+	Interfaces []*NetworkInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,3,opt,name=interfaces"`
 }
 
 // Network defines the interface parameters
@@ -62,22 +62,30 @@ type NetworkRoutingTable struct {
 type NetworkInterface struct {
 	// BridgeDomain defines the name of the bridgeDomain belonging to the interface
 	// A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
-	// defined interface Identifier
+	// defined Endpoint
 	BridgeDomain *string `json:"bridgeDomain,omitempty" yaml:"bridgeDomain,omitempty" protobuf:"bytes,1,opt,name=bridgeDomain"`
-	// EndpointID defines the name of the interface
-	infrabev1alpha1.EndpointID `json:",inline" yaml:",inline" protobuf:"bytes,2,opt,name=endpointID"`
+	// Endpoint 
+	EndPoint *string `json:"endpoint,omitempty" yaml:"endpoint,omitempty" protobuf:"bytes,2,opt,name=endpoint"`
+	// NodeID defines the node identifier
+	// if omitted only possible with the bridgedomain
+	*infrabev1alpha1.NodeID `json:",inline" yaml:",inline" protobuf:"bytes,3,opt,name=nodeID"`
 	// IPs define the list of IP addresses on the interface
-	IPs []string `json:"ips,omitempty" yaml:"ips,omitempty" protobuf:"bytes,2,opt,name=ips"`
+	Addresses []*NetworkInterfaceAddress `json:"addresses,omitempty" yaml:"addresses,omitempty" protobuf:"bytes,4,opt,name=ipsaddresses"`
 	// VLANID defines the VLAN ID on the interface
-	VLANID *uint16 `json:"vlanID,omitempty" yaml:"vlanID,omitempty" protobuf:"bytes,2,opt,name=vlanID"`
+	VLANID *uint32 `json:"vlanID,omitempty" yaml:"vlanID,omitempty" protobuf:"bytes,5,opt,name=vlanID"`
 	// Selector defines the selector criterias for the interface selection
 	// Used for dynamic interface selection
-	Selector *metav1.LabelSelector `json:"selector,omitempty" yaml:"selector,omitempty"`
+	Selector *metav1.LabelSelector `json:"selector,omitempty" yaml:"selector,omitempty" protobuf:"bytes,6,opt,name=selector"`
 	// VLANTagging defines if the interface is vlanTagged or not
 	// Used for dynamic interface selection
-	VLANTagging bool `json:"vlanTagging,omitempty" yaml:"vlanTagging,,omitempty" protobuf:"bytes,5,opt,name=vlanTagging"`
+	VLANTagging bool `json:"vlanTagging,omitempty" yaml:"vlanTagging,,omitempty" protobuf:"bytes,7,opt,name=vlanTagging"`
 	// Protocols define the protocols parameters for this interface
-	Protocols *NetworkInterfaceProtocols `json:"protocols,omitempty" yaml:"protocols,,omitempty" protobuf:"bytes,4,opt,name=protocols"`
+	Protocols *NetworkInterfaceProtocols `json:"protocols,omitempty" yaml:"protocols,,omitempty" protobuf:"bytes,8,opt,name=protocols"`
+}
+
+type NetworkInterfaceAddress struct {
+	Address   string `json:"address" yaml:"address" protobuf:"bytes,1,opt,name=address"`
+	Attribute *string `json:"attribute,omitempty" yaml:"address,omitempty" protobuf:"bytes,2,opt,name=attribute"`
 }
 
 type NetworkInterfaceProtocols struct {

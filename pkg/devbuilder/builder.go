@@ -10,6 +10,7 @@ import (
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -41,6 +42,7 @@ func (r *DeviceBuilder) GetNetworkDeviceConfigs() []*netwv1alpha1.NetworkDevice 
 }
 
 func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc *netwv1alpha1.NetworkConfig) error {
+	//log := log.FromContext(ctx)
 	networkName := cr.GetNetworkName()
 	if cr.IsDefaultNetwork() {
 		niName := networkName
@@ -66,6 +68,10 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 			if nc.ISBGPEVPNEnabled() {
 				r.devices.AddSystemProtocolsBGPVPN(nodeName, &netwv1alpha1.NetworkDeviceSystemProtocolsBGPVPN{})
 			}
+			// add IRB interface
+			r.devices.AddInterface(nodeName, &netwv1alpha1.NetworkDeviceInterface{
+				Name: IRBInterfaceName,
+			})
 
 			r.UpdateNetworkInstance(ctx, nodeName, niName, netwv1alpha1.NetworkInstanceType_DEFAULT)
 			r.UpdateRoutingPolicies(ctx, nodeName, cr.IsDefaultNetwork(), nc)
@@ -81,37 +87,82 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 			return err
 		}
 
+		// to do the peer mesh we need to collect all edge peers for the rr to
+		// know all the peers
+		edgePeers := sets.New[string]()
 		for _, n := range nodes {
 			nodeName := n.Spec.NodeID.Node
 			// this is waiting for information from the previous steps
 			// e.g. routerID, AS numbers, etc
-			if err := r.UpdateProtocols(ctx, nodeName, niName, nc, n.Spec.UserDefinedLabels.Labels); err != nil {
-				return err
+			netwworkDeviceType, ok := n.Spec.UserDefinedLabels.Labels[backend.KuidINVNetworkDeviceType]
+			if !ok {
+				return nil
+			}
+
+			if netwworkDeviceType == "edge" || netwworkDeviceType == "pe" {
+				var err error
+				if err = r.UpdateProtocolsEdge(ctx, nodeName, niName, nc, edgePeers); err != nil {
+					return err
+				}
+			}
+		}
+		for _, n := range nodes {
+			nodeName := n.Spec.NodeID.Node
+			// this is waiting for information from the previous steps
+			// e.g. routerID, AS numbers, etc
+			netwworkDeviceType, ok := n.Spec.UserDefinedLabels.Labels[backend.KuidINVNetworkDeviceType]
+			if !ok {
+				return nil
+			}
+			if edgePeers.Len() != 0 && netwworkDeviceType != "edge" && netwworkDeviceType != "pe" {
+				if err := r.UpdateProtocolsRR(ctx, nodeName, niName, nc, edgePeers); err != nil {
+					return err
+				}
 			}
 		}
 	} else {
+		bd2NodeName := map[string]sets.Set[string]{}
+
 		for _, bd := range cr.Spec.BridgeDomains {
+			bd2NodeName[bd.Name] = sets.New[string]()
 			// add bridge domain
 			bdName := fmt.Sprintf("%s.%s", networkName, bd.Name)
 			id := uint32(bd.NetworkID)
 			for _, itfce := range bd.Interfaces {
 				if !itfce.IsDynamic() {
-					nodeName := itfce.Node
 					// static interface
 					// check if the endpoint exists in the inventory
+					if itfce.EndPoint == nil {
+						return fmt.Errorf("cannot have a bridge domain without a specific endpoint defined")
+					}
+					if itfce.NodeID == nil {
+						return fmt.Errorf("cannot have a bridge domain without a specific node id defined")
+					}
+					nodeName := itfce.Node
+					endpointID := infrabev1alpha1.EndpointID{
+						Endpoint: *itfce.EndPoint,
+						NodeID:   *itfce.NodeID,
+					}
 					ep, err := r.getEndpoint(ctx, types.NamespacedName{
 						Namespace: r.nsn.Namespace,
-						Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, itfce.EndpointID.KuidString()),
+						Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, endpointID.KuidString()),
 					})
 					if err != nil {
 						return err
 					}
+					bd2NodeName[bd.Name].Insert(nodeName)
+
 					r.devices.AddProvider(itfce.Node, ep.Spec.Provider)
+
+					vlan := ptr.To[uint32](id)
+					if itfce.VLANID != nil {
+						*vlan = *itfce.VLANID
+					}
 					r.devices.AddSubInterface(nodeName, ep.Spec.Endpoint, &netwv1alpha1.NetworkDeviceInterfaceSubInterface{
 						PeerName: "customer",
 						ID:       id,
 						Type:     netwv1alpha1.SubInterfaceType_Bridged,
-						VLAN:     ptr.To[uint32](id),
+						VLAN:     vlan,
 					}, nil, nil)
 
 					r.devices.AddNetworkInstance(nodeName, &netwv1alpha1.NetworkDeviceNetworkInstance{
@@ -132,16 +183,138 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 							ID:   id,
 						})
 					}
-					r.devices.AddNetworkInstanceprotocolsBGPEVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN{
+					r.devices.AddNetworkInstanceProtocolsBGPEVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN{
 						EVI:            id,
 						ECMP:           2,
 						VXLANInterface: VXLANInterfaceName,
 					})
-					r.devices.AddNetworkInstanceprotocolsBGPVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN{
+					r.devices.AddNetworkInstanceProtocolsBGPVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN{
 						ImportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
 						ExportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
 					})
 					continue
+				}
+			}
+		}
+		for _, ni := range cr.Spec.RoutingTables {
+			niName := fmt.Sprintf("%s.%s", networkName, ni.Name)
+			id := uint32(ni.NetworkID)
+			for _, itfce := range ni.Interfaces {
+				if !itfce.IsDynamic() {
+					if itfce.BridgeDomain == nil && itfce.EndPoint == nil {
+						return fmt.Errorf("cannot create an rt interface w/o a bridgedomain or endpoint specified")
+					}
+
+					if itfce.NodeID == nil {
+						return fmt.Errorf("unsupported for now")
+						// use the nodes collected by the bridge domain logic
+						// need to split the ip prefix per node
+					}
+
+					nodeName := itfce.Node
+					if itfce.EndPoint == nil && itfce.BridgeDomain == nil {
+						return fmt.Errorf("cannot create a interface w/o no endpoint and brdigedomain")
+					}
+
+					if itfce.BridgeDomain == nil {
+						// static interface
+						// check if the endpoint exists in the inventory
+						endpointID := infrabev1alpha1.EndpointID{
+							Endpoint: *itfce.EndPoint,
+							NodeID:   *itfce.NodeID,
+						}
+						ep, err := r.getEndpoint(ctx, types.NamespacedName{
+							Namespace: r.nsn.Namespace,
+							Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, endpointID.KuidString()),
+						})
+						if err != nil {
+							return err
+						}
+						r.devices.AddProvider(itfce.Node, ep.Spec.Provider)
+					} else {
+						n, err := r.getNode(ctx, types.NamespacedName{
+							Namespace: r.nsn.Namespace,
+							Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, itfce.NodeID.KuidString()),
+						})
+						if err != nil {
+							return err
+						}
+						r.devices.AddProvider(itfce.Node, n.Spec.Provider)
+					}
+
+					r.devices.AddNetworkInstance(nodeName, &netwv1alpha1.NetworkDeviceNetworkInstance{
+						Name: niName,
+						Type: netwv1alpha1.NetworkInstanceType_IPVRF,
+					})
+					if nc.IsVXLANEnabled() {
+						r.devices.AddTunnelSubInterface(nodeName, VXLANInterfaceName, &netwv1alpha1.NetworkDeviceTunnelInterfaceSubInterface{
+							ID:   id,
+							Type: netwv1alpha1.SubInterfaceType_Routed,
+						})
+						r.devices.AddNetworkInstanceSubInterfaceVXLAN(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+							Name: VXLANInterfaceName,
+							ID:   id,
+						})
+					}
+					r.devices.AddNetworkInstanceProtocolsBGPEVPN(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN{
+						EVI:            id,
+						ECMP:           2,
+						VXLANInterface: VXLANInterfaceName,
+					})
+					r.devices.AddNetworkInstanceProtocolsBGPVPN(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN{
+						ImportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
+						ExportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
+					})
+
+					vlan := ptr.To[uint32](id)
+					if itfce.VLANID != nil {
+						*vlan = *itfce.VLANID
+					}
+
+					ipv4 := []string{}
+					ipv6 := []string{}
+					for _, address := range itfce.Addresses {
+						pi, err := iputil.New(address.Address)
+						if err != nil {
+							continue
+						}
+						if pi.IsIpv4() {
+							ipv4 = append(ipv4, address.Address)
+						} else {
+							ipv6 = append(ipv6, address.Address)
+						}
+					}
+					if itfce.BridgeDomain == nil {
+						r.devices.AddSubInterface(nodeName, *itfce.EndPoint, &netwv1alpha1.NetworkDeviceInterfaceSubInterface{
+							PeerName: "customer",
+							ID:       id,
+							Type:     netwv1alpha1.SubInterfaceType_Routed,
+							VLAN:     vlan,
+						}, ipv4, ipv6)
+						r.devices.AddNetworkInstanceSubInterface(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+							Name: *itfce.EndPoint,
+							ID:   id,
+						})
+					} else {
+						if !cr.IsBridgeDomainPresent(*itfce.BridgeDomain) {
+							return fmt.Errorf("cannot create an irb interface on a bridgedomain that is not present")
+						}
+						r.devices.AddSubInterface(nodeName, IRBInterfaceName, &netwv1alpha1.NetworkDeviceInterfaceSubInterface{
+							PeerName: "customer",
+							ID:       id,
+							//Type:     netwv1alpha1.SubInterfaceType_Routed,// not type exepected
+						}, ipv4, ipv6)
+						r.devices.AddNetworkInstanceSubInterface(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+							Name: IRBInterfaceName,
+							ID:   id,
+						})
+						// add the irb to the bridge domain as well
+						bdName := fmt.Sprintf("%s.%s", networkName, *itfce.BridgeDomain)
+						r.devices.AddNetworkInstanceSubInterface(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+							Name: IRBInterfaceName,
+							ID:   id,
+						})
+					}
 				}
 			}
 		}
@@ -343,7 +516,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nc 
 	return nil
 }
 
-func (r *DeviceBuilder) UpdateProtocols(ctx context.Context, nodeName, networkName string, nc *netwv1alpha1.NetworkConfig, nodeLabels map[string]string) error {
+func (r *DeviceBuilder) UpdateProtocolsDynamicNeighbors(ctx context.Context, nodeName, networkName string, nc *netwv1alpha1.NetworkConfig, nodeLabels map[string]string) error {
 	log := log.FromContext(ctx)
 	//nodeID := infrabev1alpha1.String2NodeGroupNodeID(n.GetName())
 	//nodeName := nodeID.Node
@@ -391,7 +564,7 @@ func (r *DeviceBuilder) UpdateProtocols(ctx context.Context, nodeName, networkNa
 			}
 
 			log.Info("rrNodeName", "rrNodeNameAF", rrNodeNameAF, "ipv4", fullNodeNameIPv4)
-			
+
 			if rrNodeNameAF == fullNodeNameIPv4 || rrNodeNameAF == fullNodeNameIPv6 {
 				// this is the rr - we add the peer group again as this cannot harm
 				r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
@@ -407,6 +580,99 @@ func (r *DeviceBuilder) UpdateProtocols(ctx context.Context, nodeName, networkNa
 					PeerGroup:    BGPOverlayPeerGroupName,
 				})
 			}
+		}
+	}
+	return nil
+}
+
+func (r *DeviceBuilder) UpdateProtocolsRR(ctx context.Context, nodeName, networkName string, nc *netwv1alpha1.NetworkConfig, edgePeers sets.Set[string]) error {
+	//log := log.FromContext(ctx)
+	if nc.IsIBGPEnabled() {
+		r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+			Name:            BGPOverlayPeerGroupName,
+			AddressFamilies: nc.GetOverlayProtocols(),
+		})
+
+		fullNodeName := fmt.Sprintf("%s.%s", r.nsn.Name, nodeName)
+		fullNodeNameIPv4 := fmt.Sprintf("%s.ipv4", fullNodeName)
+		fullNodeNameIPv6 := fmt.Sprintf("%s.ipv6", fullNodeName)
+
+		for _, rrNodeNameAF := range nc.Spec.Protocols.IBGP.RouteReflectors {
+			rrIP, err := r.getIPClaim(ctx, types.NamespacedName{
+				Namespace: r.nsn.Namespace,
+				Name:      rrNodeNameAF,
+			})
+			if err != nil {
+				return err
+			}
+
+			peerPrefix, _ := iputil.New(rrIP)
+
+			localAddress := ""
+			systemPrefix := r.devices.GetSystemIP(nodeName, SystemInterfaceName, 0, peerPrefix.IsIpv4())
+			if systemPrefix != "" {
+				pi, _ := iputil.New(systemPrefix)
+				localAddress = pi.GetIPAddress().String()
+			}
+			if rrNodeNameAF == fullNodeNameIPv4 || rrNodeNameAF == fullNodeNameIPv6 {
+				// this is the rr - we add the peer group again as this cannot harm
+				r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+					Name:            BGPOverlayPeerGroupName,
+					AddressFamilies: nc.GetOverlayProtocols(),
+					RouteReflector: &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector{
+						ClusterID: peerPrefix.GetIPAddress().String(),
+					},
+				})
+
+				for _, peerIP := range edgePeers.UnsortedList() {
+					r.devices.AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
+						LocalAddress: localAddress,
+						PeerAddress:  peerIP,
+						PeerGroup:    BGPOverlayPeerGroupName,
+						LocalAS:      nc.GetIBGPAS(),
+						PeerAS:       nc.GetIBGPAS(),
+					})
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (r *DeviceBuilder) UpdateProtocolsEdge(ctx context.Context, nodeName, networkName string, nc *netwv1alpha1.NetworkConfig, edgePeers sets.Set[string]) error {
+	if nc.IsIBGPEnabled() {
+		r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+			Name:            BGPOverlayPeerGroupName,
+			AddressFamilies: nc.GetOverlayProtocols(),
+		})
+
+		for _, rrNodeNameAF := range nc.Spec.Protocols.IBGP.RouteReflectors {
+			rrIP, err := r.getIPClaim(ctx, types.NamespacedName{
+				Namespace: r.nsn.Namespace,
+				Name:      rrNodeNameAF,
+			})
+			if err != nil {
+				return err
+			}
+
+			peerPrefix, _ := iputil.New(rrIP)
+
+			localAddress := ""
+			systemPrefix := r.devices.GetSystemIP(nodeName, SystemInterfaceName, 0, peerPrefix.IsIpv4())
+			if systemPrefix == "" {
+				return fmt.Errorf("no local address configured")
+			}
+			pi, _ := iputil.New(systemPrefix)
+			localAddress = pi.GetIPAddress().String()
+			edgePeers.Insert(localAddress)
+
+			r.devices.AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
+				LocalAddress: localAddress,
+				PeerAddress:  peerPrefix.GetIPAddress().String(),
+				PeerGroup:    BGPOverlayPeerGroupName,
+				LocalAS:      nc.GetIBGPAS(),
+				PeerAS:       nc.GetIBGPAS(),
+			})
 		}
 	}
 	return nil
