@@ -405,3 +405,27 @@ func (r *NetworkConfig) GetLoopbackPrefixes() ([]string, []string) {
 	}
 	return ipv4Prefixes, ipv6Prefixes
 }
+
+func (r *NetworkConfig) IsVXLANEnabled() bool {
+	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.VXLAN != nil 
+}
+
+func (r *NetworkConfig) IsMPLSLDPEnabled() bool {
+	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.MPLS != nil && r.Spec.Encapsultation.MPLS.LDP != nil 
+}
+
+func (r *NetworkConfig) IsMPLSSREnabled() bool {
+	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.MPLS != nil && r.Spec.Encapsultation.MPLS.SR != nil 
+}
+
+func (r *NetworkConfig) IsMPLSRSVPEnabled() bool {
+	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.MPLS != nil && r.Spec.Encapsultation.MPLS.RSVP != nil 
+}
+
+func (r *NetworkConfig) ISSRv6Enabled() bool {
+	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.SRV6 != nil
+}
+
+func (r *NetworkConfig) ISSRv6USIDEnabled() bool {
+	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.SRV6 != nil && r.Spec.Encapsultation.SRV6.MicroSID != nil
+}

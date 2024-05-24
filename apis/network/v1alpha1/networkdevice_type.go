@@ -28,19 +28,19 @@ type NetworkDeviceSpec struct {
 	Topology string `json:"topology" yaml:"topology" protobuf:"bytes,1,opt,name=topology"`
 	// Provider defines the provider implementing this resource.
 	Provider string `json:"provider" yaml:"provider" protobuf:"bytes,2,opt,name=provider"`
-	// Interfaces defines the interfaces of the device config
+	// Interfaces defines the interfaces for the device config
 	// +optional
 	Interfaces []*NetworkDeviceInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,3,rep,name=interfaces"`
-	// NetworkInstances defines the network instances of the device config
+	// NetworkInstances defines the network instances for the device config
 	// +optional
 	NetworkInstances []*NetworkDeviceNetworkInstance `json:"networkInstances,omitempty" yaml:"networkInstances,omitempty" protobuf:"bytes,4,rep,name=networkInstances"`
-	// TunnelInterfaces defines the unnelInterfaces of the device config
+	// TunnelInterfaces defines the unnelInterfaces for the device config
 	// +optional
 	TunnelInterfaces []*NetworkDeviceTunnelInterface `json:"tunnelInterfaces,omitempty" yaml:"tunnelInterfaces,omitempty" protobuf:"bytes,5,rep,name=tunnelInterfaces"`
-	// RoutingPolicies defines the routingPolicies of the device config
+	// RoutingPolicies defines the routingPolicies for the device config
 	// +optional
 	RoutingPolicies []*NetworkDeviceRoutingPolicy `json:"routingPolicies,omitempty" yaml:"routingPolicies,omitempty" protobuf:"bytes,6,opt,name=routingPolicies"`
-	// System defines the system parameters of the device config
+	// System defines the system parameters for the device config
 	System *NetworkDeviceSystem `json:"system,omitempty" yaml:"system,omitempty" protobuf:"bytes,7,opt,name=system"`
 }
 

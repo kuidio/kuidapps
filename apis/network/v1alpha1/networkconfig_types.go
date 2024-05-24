@@ -46,6 +46,38 @@ type NetworkConfigSpec struct {
 	Protocols *NetworkConfigProtocols `json:"protocols,omitempty" yaml:"protocols,,omitempty" protobuf:"bytes,4,opt,name=protocols"`
 	// VLANTagging defines if VLAN tagging should be used or not
 	VLANTagging bool `json:"vlanTagging,omitempty" yaml:"vlanTagging,,omitempty" protobuf:"bytes,5,opt,name=vlanTagging"`
+	// Encapsultation define the encapsulation parameters
+	Encapsultation *NetworkConfigEncapsulation `json:"encapsultation,omitempty" yaml:"encapsultation,,omitempty" protobuf:"bytes,5,opt,name=encapsultation"`
+}
+
+type NetworkConfigEncapsulation struct {
+	VXLAN *NetworkConfigEncapsulationVXLAN `json:"vxlan,omitempty" yaml:"vxlan,omitempty" protobuf:"bytes,1,opt,name=vxlan"`
+	MPLS  *NetworkConfigEncapsulationMPLS  `json:"mpls,omitempty" yaml:"mpls,omitempty" protobuf:"bytes,2,opt,name=mpls"`
+	SRV6  *NetworkConfigEncapsulationSRv6  `json:"srv6,omitempty" yaml:"srv6,omitempty" protobuf:"bytes,3,opt,name=srv6"`
+}
+
+type NetworkConfigEncapsulationVXLAN struct {
+}
+
+type NetworkConfigEncapsulationMPLS struct {
+	LDP  *NetworkConfigEncapsulationMPLSLDP  `json:"ldp,omitempty" yaml:"ldp,omitempty" protobuf:"bytes,1,opt,name=ldp"`
+	SR   *NetworkConfigEncapsulationMPLSSR   `json:"sr,omitempty" yaml:"sr,omitempty" protobuf:"bytes,2,opt,name=sr"`
+	RSVP *NetworkConfigEncapsulationMPLSRSVP `json:"rsvp,omitempty" yaml:"rsvp,omitempty" protobuf:"bytes,3,opt,name=rsvp"`
+}
+
+type NetworkConfigEncapsulationMPLSLDP struct {
+}
+
+type NetworkConfigEncapsulationMPLSSR struct {
+}
+
+type NetworkConfigEncapsulationMPLSRSVP struct {
+}
+type NetworkConfigEncapsulationSRv6 struct {
+	MicroSID *NetworkConfigEncapsulationMPLSSRv6MicroSID `json:"ldp,omitempty" yaml:"ldp,omitempty" protobuf:"bytes,1,opt,name=ldp"`
+}
+
+type NetworkConfigEncapsulationMPLSSRv6MicroSID struct {
 }
 
 type NetworkConfigProtocols struct {
