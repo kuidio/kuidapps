@@ -31,6 +31,6 @@ spec:
     ebgp: 
       asPool: 65000-65100
     bgpEVPN: {}
-    encapsultation: 
-      vxlan: {}
+  encapsulation: 
+    vxlan: {}
   

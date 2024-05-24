@@ -47,7 +47,7 @@ type NetworkConfigSpec struct {
 	// VLANTagging defines if VLAN tagging should be used or not
 	VLANTagging bool `json:"vlanTagging,omitempty" yaml:"vlanTagging,,omitempty" protobuf:"bytes,5,opt,name=vlanTagging"`
 	// Encapsultation define the encapsulation parameters
-	Encapsultation *NetworkConfigEncapsulation `json:"encapsultation,omitempty" yaml:"encapsultation,,omitempty" protobuf:"bytes,5,opt,name=encapsultation"`
+	Encapsultation *NetworkConfigEncapsulation `json:"encapsulation,omitempty" yaml:"encapsulation,,omitempty" protobuf:"bytes,5,opt,name=encapsulation"`
 }
 
 type NetworkConfigEncapsulation struct {
