@@ -156,17 +156,27 @@ func (r *Devices) AddNetworkInstanceSubInterfaceVXLAN(nodeName, niName string, v
 	d.GetOrCreateNetworkInstance(niName).VXLANInterface = vxlanItfce
 }
 
-func (r *Devices) AddBGPNeighbor(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor) {
+func (r *Devices) AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGP().AddOrUpdateNeighbor(x)
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGP().AddOrUpdateNetworkInstanceProtocolBGNeighbor(x)
 }
 
-func (r *Devices) AddBGPPeerGroup(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {
+func (r *Devices) AddAddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, niName string, new *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGP().AddOrCreateNetworkInstanceProtocolBGPDynamicNeighbors(new)
+}
+
+func (r *Devices) AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
@@ -209,7 +219,7 @@ func (r *Devices) AddRoutingPolicy(nodeName, policyName string, ipv4, ipv6 []str
 
 }
 
-func (r *Devices) AddBGPVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN) {
+func (r *Devices) AddNetworkInstanceprotocolsBGPVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
@@ -221,7 +231,7 @@ func (r *Devices) AddBGPVPN(nodeName, niName string, x *netwv1alpha1.NetworkDevi
 	bgpvpn.ImportRouteTarget = x.ImportRouteTarget
 }
 
-func (r *Devices) AddBGPEVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN) {
+func (r *Devices) AddNetworkInstanceprotocolsBGPEVPN(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {

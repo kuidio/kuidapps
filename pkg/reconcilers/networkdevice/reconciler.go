@@ -137,7 +137,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if err != nil {
 		// we need networkconfig for the default network
 		// we do not release resources at this stage -> decision do far is no
-		r.handleError(ctx, cr, "network config not provided, needed for a default network", nil)
+		r.handleError(ctx, cr, "cannot reconcile a network without a default network config", nil)
 		//return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		return ctrl.Result{Requeue: true}, nil
 	}

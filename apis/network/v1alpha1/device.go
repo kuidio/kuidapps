@@ -228,6 +228,7 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdatePeerGroup(new *Netw
 	}
 	x := r.GetOrCreatePeerGroup(new.Name)
 	x.AddressFamilies = new.AddressFamilies
+	x.RouteReflector = new.RouteReflector
 }
 
 func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreatePeerGroup(name string) *NetworkDeviceNetworkInstanceProtocolBGPPeerGroup {
@@ -243,7 +244,7 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreatePeerGroup(name stri
 	return newPeerGroup
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdateNeighbor(new *NetworkDeviceNetworkInstanceProtocolBGPNeighbor) {
+func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdateNetworkInstanceProtocolBGNeighbor(new *NetworkDeviceNetworkInstanceProtocolBGPNeighbor) {
 	if r.Neighbors == nil {
 		r.Neighbors = []*NetworkDeviceNetworkInstanceProtocolBGPNeighbor{}
 	}
@@ -253,7 +254,7 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdateNeighbor(new *Netwo
 	if new.PeerAddress == "" {
 		return
 	}
-	x := r.GetOrCreateNeighbor(new.PeerAddress)
+	x := r.GetOrCreateNetworkInstanceProtocolBGPNeighbor(new.PeerAddress)
 	x.LocalAS = new.LocalAS
 	x.LocalAddress = new.LocalAddress
 	x.PeerAS = new.PeerAS
@@ -262,7 +263,7 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdateNeighbor(new *Netwo
 
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNeighbor(peerAddress string) *NetworkDeviceNetworkInstanceProtocolBGPNeighbor {
+func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNetworkInstanceProtocolBGPNeighbor(peerAddress string) *NetworkDeviceNetworkInstanceProtocolBGPNeighbor {
 	for _, neighbor := range r.Neighbors {
 		if neighbor.PeerAddress == peerAddress {
 			return neighbor
@@ -273,6 +274,21 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNeighbor(peerAddres
 	}
 	r.Neighbors = append(r.Neighbors, newNeighbor)
 	return newNeighbor
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNetworkInstanceProtocolBGPDynamicNeighbors() *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors {
+	if r.DynamicNeighbors == nil {
+		r.DynamicNeighbors = &NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors{} 
+	}
+	return r.DynamicNeighbors
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrCreateNetworkInstanceProtocolBGPDynamicNeighbors(new *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors)  {
+	x := r.GetOrCreateNetworkInstanceProtocolBGPDynamicNeighbors()
+	x.PeerAS = new.PeerAS
+	x.PeerGroup = new.PeerGroup
+	x.PeerPrefixes = new.PeerPrefixes
+
 }
 
 func (r *Device) AddOrUpdateRoutingPolicy(new *NetworkDeviceRoutingPolicy) {

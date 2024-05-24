@@ -134,6 +134,22 @@ spec:
                             as:
                               format: int32
                               type: integer
+                            dynamicNeighbors:
+                              properties:
+                                peerAS:
+                                  format: int32
+                                  type: integer
+                                peerGroup:
+                                  type: string
+                                peerPrefixes:
+                                  items:
+                                    type: string
+                                  type: array
+                              required:
+                              - peerAS
+                              - peerGroup
+                              - peerPrefixes
+                              type: object
                             neighbors:
                               items:
                                 properties:
@@ -166,6 +182,13 @@ spec:
                                     type: array
                                   name:
                                     type: string
+                                  routeReflector:
+                                    properties:
+                                      clusterID:
+                                        type: string
+                                    required:
+                                    - clusterID
+                                    type: object
                                 required:
                                 - name
                                 type: object

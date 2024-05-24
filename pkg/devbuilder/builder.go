@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/henderiw/iputil"
+	"github.com/henderiw/logger/log"
 	"github.com/kuidio/kuid/apis/backend"
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
@@ -55,11 +56,8 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 
 		for _, n := range nodes {
 			nodeName := n.Spec.NodeID.Node
-			//nodeID := infrabev1alpha1.String2NodeGroupNodeID(n.GetName())
-			//nodeName := nodeID.Node
 
 			r.devices.AddProvider(nodeName, n.Spec.Provider)
-			// TODO check encap
 			if nc.IsVXLANEnabled() {
 				r.devices.AddTunnelInterface(nodeName, &netwv1alpha1.NetworkDeviceTunnelInterface{
 					Name: VXLANInterfaceName,
@@ -134,17 +132,15 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 							ID:   id,
 						})
 					}
-
-					r.devices.AddBGPEVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN{
+					r.devices.AddNetworkInstanceprotocolsBGPEVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN{
 						EVI:            id,
 						ECMP:           2,
 						VXLANInterface: VXLANInterfaceName,
 					})
-					r.devices.AddBGPVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN{
+					r.devices.AddNetworkInstanceprotocolsBGPVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN{
 						ImportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
 						ExportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
 					})
-
 					continue
 				}
 			}
@@ -316,7 +312,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nc 
 				if nc.IsIPv4Enabled() {
 					pii, _ := iputil.New(usedipv4[i])
 					pij, _ := iputil.New(usedipv4[j])
-					r.devices.AddBGPNeighbor(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
+					r.devices.AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
 						LocalAddress: pii.GetIPAddress().String(),
 						PeerAddress:  pij.GetIPAddress().String(),
 						PeerGroup:    BGPUnderlayPeerGroupName,
@@ -328,7 +324,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nc 
 				if nc.IsIPv6Enabled() {
 					pii, _ := iputil.New(usedipv6[i])
 					pij, _ := iputil.New(usedipv6[j])
-					r.devices.AddBGPNeighbor(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
+					r.devices.AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
 						LocalAddress: pii.GetIPAddress().String(),
 						PeerAddress:  pij.GetIPAddress().String(),
 						PeerGroup:    BGPUnderlayPeerGroupName,
@@ -337,7 +333,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nc 
 					})
 					afs = append(afs, "ipv6-unicast")
 				}
-				r.devices.AddBGPPeerGroup(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+				r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 					Name:            BGPUnderlayPeerGroupName,
 					AddressFamilies: afs,
 				})
@@ -348,25 +344,30 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nc 
 }
 
 func (r *DeviceBuilder) UpdateProtocols(ctx context.Context, nodeName, networkName string, nc *netwv1alpha1.NetworkConfig, nodeLabels map[string]string) error {
+	log := log.FromContext(ctx)
 	//nodeID := infrabev1alpha1.String2NodeGroupNodeID(n.GetName())
 	//nodeName := nodeID.Node
 	//networkName := cr.GetNetworkName()
 	if nc.IsIBGPEnabled() {
-		r.devices.AddBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+		r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 			Name:            BGPOverlayPeerGroupName,
-			AddressFamilies: []string{"evpn"},
+			AddressFamilies: nc.GetOverlayProtocols(),
 		})
 
-		for _, rrNodeName := range nc.Spec.Protocols.IBGP.RouteReflectors {
-			peerIP, err := r.getIPClaim(ctx, types.NamespacedName{
+		fullNodeName := fmt.Sprintf("%s.%s", r.nsn.Name, nodeName)
+		fullNodeNameIPv4 := fmt.Sprintf("%s.ipv4", fullNodeName)
+		fullNodeNameIPv6 := fmt.Sprintf("%s.ipv6", fullNodeName)
+
+		for _, rrNodeNameAF := range nc.Spec.Protocols.IBGP.RouteReflectors {
+			rrIP, err := r.getIPClaim(ctx, types.NamespacedName{
 				Namespace: r.nsn.Namespace,
-				Name:      rrNodeName,
+				Name:      rrNodeNameAF,
 			})
 			if err != nil {
 				return err
 			}
 
-			peerPrefix, _ := iputil.New(peerIP)
+			peerPrefix, _ := iputil.New(rrIP)
 
 			localAddress := ""
 			systemPrefix := r.devices.GetSystemIP(nodeName, SystemInterfaceName, 0, peerPrefix.IsIpv4())
@@ -380,12 +381,30 @@ func (r *DeviceBuilder) UpdateProtocols(ctx context.Context, nodeName, networkNa
 				return nil
 			}
 			if netwworkDeviceType == "edge" || netwworkDeviceType == "pe" {
-				r.devices.AddBGPNeighbor(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
+				r.devices.AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor{
 					LocalAddress: localAddress,
 					PeerAddress:  peerPrefix.GetIPAddress().String(),
 					PeerGroup:    BGPOverlayPeerGroupName,
-					LocalAS:      *nc.Spec.Protocols.IBGP.AS,
-					PeerAS:       *nc.Spec.Protocols.IBGP.AS,
+					LocalAS:      nc.GetIBGPAS(),
+					PeerAS:       nc.GetIBGPAS(),
+				})
+			}
+
+			log.Info("rrNodeName", "rrNodeNameAF", rrNodeNameAF, "ipv4", fullNodeNameIPv4)
+			
+			if rrNodeNameAF == fullNodeNameIPv4 || rrNodeNameAF == fullNodeNameIPv6 {
+				// this is the rr - we add the peer group again as this cannot harm
+				r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+					Name:            BGPOverlayPeerGroupName,
+					AddressFamilies: nc.GetOverlayProtocols(),
+					RouteReflector: &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector{
+						ClusterID: rrIP,
+					},
+				})
+				r.devices.AddAddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors{
+					PeerPrefixes: nc.GetLoopbackPrefixes(),
+					PeerAS:       nc.GetIBGPAS(),
+					PeerGroup:    BGPOverlayPeerGroupName,
 				})
 			}
 		}
@@ -395,7 +414,7 @@ func (r *DeviceBuilder) UpdateProtocols(ctx context.Context, nodeName, networkNa
 
 func (r *DeviceBuilder) UpdateRoutingPolicies(ctx context.Context, nodeName string, isDefaultNetwork bool, nc *netwv1alpha1.NetworkConfig) error {
 	if isDefaultNetwork {
-		ipv4, ipv6 := nc.GetLoopbackPrefixes()
+		ipv4, ipv6 := nc.GetLoopbackPrefixesPerAF()
 		r.devices.AddRoutingPolicy(nodeName, "underlay", ipv4, ipv6)
 		r.devices.AddRoutingPolicy(nodeName, "overlay", nil, nil)
 	}

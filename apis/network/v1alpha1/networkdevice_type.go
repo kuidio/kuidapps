@@ -109,10 +109,11 @@ type NetworkDeviceNetworkInstanceProtocols struct {
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGP struct {
-	AS         uint32                                              `json:"as" yaml:"as" protobuf:"bytes,1,opt,name=as"`
-	RouterID   string                                              `json:"routerID" yaml:"routerID" protobuf:"bytes,2,opt,name=routerID"`
-	PeerGroups []*NetworkDeviceNetworkInstanceProtocolBGPPeerGroup `json:"peerGroups,omitempty" yaml:"peerGroups,omitempty" protobuf:"bytes,3,opt,name=peerGroups"`
-	Neighbors  []*NetworkDeviceNetworkInstanceProtocolBGPNeighbor  `json:"neighbors,omitempty" yaml:"neighbors,omitempty" protobuf:"bytes,4,opt,name=neighbors"`
+	AS               uint32                                                   `json:"as" yaml:"as" protobuf:"bytes,1,opt,name=as"`
+	RouterID         string                                                   `json:"routerID" yaml:"routerID" protobuf:"bytes,2,opt,name=routerID"`
+	PeerGroups       []*NetworkDeviceNetworkInstanceProtocolBGPPeerGroup      `json:"peerGroups,omitempty" yaml:"peerGroups,omitempty" protobuf:"bytes,3,opt,name=peerGroups"`
+	Neighbors        []*NetworkDeviceNetworkInstanceProtocolBGPNeighbor       `json:"neighbors,omitempty" yaml:"neighbors,omitempty" protobuf:"bytes,4,opt,name=neighbors"`
+	DynamicNeighbors *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors `json:"dynamicNeighbors,omitempty" yaml:"dynamicNeighbors,omitempty" protobuf:"bytes,5,opt,name=dynamicNeighbors"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPEVPN struct {
@@ -127,16 +128,27 @@ type NetworkDeviceNetworkInstanceProtocolBGPVPN struct {
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPPeerGroup struct {
-	Name            string   `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
-	AddressFamilies []string `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,2,rep,name=addressFamilies"`
+	Name            string                                                          `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
+	AddressFamilies []string                                                        `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,2,rep,name=addressFamilies"`
+	RouteReflector  *NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector `json:"routeReflector,omitempty" yaml:"routeReflector,omitempty" protobuf:"bytes,3,opt,name=routeReflector"`
+}
+
+type NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector struct {
+	ClusterID string `json:"clusterID" yaml:"clusterID" protobuf:"bytes,1,opt,name=clusterID"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPNeighbor struct {
 	PeerAddress  string `json:"peerAddress" yaml:"peerAddress" protobuf:"bytes,1,opt,name=peerAddress"`
 	PeerAS       uint32 `json:"peerAS" yaml:"peerAS" protobuf:"bytes,2,opt,name=peerAS"`
-	PeerGroup    string `json:"peerGroup" yaml:"peerGroup" protobuf:"bytes,2,opt,name=peerGroup"`
-	LocalAS      uint32 `json:"localAS" yaml:"localAS" protobuf:"bytes,2,opt,name=localAS"`
-	LocalAddress string `json:"localAddress" yaml:"localAddress" protobuf:"bytes,2,opt,name=localAddress"`
+	PeerGroup    string `json:"peerGroup" yaml:"peerGroup" protobuf:"bytes,3,opt,name=peerGroup"`
+	LocalAS      uint32 `json:"localAS" yaml:"localAS" protobuf:"bytes,4,opt,name=localAS"`
+	LocalAddress string `json:"localAddress" yaml:"localAddress" protobuf:"bytes,5,opt,name=localAddress"`
+}
+
+type NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors struct {
+	PeerPrefixes []string `json:"peerPrefixes" yaml:"peerPrefixes" protobuf:"bytes,1,opt,name=peerPrefixes"`
+	PeerAS       uint32   `json:"peerAS" yaml:"peerAS" protobuf:"bytes,2,opt,name=peerAS"`
+	PeerGroup    string   `json:"peerGroup" yaml:"peerGroup" protobuf:"bytes,3,opt,name=peerGroup"`
 }
 
 type NetworkDeviceSystem struct {
@@ -144,7 +156,7 @@ type NetworkDeviceSystem struct {
 }
 
 type NetworkDeviceSystemProtocols struct {
-	BGPVPN *NetworkDeviceSystemProtocolsBGPVPN `json:"bgpVPN,omitempty" yaml:"bgpVPN,omitempty" protobuf:"bytes,7,opt,name=bgpVPN"`
+	BGPVPN  *NetworkDeviceSystemProtocolsBGPVPN  `json:"bgpVPN,omitempty" yaml:"bgpVPN,omitempty" protobuf:"bytes,7,opt,name=bgpVPN"`
 	BGPEVPN *NetworkDeviceSystemProtocolsBGPEVPN `json:"bgpEVPN,omitempty" yaml:"bgpEVPN,omitempty" protobuf:"bytes,7,opt,name=bgpEVPN"`
 }
 
@@ -153,7 +165,6 @@ type NetworkDeviceSystemProtocolsBGPVPN struct {
 
 type NetworkDeviceSystemProtocolsBGPEVPN struct {
 }
-
 
 // NetworkDeviceStatus defines the observed state of NetworkDevice
 type NetworkDeviceStatus struct {

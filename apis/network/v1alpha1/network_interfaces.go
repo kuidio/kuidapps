@@ -74,8 +74,5 @@ func (r *Network) IsDefaultNetwork() bool {
 
 
 func (r *NetworkInterface) IsDynamic() bool {
-	if r.Selector != nil {
-		return true
-	}
-	return false
+	return r.Selector != nil 
 }

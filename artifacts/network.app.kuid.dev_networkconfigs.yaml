@@ -54,7 +54,7 @@ spec:
                 - ipv4only
                 - ipv6only
                 type: string
-              encapsultation:
+              encapsulation:
                 description: Encapsultation define the encapsulation parameters
                 properties:
                   mpls:
