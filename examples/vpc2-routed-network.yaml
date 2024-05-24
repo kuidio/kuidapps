@@ -13,12 +13,12 @@ spec:
       region: region1
       site: site1
       addresses:
-      - address: 10.0.0.1/24
+      - address: 10.1.1.1/24
     - endpoint: e1-1
       node: edge02
       region: region1
       site: site1
       addresses:
-      - address: 10.0.0.2/24
+      - address: 10.2.2.1/24
   
   
