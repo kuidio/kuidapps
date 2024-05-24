@@ -54,6 +54,26 @@ spec:
                 - ipv4only
                 - ipv6only
                 type: string
+              encapsultation:
+                description: Encapsultation define the encapsulation parameters
+                properties:
+                  mpls:
+                    properties:
+                      ldp:
+                        type: object
+                      rsvp:
+                        type: object
+                      sr:
+                        type: object
+                    type: object
+                  srv6:
+                    properties:
+                      ldp:
+                        type: object
+                    type: object
+                  vxlan:
+                    type: object
+                type: object
               prefixes:
                 description: |-
                   Prefixes defines the prefixes belonging to this network config
@@ -76,12 +96,14 @@ spec:
               protocols:
                 description: Protocols define the network wide protocol parameters
                 properties:
+                  bgpEVPN:
+                    type: object
+                  bgpVPN:
+                    type: object
                   ebgp:
                     properties:
                       asPool:
                         type: string
-                    type: object
-                  evpn:
                     type: object
                   ibgp:
                     properties:
@@ -94,8 +116,6 @@ spec:
                         items:
                           type: string
                         type: array
-                    type: object
-                  ipvpn:
                     type: object
                   isis:
                     type: object

@@ -54,6 +54,26 @@ spec:
                 - ipv4only
                 - ipv6only
                 type: string
+              encapsultation:
+                description: Encapsultation define the encapsulation parameters
+                properties:
+                  mpls:
+                    properties:
+                      ldp:
+                        type: object
+                      rsvp:
+                        type: object
+                      sr:
+                        type: object
+                    type: object
+                  srv6:
+                    properties:
+                      ldp:
+                        type: object
+                    type: object
+                  vxlan:
+                    type: object
+                type: object
               prefixes:
                 description: |-
                   Prefixes defines the prefixes belonging to this network config
@@ -76,12 +96,14 @@ spec:
               protocols:
                 description: Protocols define the network wide protocol parameters
                 properties:
+                  bgpEVPN:
+                    type: object
+                  bgpVPN:
+                    type: object
                   ebgp:
                     properties:
                       asPool:
                         type: string
-                    type: object
-                  evpn:
                     type: object
                   ibgp:
                     properties:
@@ -94,8 +116,6 @@ spec:
                         items:
                           type: string
                         type: array
-                    type: object
-                  ipvpn:
                     type: object
                   isis:
                     type: object
@@ -232,7 +252,7 @@ spec:
             description: NetworkDeviceDeviceSpec defines the desired state of NetworkDevice
             properties:
               interfaces:
-                description: Interfaces defines the interfaces of the device config
+                description: Interfaces defines the interfaces for the device config
                 items:
                   description: TODO LAG, etc
                   properties:
@@ -290,7 +310,7 @@ spec:
                   type: object
                 type: array
               networkInstances:
-                description: NetworkInstances defines the network instances of the device config
+                description: NetworkInstances defines the network instances for the device config
                 items:
                   properties:
                     interfaces:
@@ -406,7 +426,7 @@ spec:
                 description: Provider defines the provider implementing this resource.
                 type: string
               routingPolicies:
-                description: RoutingPolicies defines the routingPolicies of the device config
+                description: RoutingPolicies defines the routingPolicies for the device config
                 items:
                   properties:
                     ipv4Prefixes:
@@ -422,7 +442,7 @@ spec:
                   type: object
                 type: array
               system:
-                description: System defines the system parameters of the device config
+                description: System defines the system parameters for the device config
                 properties:
                   protocols:
                     properties:
@@ -435,7 +455,7 @@ spec:
               topology:
                 type: string
               tunnelInterfaces:
-                description: TunnelInterfaces defines the unnelInterfaces of the device config
+                description: TunnelInterfaces defines the unnelInterfaces for the device config
                 items:
                   properties:
                     name:

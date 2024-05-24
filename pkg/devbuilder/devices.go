@@ -233,3 +233,13 @@ func (r *Devices) AddBGPEVPN(nodeName, niName string, x *netwv1alpha1.NetworkDev
 	bgpevpn.EVI = x.EVI
 	bgpevpn.VXLANInterface = x.VXLANInterface
 }
+
+func (r *Devices) AddSystemProtocolsBGPVPN(nodeName string, x *netwv1alpha1.NetworkDeviceSystemProtocolsBGPVPN) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.GetOrCreateSystem().GetOrCreateSystemProtocols().GetOrCreateSystemProtocolsBGPVPN()
+}

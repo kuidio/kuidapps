@@ -50,7 +50,7 @@ spec:
             description: NetworkDeviceDeviceSpec defines the desired state of NetworkDevice
             properties:
               interfaces:
-                description: Interfaces defines the interfaces of the device config
+                description: Interfaces defines the interfaces for the device config
                 items:
                   description: TODO LAG, etc
                   properties:
@@ -108,7 +108,7 @@ spec:
                   type: object
                 type: array
               networkInstances:
-                description: NetworkInstances defines the network instances of the
+                description: NetworkInstances defines the network instances for the
                   device config
                 items:
                   properties:
@@ -225,7 +225,7 @@ spec:
                 description: Provider defines the provider implementing this resource.
                 type: string
               routingPolicies:
-                description: RoutingPolicies defines the routingPolicies of the device
+                description: RoutingPolicies defines the routingPolicies for the device
                   config
                 items:
                   properties:
@@ -242,7 +242,7 @@ spec:
                   type: object
                 type: array
               system:
-                description: System defines the system parameters of the device config
+                description: System defines the system parameters for the device config
                 properties:
                   protocols:
                     properties:
@@ -255,8 +255,8 @@ spec:
               topology:
                 type: string
               tunnelInterfaces:
-                description: TunnelInterfaces defines the unnelInterfaces of the device
-                  config
+                description: TunnelInterfaces defines the unnelInterfaces for the
+                  device config
                 items:
                   properties:
                     name:

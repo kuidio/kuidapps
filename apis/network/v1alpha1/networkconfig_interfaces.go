@@ -429,3 +429,7 @@ func (r *NetworkConfig) ISSRv6Enabled() bool {
 func (r *NetworkConfig) ISSRv6USIDEnabled() bool {
 	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.SRV6 != nil && r.Spec.Encapsultation.SRV6.MicroSID != nil
 }
+
+func (r *NetworkConfig) ISBGPEVPNEnabled() bool {
+	return r.Spec.Protocols != nil && r.Spec.Protocols.BGPEVPN != nil
+}

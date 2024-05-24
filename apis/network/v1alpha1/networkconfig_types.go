@@ -81,12 +81,12 @@ type NetworkConfigEncapsulationMPLSSRv6MicroSID struct {
 }
 
 type NetworkConfigProtocols struct {
-	OSPF  *NetworkConfigProtocolsOSPF  `json:"ospf,omitempty" yaml:"ospf,omitempty" protobuf:"bytes,1,opt,name=ospf"`
-	ISIS  *NetworkConfigProtocolsISIS  `json:"isis,omitempty" yaml:"isis,omitempty" protobuf:"bytes,2,opt,name=isis"`
-	IBGP  *NetworkConfigProtocolsIBGP  `json:"ibgp,omitempty" yaml:"ibgp,omitempty" protobuf:"bytes,3,opt,name=ibgp"`
-	EBGP  *NetworkConfigProtocolsEBGP  `json:"ebgp,omitempty" yaml:"ebgp,omitempty" protobuf:"bytes,4,opt,name=ebgp"`
-	EVPN  *NetworkConfigProtocolsEVPN  `json:"evpn,omitempty" yaml:"evpn,omitempty" protobuf:"bytes,5,opt,name=evpn"`
-	IPVPN *NetworkConfigProtocolsIPVPN `json:"ipvpn,omitempty" yaml:"ipvpn,omitempty" protobuf:"bytes,6,opt,name=ipvpn"`
+	OSPF    *NetworkConfigProtocolsOSPF    `json:"ospf,omitempty" yaml:"ospf,omitempty" protobuf:"bytes,1,opt,name=ospf"`
+	ISIS    *NetworkConfigProtocolsISIS    `json:"isis,omitempty" yaml:"isis,omitempty" protobuf:"bytes,2,opt,name=isis"`
+	IBGP    *NetworkConfigProtocolsIBGP    `json:"ibgp,omitempty" yaml:"ibgp,omitempty" protobuf:"bytes,3,opt,name=ibgp"`
+	EBGP    *NetworkConfigProtocolsEBGP    `json:"ebgp,omitempty" yaml:"ebgp,omitempty" protobuf:"bytes,4,opt,name=ebgp"`
+	BGPEVPN *NetworkConfigProtocolsBGPEVPN `json:"bgpEVPN,omitempty" yaml:"bgpEVPN,omitempty" protobuf:"bytes,5,opt,name=bgpEVPN"`
+	IPVPN   *NetworkConfigProtocolsIPVPN   `json:"bgpVPN,omitempty" yaml:"bgpVPN,omitempty" protobuf:"bytes,6,opt,name=bgpVPN"`
 }
 
 type NetworkConfigProtocolsOSPF struct {
@@ -105,7 +105,7 @@ type NetworkConfigProtocolsEBGP struct {
 	ASPool *string `json:"asPool,omitempty" yaml:"asPool,omitempty" protobuf:"bytes,3,opt,name=asPool"`
 }
 
-type NetworkConfigProtocolsEVPN struct {
+type NetworkConfigProtocolsBGPEVPN struct {
 }
 
 type NetworkConfigProtocolsIPVPN struct {

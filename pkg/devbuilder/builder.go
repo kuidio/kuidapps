@@ -51,6 +51,7 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 		if err != nil {
 			return err
 		}
+
 		for _, n := range nodes {
 			nodeName := n.Spec.NodeID.Node
 			//nodeID := infrabev1alpha1.String2NodeGroupNodeID(n.GetName())
@@ -58,9 +59,15 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 
 			r.devices.AddProvider(nodeName, n.Spec.Provider)
 			// TODO check encap
-			r.devices.AddTunnelInterface(nodeName, &netwv1alpha1.NetworkDeviceTunnelInterface{
-				Name: VXLANInterfaceName,
-			})
+			if nc.IsVXLANEnabled() {
+				r.devices.AddTunnelInterface(nodeName, &netwv1alpha1.NetworkDeviceTunnelInterface{
+					Name: VXLANInterfaceName,
+				})
+			}
+			if nc.ISBGPEVPNEnabled() {
+				r.devices.AddSystemProtocolsBGPVPN(nodeName, &netwv1alpha1.NetworkDeviceSystemProtocolsBGPVPN{})
+			}
+
 			r.UpdateNetworkInstance(ctx, nodeName, niName, netwv1alpha1.NetworkInstanceType_DEFAULT)
 			r.UpdateRoutingPolicies(ctx, nodeName, cr.IsDefaultNetwork(), nc)
 			if err := r.UpdateNodeAS(ctx, nodeName, niName, nc); err != nil {
