@@ -9,6 +9,7 @@ import (
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -108,10 +109,13 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 						return err
 					}
 					r.devices.AddProvider(itfce.Node, ep.Spec.Provider)
-					r.devices.AddTunnelSubInterface(nodeName, VXLANInterfaceName, &netwv1alpha1.NetworkDeviceTunnelInterfaceSubInterface{
-						ID:   id,
-						Type: netwv1alpha1.SubInterfaceType_Bridged,
-					})
+					r.devices.AddSubInterface(nodeName, ep.Spec.Endpoint, &netwv1alpha1.NetworkDeviceInterfaceSubInterface{
+						PeerName: "customer",
+						ID:       id,
+						Type:     netwv1alpha1.SubInterfaceType_Bridged,
+						VLAN:     ptr.To[uint32](id),
+					}, nil, nil)
+
 					r.devices.AddNetworkInstance(nodeName, &netwv1alpha1.NetworkDeviceNetworkInstance{
 						Name: bdName,
 						Type: netwv1alpha1.NetworkInstanceType_MACVRF,
@@ -120,10 +124,17 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 						Name: ep.Spec.Endpoint,
 						ID:   id,
 					})
-					r.devices.AddNetworkInstanceSubInterfaceVXLAN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
-						Name: VXLANInterfaceName,
-						ID:   id,
-					})
+					if nc.IsVXLANEnabled() {
+						r.devices.AddTunnelSubInterface(nodeName, VXLANInterfaceName, &netwv1alpha1.NetworkDeviceTunnelInterfaceSubInterface{
+							ID:   id,
+							Type: netwv1alpha1.SubInterfaceType_Bridged,
+						})
+						r.devices.AddNetworkInstanceSubInterfaceVXLAN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+							Name: VXLANInterfaceName,
+							ID:   id,
+						})
+					}
+
 					r.devices.AddBGPEVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPEVPN{
 						EVI:            id,
 						ECMP:           2,
