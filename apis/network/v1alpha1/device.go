@@ -302,3 +302,31 @@ func (r *Device) GetOrCreateRoutingPolicy(name string) *NetworkDeviceRoutingPoli
 	r.nd.Spec.RoutingPolicies = append(r.nd.Spec.RoutingPolicies, newrp)
 	return newrp
 }
+
+func (r *Device) GetOrCreateSystem() *NetworkDeviceSystem {
+	if r.nd.Spec.System == nil {
+		r.nd.Spec.System = &NetworkDeviceSystem{}
+	}
+	return r.nd.Spec.System
+}
+
+func (r *NetworkDeviceSystem) GetOrCreateSystemProtocols() *NetworkDeviceSystemProtocols {
+	if r.Protocols == nil {
+		r.Protocols = &NetworkDeviceSystemProtocols{}
+	}
+	return r.Protocols
+}
+
+func (r *NetworkDeviceSystemProtocols) GetOrCreateSystemProtocolsBGPEVPN() *NetworkDeviceSystemProtocolsBGPEVPN {
+	if r.BGPEVPN == nil {
+		r.BGPEVPN = &NetworkDeviceSystemProtocolsBGPEVPN{}
+	}
+	return r.BGPEVPN
+}
+
+func (r *NetworkDeviceSystemProtocols) GetOrCreateSystemProtocolsBGPVPN() *NetworkDeviceSystemProtocolsBGPVPN {
+	if r.BGPVPN == nil {
+		r.BGPVPN = &NetworkDeviceSystemProtocolsBGPVPN{}
+	}
+	return r.BGPVPN
+}
