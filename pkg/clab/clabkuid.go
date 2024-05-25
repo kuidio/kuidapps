@@ -39,6 +39,11 @@ func (r *clabkuid) GetNodes(ctx context.Context) []backend.GenericObject {
 		nodeKind, nodeType := r.cfg.Topology.GetNodeKindType(nodeName)
 		nodeGroupNodeID := r.getNodeGroupNodeID(nodeName, n.Labels)
 
+		if len(n.Labels) != 0 {
+			if _, ok := n.Labels[backend.KuidINVExclude]; ok {
+				continue
+			}
+		}
 		labels := map[string]string{
 			backend.KuidINVNodeTypeKey: nodeType,
 		}
@@ -71,6 +76,11 @@ func (r *clabkuid) GetLinks(ctx context.Context) []backend.GenericObject {
 	log := log.FromContext(ctx)
 	links := make([]backend.GenericObject, 0, len(r.cfg.Topology.Links))
 	for _, l := range r.cfg.Topology.Links {
+		if len(l.Labels) != 0 {
+			if _, ok := l.Labels[backend.KuidINVExclude]; ok {
+				continue
+			}
+		}
 		eps := r.getEndpoints(ctx, l)
 		if eps == nil {
 			return nil
