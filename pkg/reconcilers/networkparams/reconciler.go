@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/henderiw/logger/log"
@@ -153,16 +152,17 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	defaultNetwork := isDefaultNetwork(cr.Name)
 	nc, err := r.getNetworkConfig(ctx, cr)
 	if err != nil {
-		// we need networkconfig for the default network
-		// we do not release resources at this stage -> decision do far is no
-		r.handleError(ctx, cr, "cannot reconcile a network without a network config", nil)
-		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		if cr.IsDefaultNetwork() {
+			// we need networkconfig for the default network
+			// we do not release resources at this stage -> decision do far is no
+			r.handleError(ctx, cr, "cannot reconcile a network without a network config", nil)
+			return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		}
 	}
 
-	if defaultNetwork {
+	if cr.IsDefaultNetwork() {
 		if err := r.applyDefaultNetwork(ctx, cr, nc); err != nil {
 			// The delete is not needed as the condition will indicate this is not ready and the resources will not be picked
 			r.handleError(ctx, cr, "cannot apply resource", err)
@@ -270,18 +270,6 @@ func (r *reconciler) getNetworkConfig(ctx context.Context, cr *netwv1alpha1.Netw
 		return nil, err
 	}
 	return o, nil
-}
-
-func isDefaultNetwork(crName string) bool {
-	parts := strings.Split(crName, ".")
-	networkName := crName
-	if len(parts) > 0 {
-		networkName = parts[len(parts)-1]
-	}
-	if networkName == "default" {
-		return true
-	}
-	return false
 }
 
 func (r *reconciler) GetNodes(ctx context.Context, cr *netwv1alpha1.Network) ([]*infrabev1alpha1.Node, error) {
