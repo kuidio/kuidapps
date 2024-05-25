@@ -50,3 +50,6 @@ rules:
 - apiGroups: [network.app.kuid.dev]
   resources: [networkdevices, networkdevices/status]
   verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [config.sdcio.dev]
+  resources: [configs, configs/status]
+  verbs: [get, watch, list, create, update, patch, delete]

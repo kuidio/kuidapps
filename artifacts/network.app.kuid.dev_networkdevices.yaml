@@ -369,6 +369,11 @@ spec:
                   - type
                   type: object
                 type: array
+              providerConfig:
+                description: ProviderConfig defines the configs based on the provider
+                  processing
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
             type: object
         type: object
     served: true

@@ -29,11 +29,12 @@ import (
 	genidbev1alpha1 "github.com/kuidio/kuid/apis/backend/genid/v1alpha1"
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	ipambev1alpha1 "github.com/kuidio/kuid/apis/backend/ipam/v1alpha1"
-	topov1alpha1 "github.com/kuidio/kuidapps/apis/topo/v1alpha1"
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
+	topov1alpha1 "github.com/kuidio/kuidapps/apis/topo/v1alpha1"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/all"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
+	configv1alpha1 "github.com/sdcio/config-server/apis/config/v1alpha1"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -76,6 +77,7 @@ func main() {
 		asbev1alpha1.AddToScheme,
 		ipambev1alpha1.AddToScheme,
 		netwv1alpha1.AddToScheme,
+		configv1alpha1.AddToScheme,
 	}) {
 		if err := api(runScheme); err != nil {
 			log.Error("cannot add scheme", "err", err)

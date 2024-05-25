@@ -23,8 +23,9 @@ import (
 
 const (
 	// ConditionTypeReady represents the resource ready condition
-	ConditionTypeNetworkParamReady          conditionv1alpha1.ConditionType = "NetworkPararmReady"
-	ConditionTypeNetworkDeviceReady         conditionv1alpha1.ConditionType = "NetworkDeviceReady"
+	ConditionTypeNetworkParamReady  conditionv1alpha1.ConditionType = "NetworkPararmReady"
+	ConditionTypeNetworkDeviceReady conditionv1alpha1.ConditionType = "NetworkDeviceReady"
+	ConditionTypeNetworkDeployReady conditionv1alpha1.ConditionType = "NetworkDeployReady"
 )
 
 var ChildConditions = []conditionv1alpha1.ConditionType{
@@ -72,7 +73,7 @@ func NetworkParamFailed(msg string) conditionv1alpha1.Condition {
 func NetworkDeviceReady() conditionv1alpha1.Condition {
 	return conditionv1alpha1.Condition{
 		Condition: metav1.Condition{
-			Type:               string(ConditionTypeNetworkParamReady),
+			Type:               string(ConditionTypeNetworkDeviceReady),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(ConditionReasonReady),
@@ -84,7 +85,7 @@ func NetworkDeviceReady() conditionv1alpha1.Condition {
 func NetworkDeviceProcessing(msg string) conditionv1alpha1.Condition {
 	return conditionv1alpha1.Condition{
 		Condition: metav1.Condition{
-			Type:               string(ConditionTypeNetworkParamReady),
+			Type:               string(ConditionTypeNetworkDeviceReady),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Message:            msg,
@@ -98,6 +99,44 @@ func NetworkDeviceFailed(msg string) conditionv1alpha1.Condition {
 	return conditionv1alpha1.Condition{
 		Condition: metav1.Condition{
 			Type:               string(ConditionTypeNetworkParamReady),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(ConditionReasonFailed),
+			Message:            msg,
+		}}
+}
+
+// NetworkDeviceReady returns a condition that indicates the resource is
+// satofying this condition
+func NetworkDeployReady() conditionv1alpha1.Condition {
+	return conditionv1alpha1.Condition{
+		Condition: metav1.Condition{
+			Type:               string(ConditionTypeNetworkDeployReady),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(ConditionReasonReady),
+		}}
+}
+
+// NetworkDeployProcessing returns a condition that indicates the resource is
+// not satisfying this condition
+func NetworkDeployProcessing(msg string) conditionv1alpha1.Condition {
+	return conditionv1alpha1.Condition{
+		Condition: metav1.Condition{
+			Type:               string(ConditionTypeNetworkDeployReady),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Message:            msg,
+			Reason:             string(conditionv1alpha1.ConditionReasonProcessing),
+		}}
+}
+
+// NetworkDeployFailed returns a condition that indicates the resource is
+// not satisfying this condition
+func NetworkDeployFailed(msg string) conditionv1alpha1.Condition {
+	return conditionv1alpha1.Condition{
+		Condition: metav1.Condition{
+			Type:               string(ConditionTypeNetworkDeployReady),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(ConditionReasonFailed),

@@ -58,3 +58,7 @@ spec:
           value: "true"
         - name: ENABLE_NETWORKDEVICE
           value: "true"
+        - name: ENABLE_NETWORKPARAMS
+          value: "true"
+        - name: ENABLE_NETWORKDEPLOY
+          value: "true"

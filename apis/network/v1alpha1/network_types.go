@@ -103,7 +103,8 @@ type NetworkStatus struct {
 	// - a ready condition indicates the overall status of the resource
 	conditionv1alpha1.ConditionedStatus `json:",inline" yaml:",inline" protobuf:"bytes,1,opt,name=conditionedStatus"`
 
-	Devices []*NetworkStatusDeviceStatus `json:"devices,omitempty" yaml:"devices,omitempty" protobuf:"bytes,2,opt,name=devices"`
+	DevicesConfigStatus []*NetworkStatusDeviceStatus `json:"devicesConfigStatus,omitempty" yaml:"devicesConfigStatus,omitempty" protobuf:"bytes,2,opt,name=devicesConfigStatus"`
+	DevicesDeployStatus []*NetworkStatusDeviceStatus `json:"devicesDeployStatus,omitempty" yaml:"devicesDeployStatus,omitempty" protobuf:"bytes,3,opt,name=devicesDeployStatus"`
 }
 
 type NetworkStatusDeviceStatus struct {
@@ -119,7 +120,9 @@ type NetworkStatusDeviceStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
-// +kubebuilder:printcolumn:name="DEVICECONFIGREADY",type="string",JSONPath=".status.conditions[?(@.type=='DeviceConfigReady')].status"
+// +kubebuilder:printcolumn:name="PARAM-READY",type="string",JSONPath=".status.conditions[?(@.type=='NetworkPararmReady')].status"
+// +kubebuilder:printcolumn:name="DEVICES-READY",type="string",JSONPath=".status.conditions[?(@.type=='NetworkDeviceReady')].status"
+// +kubebuilder:printcolumn:name="DEPLOY-READY",type="string",JSONPath=".status.conditions[?(@.type=='NetworkDeployReady')].status"
 // +kubebuilder:resource:categories={kuid, net}
 // Network is the Network for the Network API
 // +k8s:openapi-gen=true

@@ -21,8 +21,14 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: READY
       type: string
-    - jsonPath: .status.conditions[?(@.type=='DeviceConfigReady')].status
-      name: DEVICECONFIGREADY
+    - jsonPath: .status.conditions[?(@.type=='NetworkPararmReady')].status
+      name: PARAM-READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='NetworkDeviceReady')].status
+      name: DEVICES-READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='NetworkDeployReady')].status
+      name: DEPLOY-READY
       type: string
     name: v1alpha1
     schema:
@@ -390,6 +396,34 @@ spec:
                   - reason
                   - status
                   - type
+                  type: object
+                type: array
+              devicesConfigStatus:
+                items:
+                  properties:
+                    node:
+                      type: string
+                    ready:
+                      type: boolean
+                    reason:
+                      type: string
+                  required:
+                  - node
+                  - ready
+                  type: object
+                type: array
+              devicesDeployStatus:
+                items:
+                  properties:
+                    node:
+                      type: string
+                    ready:
+                      type: boolean
+                    reason:
+                      type: string
+                  required:
+                  - node
+                  - ready
                   type: object
                 type: array
             type: object

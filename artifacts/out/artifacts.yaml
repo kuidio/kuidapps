@@ -568,6 +568,10 @@ spec:
                   - type
                   type: object
                 type: array
+              providerConfig:
+                description: ProviderConfig defines the configs based on the provider processing
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
             type: object
         type: object
     served: true
@@ -598,8 +602,14 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: READY
       type: string
-    - jsonPath: .status.conditions[?(@.type=='DeviceConfigReady')].status
-      name: DEVICECONFIGREADY
+    - jsonPath: .status.conditions[?(@.type=='NetworkPararmReady')].status
+      name: PARAM-READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='NetworkDeviceReady')].status
+      name: DEVICES-READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='NetworkDeployReady')].status
+      name: DEPLOY-READY
       type: string
     name: v1alpha1
     schema:
@@ -953,6 +963,34 @@ spec:
                   - type
                   type: object
                 type: array
+              devicesConfigStatus:
+                items:
+                  properties:
+                    node:
+                      type: string
+                    ready:
+                      type: boolean
+                    reason:
+                      type: string
+                  required:
+                  - node
+                  - ready
+                  type: object
+                type: array
+              devicesDeployStatus:
+                items:
+                  properties:
+                    node:
+                      type: string
+                    ready:
+                      type: boolean
+                    reason:
+                      type: string
+                  required:
+                  - node
+                  - ready
+                  type: object
+                type: array
             type: object
         type: object
     served: true
@@ -1160,6 +1198,10 @@ spec:
           value: "true"
         - name: ENABLE_NETWORKDEVICE
           value: "true"
+        - name: ENABLE_NETWORKPARAMS
+          value: "true"
+        - name: ENABLE_NETWORKDEPLOY
+          value: "true"
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1213,6 +1255,9 @@ rules:
   verbs: [get, watch, list, create, update, patch, delete]
 - apiGroups: [network.app.kuid.dev]
   resources: [networkdevices, networkdevices/status]
+  verbs: [get, watch, list, create, update, patch, delete]
+- apiGroups: [config.sdcio.dev]
+  resources: [configs, configs/status]
   verbs: [get, watch, list, create, update, patch, delete]
 
 ---
