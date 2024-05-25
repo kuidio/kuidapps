@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
 	"strings"
 
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
@@ -83,4 +84,54 @@ func (r *Network) IsBridgeDomainPresent(name string) bool {
 		}
 	}
 	return false
+}
+
+func (r *Network) DidAChildConditionFail() bool {
+	for _, childCondition := range ChildConditions {
+		if r.GetCondition(childCondition).Reason == string(ConditionReasonFailed) {
+			return true
+		}
+	}
+	return true
+}
+
+func (r *Network) GetFailedMessage() string {
+	var sb strings.Builder
+	first := true
+	for _, childCondition := range ChildConditions {
+		condition := r.GetCondition(childCondition)
+		if condition.Reason == string(ConditionReasonFailed) {
+			if first {
+				sb.WriteString(";")
+				first = false
+			}
+			sb.WriteString(fmt.Sprintf("condition: %s failed, msg %s", string(childCondition), condition.Message))
+		}
+	}
+	return sb.String()
+}
+
+func (r *Network) GetProcessingMessage() string {
+	var sb strings.Builder
+	first := true
+	for _, childCondition := range ChildConditions {
+		condition := r.GetCondition(childCondition)
+		if condition.Status == metav1.ConditionFalse {
+			if first {
+				sb.WriteString(";")
+				first = false
+			}
+			sb.WriteString(fmt.Sprintf("condition: %s still processing", string(childCondition)))
+		}
+	}
+	return sb.String()
+}
+
+func (r *Network) AreChildConditionsReady() bool {
+	for _, childCondition := range ChildConditions {
+		if r.GetCondition(childCondition).Status == metav1.ConditionFalse {
+			return false
+		}
+	}
+	return true
 }

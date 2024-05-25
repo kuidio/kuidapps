@@ -64,7 +64,7 @@ type NetworkInterface struct {
 	// A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
 	// defined Endpoint
 	BridgeDomain *string `json:"bridgeDomain,omitempty" yaml:"bridgeDomain,omitempty" protobuf:"bytes,1,opt,name=bridgeDomain"`
-	// Endpoint 
+	// Endpoint
 	EndPoint *string `json:"endpoint,omitempty" yaml:"endpoint,omitempty" protobuf:"bytes,2,opt,name=endpoint"`
 	// NodeID defines the node identifier
 	// if omitted only possible with the bridgedomain
@@ -84,7 +84,7 @@ type NetworkInterface struct {
 }
 
 type NetworkInterfaceAddress struct {
-	Address   string `json:"address" yaml:"address" protobuf:"bytes,1,opt,name=address"`
+	Address   string  `json:"address" yaml:"address" protobuf:"bytes,1,opt,name=address"`
 	Attribute *string `json:"attribute,omitempty" yaml:"address,omitempty" protobuf:"bytes,2,opt,name=attribute"`
 }
 
@@ -102,6 +102,14 @@ type NetworkStatus struct {
 	// ConditionedStatus provides the status of the Network using conditions
 	// - a ready condition indicates the overall status of the resource
 	conditionv1alpha1.ConditionedStatus `json:",inline" yaml:",inline" protobuf:"bytes,1,opt,name=conditionedStatus"`
+
+	Devices []*NetworkStatusDeviceStatus `json:"devices,omitempty" yaml:"devices,omitempty" protobuf:"bytes,2,opt,name=devices"`
+}
+
+type NetworkStatusDeviceStatus struct {
+	Node   string  `json:"node" yaml:"node" protobuf:"bytes,1,opt,name=node"`
+	Ready  bool    `json:"ready" yaml:"ready" protobuf:"bytes,2,opt,name=ready"`
+	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
 }
 
 // +kubebuilder:object:root=true

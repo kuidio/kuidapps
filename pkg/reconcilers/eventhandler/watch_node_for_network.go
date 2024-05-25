@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"github.com/henderiw/logger/log"
+	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,34 +30,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type NetworkDeviceEventHandler struct {
+type NodeForNetworkEventHandler struct {
 	Client  client.Client
-	ObjList *netwv1alpha1.NetworkDeviceList
+	ObjList *netwv1alpha1.NetworkList
 }
 
 // Create enqueues a request
-func (r *NetworkDeviceEventHandler) Create(ctx context.Context, evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+func (r *NodeForNetworkEventHandler) Create(ctx context.Context, evt event.CreateEvent, q workqueue.RateLimitingInterface) {
 	r.add(ctx, evt.Object, q)
 }
 
 // Create enqueues a request
-func (r *NetworkDeviceEventHandler) Update(ctx context.Context, evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+func (r *NodeForNetworkEventHandler) Update(ctx context.Context, evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	r.add(ctx, evt.ObjectOld, q)
 	r.add(ctx, evt.ObjectNew, q)
 }
 
 // Create enqueues a request
-func (r *NetworkDeviceEventHandler) Delete(ctx context.Context, evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+func (r *NodeForNetworkEventHandler) Delete(ctx context.Context, evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	r.add(ctx, evt.Object, q)
 }
 
 // Create enqueues a request
-func (r *NetworkDeviceEventHandler) Generic(ctx context.Context, evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+func (r *NodeForNetworkEventHandler) Generic(ctx context.Context, evt event.GenericEvent, q workqueue.RateLimitingInterface) {
 	r.add(ctx, evt.Object, q)
 }
 
-func (r *NetworkDeviceEventHandler) add(ctx context.Context, obj runtime.Object, queue adder) {
-	cr, ok := obj.(*netwv1alpha1.Network)
+func (r *NodeForNetworkEventHandler) add(ctx context.Context, obj runtime.Object, queue adder) {
+	n, ok := obj.(*infrabev1alpha1.Node)
 	if !ok {
 		return
 	}
@@ -65,27 +66,21 @@ func (r *NetworkDeviceEventHandler) add(ctx context.Context, obj runtime.Object,
 	//log.Info("event", "gvk", ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPEntryKind).String(), "name", cr.GetName())
 
 	opts := []client.ListOption{
-		client.InNamespace(cr.Namespace),
+		client.InNamespace(n.Namespace),
 	}
 	objList := r.ObjList
 	if err := r.Client.List(ctx, objList, opts...); err != nil {
 		log.Error("cannot list object", "error", err)
 		return
 	}
-	// walk over the links
-	// if endpoint has the same endpointID -> retrigger
-	// if the ownerref is link retrigger
-	for _, obj := range objList.Items {
-		// check if the connection profile is referenced in the discoveryProfile
-		//log.Info("event", "objOwnerRef", obj.GetOwnerReference().String(), "crOwnerRef", cr.GetOwnerReference().String())
 
-		if obj.Name == cr.Name {
+	for _, obj := range objList.Items {
+		if obj.Spec.Topology == n.Spec.NodeGroup {
 			key := types.NamespacedName{
 				Namespace: obj.GetNamespace(),
 				Name:      obj.GetName()}
 			log.Info("event requeue", "key", key.String())
 			queue.Add(reconcile.Request{NamespacedName: key})
-			continue
 		}
 	}
 }

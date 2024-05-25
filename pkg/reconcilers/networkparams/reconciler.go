@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package networkdevice
+package networkparams
 
 import (
 	"context"
@@ -24,17 +24,19 @@ import (
 	"time"
 
 	"github.com/henderiw/logger/log"
-	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
+	"github.com/kuidio/kuid/apis/backend"
+	asbev1alpha1 "github.com/kuidio/kuid/apis/backend/as/v1alpha1"
+	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
+	ipambev1alpha1 "github.com/kuidio/kuid/apis/backend/ipam/v1alpha1"
 	"github.com/kuidio/kuid/pkg/reconcilers/resource"
 	"github.com/kuidio/kuid/pkg/resources"
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
-	"github.com/kuidio/kuidapps/pkg/devbuilder"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
+	"github.com/kuidio/kuidapps/pkg/reconcilers/eventhandler"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/lease"
 	perrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -45,13 +47,13 @@ import (
 )
 
 func init() {
-	reconcilers.Register(crName, &reconciler{})
+	reconcilers.Register("networkparams", &reconciler{})
 }
 
 const (
-	crName                    = "networkdevice"
-	controllerName            = "NetworkDeviceController"
-	finalizer                 = "networkdevice.network.app.kuid.dev/finalizer"
+	crName                    = "network"
+	controllerName            = "NetworkParametersController"
+	finalizer                 = "networkparams.network.app.kuid.dev/finalizer"
 	controllerCondition       = string(netwv1alpha1.ConditionTypeNetworkParamReady)
 	controllerConditionWithCR = controllerCondition + "." + crName
 	// errors
@@ -74,8 +76,23 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 	return nil, ctrl.NewControllerManagedBy(mgr).
 		Named(controllerName).
 		For(&netwv1alpha1.Network{}).
-		Owns(&netwv1alpha1.NetworkDevice{}).
-		// we only do a watch at the higher level object -> not sure if we need to revisit this
+		Owns(&ipambev1alpha1.IPClaim{}).
+		Owns(&asbev1alpha1.ASClaim{}).
+		Watches(&netwv1alpha1.NetworkConfig{},
+			&eventhandler.NetworkConfigForNetworkEventHandler{
+				Client:  mgr.GetClient(),
+				ObjList: &netwv1alpha1.NetworkList{},
+			}).
+		Watches(&infrabev1alpha1.Node{},
+			&eventhandler.NodeForNetworkEventHandler{
+				Client:  mgr.GetClient(),
+				ObjList: &netwv1alpha1.NetworkList{},
+			}).
+		Watches(&infrabev1alpha1.Link{},
+			&eventhandler.NodeForNetworkEventHandler{
+				Client:  mgr.GetClient(),
+				ObjList: &netwv1alpha1.NetworkList{},
+			}).
 		Complete(r)
 }
 
@@ -117,6 +134,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		"lease", "acquired")
 
 	if !cr.GetDeletionTimestamp().IsZero() {
+
 		if err := r.delete(ctx, cr); err != nil {
 			r.handleError(ctx, cr, "canot delete resources", err)
 			return reconcile.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
@@ -135,45 +153,30 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	// check if the processing was done properly
-	if cr.GetCondition(netwv1alpha1.ConditionTypeNetworkDeviceProviderReady).Status == metav1.ConditionFalse {
-		cr.SetConditions(netwv1alpha1.NetworkDeviceProcessing("network parameter controller not ready"))
-		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-	}
-
-	// always use default network to fetch the SRE config
-	nc, err := r.getNetworkConfig(ctx, types.NamespacedName{
-		Namespace: cr.GetNamespace(),
-		Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, netwv1alpha1.DefaultNetwork),
-	})
+	defaultNetwork := isDefaultNetwork(cr.Name)
+	nc, err := r.getNetworkConfig(ctx, cr)
 	if err != nil {
 		// we need networkconfig for the default network
 		// we do not release resources at this stage -> decision do far is no
-		r.handleError(ctx, cr, "cannot reconcile a network without a default network config", nil)
-		//return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if err := r.apply(ctx, cr, nc); err != nil {
-		// The delete is not needed as the condition will indicate this is not ready and the resources will not be picked
-		r.handleError(ctx, cr, "cannot apply resource", err)
-		return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-	}
-
-	allDevicesready, failures, err := r.AreAllDeviceConfigsReady(ctx, cr)
-	if err != nil {
-		r.handleError(ctx, cr, "cannot gather network device status", err)
-		return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-	}
-	if !allDevicesready {
-		if failures {
-			cr.SetConditions(netwv1alpha1.NetworkDeviceFailed("some devices failed, see device status list"))
-		}
-		cr.SetConditions(netwv1alpha1.NetworkDeviceProcessing("some devices are still processing"))
+		r.handleError(ctx, cr, "cannot reconcile a network without a network config", nil)
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	cr.SetConditions(netwv1alpha1.NetworkDeviceReady()) // This is the DeviceConfigReady condition, not the Ready condition
+	if defaultNetwork {
+		if err := r.applyDefaultNetwork(ctx, cr, nc); err != nil {
+			// The delete is not needed as the condition will indicate this is not ready and the resources will not be picked
+			r.handleError(ctx, cr, "cannot apply resource", err)
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		}
+	} else {
+		if err := r.applyNetwork(ctx, cr, nc); err != nil {
+			// The delete is not needed as the condition will indicate this is not ready and the resources will not be picked
+			r.handleError(ctx, cr, "cannot apply resource", err)
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		}
+	}
+
+	cr.SetConditions(netwv1alpha1.NetworkParamReady())
 	r.recorder.Eventf(cr, corev1.EventTypeNormal, controllerConditionWithCR, "ready")
 	return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 }
@@ -181,29 +184,45 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.Network, msg string, err error) {
 	log := log.FromContext(ctx)
 	if err == nil {
-		cr.SetConditions(netwv1alpha1.NetworkDeviceFailed(msg))
+		cr.SetConditions(netwv1alpha1.NetworkParamFailed(msg))
 		log.Error(msg)
 		r.recorder.Eventf(cr, corev1.EventTypeWarning, controllerConditionWithCR, msg)
 	} else {
-		cr.SetConditions(netwv1alpha1.NetworkDeviceFailed(err.Error()))
+		cr.SetConditions(netwv1alpha1.NetworkParamFailed(err.Error()))
 		log.Error(msg, "error", err)
 		r.recorder.Eventf(cr, corev1.EventTypeWarning, controllerConditionWithCR, fmt.Sprintf("%s, err: %s", msg, err.Error()))
 	}
 }
 
-func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network, nc *netwv1alpha1.NetworkConfig) error {
+func (r *reconciler) applyDefaultNetwork(ctx context.Context, cr *netwv1alpha1.Network, nc *netwv1alpha1.NetworkConfig) error {
 	res := resources.New(r.Client, resources.Config{
 		Owns: []schema.GroupVersionKind{
-			netwv1alpha1.SchemeGroupVersion.WithKind(netwv1alpha1.NetworkDeviceKind),
+			ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPClaimKind),
+			asbev1alpha1.SchemeGroupVersion.WithKind(asbev1alpha1.ASClaimKind),
 		},
 	})
 
-	b := devbuilder.New(r.Client, types.NamespacedName{Namespace: cr.Namespace, Name: cr.Name})
-	if err := b.Build(ctx, cr, nc); err != nil {
+	nodes, err := r.GetNodes(ctx, cr)
+	if err != nil {
 		return err
 	}
-	for _, nd := range b.GetNetworkDeviceConfigs() {
-		res.AddNewResource(ctx, cr, nd)
+	for _, n := range nodes {
+		for _, ipclaim := range nc.GetNodeIPClaims(cr, n) {
+			res.AddNewResource(ctx, cr, ipclaim)
+		}
+
+		if asClaim := nc.GetNodeASClaim(cr, n); asClaim != nil {
+			res.AddNewResource(ctx, cr, asClaim)
+		}
+	}
+	links, err := r.GetLinks(ctx, cr)
+	if err != nil {
+		return err
+	}
+	for _, l := range links {
+		for _, ipclaim := range nc.GetLinkIPClaims(cr, l) {
+			res.AddNewResource(ctx, cr, ipclaim)
+		}
 	}
 
 	if err := res.APIApply(ctx, cr); err != nil {
@@ -212,11 +231,24 @@ func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network, nc *ne
 	return nil
 }
 
+func (r *reconciler) applyNetwork(_ context.Context, _ *netwv1alpha1.Network, _ *netwv1alpha1.NetworkConfig) error {
+	/*
+		res := resources.New(r.Client, resources.Config{
+			Owns: []schema.GroupVersionKind{
+				ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPClaimKind),
+			},
+		})
+	*/
+
+	return nil
+}
+
 func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.Network) error {
 	// First claim the global identifiers
 	res := resources.New(r.Client, resources.Config{
 		Owns: []schema.GroupVersionKind{
-			netwv1alpha1.SchemeGroupVersion.WithKind(netwv1alpha1.NetworkDeviceKind),
+			ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPClaimKind),
+			asbev1alpha1.SchemeGroupVersion.WithKind(asbev1alpha1.ASClaimKind),
 		},
 	})
 
@@ -226,8 +258,12 @@ func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.Network) error
 	return nil
 }
 
-func (r *reconciler) getNetworkConfig(ctx context.Context, key types.NamespacedName) (*netwv1alpha1.NetworkConfig, error) {
+func (r *reconciler) getNetworkConfig(ctx context.Context, cr *netwv1alpha1.Network) (*netwv1alpha1.NetworkConfig, error) {
 	//log := log.FromContext((ctx))
+	key := types.NamespacedName{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}
 
 	o := &netwv1alpha1.NetworkConfig{}
 	if err := r.Client.Get(ctx, key, o); err != nil {
@@ -236,61 +272,66 @@ func (r *reconciler) getNetworkConfig(ctx context.Context, key types.NamespacedN
 	return o, nil
 }
 
-func (r *reconciler) AreAllDeviceConfigsReady(ctx context.Context, cr *netwv1alpha1.Network) (bool, bool, error) {
-	// GetExistingResources retrieves the exisiting resource that match the label selector and the owner reference
-	// and puts the results in the resource inventory
-	log := log.FromContext(ctx)
-
-	opts := []client.ListOption{}
-
-	//ownObjList := ownObj.NewObjList()
-	ndList := netwv1alpha1.NetworkDeviceList{}
-	if err := r.Client.List(ctx, &ndList, opts...); err != nil {
-		log.Error("get network devices failed", "err", err.Error())
-		return false, false, err
+func isDefaultNetwork(crName string) bool {
+	parts := strings.Split(crName, ".")
+	networkName := crName
+	if len(parts) > 0 {
+		networkName = parts[len(parts)-1]
 	}
-	devicesStatus := []*netwv1alpha1.NetworkStatusDeviceStatus{}
-	ready := true
-	failures := false
-	for _, nd := range ndList.Items {
-		for _, ref := range nd.GetOwnerReferences() {
-			if ref.UID == cr.GetUID() {
-				condition := nd.GetCondition(conditionv1alpha1.ConditionTypeReady)
-				if condition.Status == metav1.ConditionFalse {
-					if condition.Reason == string(conditionv1alpha1.ConditionReasonFailed) {
-						failures = true
-					}
-					ready = false
-					devicesStatus = append(devicesStatus, &netwv1alpha1.NetworkStatusDeviceStatus{
-						Node:   getLastElement(nd.Name),
-						Ready:  false,
-						Reason: &condition.Reason,
-					})
-				} else {
-					devicesStatus = append(devicesStatus, &netwv1alpha1.NetworkStatusDeviceStatus{
-						Node:   getLastElement(nd.Name),
-						Ready:  true,
-						Reason: nil,
-					})
-				}
-			}
-		}
+	if networkName == "default" {
+		return true
 	}
-	cr.Status.Devices = devicesStatus
-	return ready, failures, nil
+	return false
 }
 
-func getLastElement(s string) string {
-	if s == "" {
-		return ""
+func (r *reconciler) GetNodes(ctx context.Context, cr *netwv1alpha1.Network) ([]*infrabev1alpha1.Node, error) {
+	nodes := make([]*infrabev1alpha1.Node, 0)
+	topology := cr.Spec.Topology
+
+	opts := []client.ListOption{
+		client.InNamespace(cr.Namespace),
+	}
+	nodeList := &infrabev1alpha1.NodeList{}
+	if err := r.Client.List(ctx, nodeList, opts...); err != nil {
+		return nil, err
 	}
 
-	// Split the string by dot (.)
-	parts := strings.Split(s, ".")
-	if len(parts) == 0 {
-		return s
+	for _, n := range nodeList.Items {
+		if topology == n.Spec.NodeGroup {
+			nodes = append(nodes, &n)
+		}
+	}
+	return nodes, nil
+}
+
+//KuidINVLinkTypeKey
+
+func (r *reconciler) GetLinks(ctx context.Context, cr *netwv1alpha1.Network) ([]*infrabev1alpha1.Link, error) {
+	links := make([]*infrabev1alpha1.Link, 0)
+	topology := cr.Spec.Topology
+
+	opts := []client.ListOption{
+		client.InNamespace(cr.Namespace),
+	}
+	linkList := &infrabev1alpha1.LinkList{}
+	if err := r.Client.List(ctx, linkList, opts...); err != nil {
+		return nil, err
 	}
 
-	// Get the last element
-	return parts[len(parts)-1]
+	for _, l := range linkList.Items {
+		linkType, ok := l.Spec.UserDefinedLabels.Labels[backend.KuidINVLinkTypeKey]
+		if !ok {
+			continue
+		}
+		if linkType != "infra" {
+			continue
+		}
+		for _, ep := range l.Spec.Endpoints {
+			if ep.NodeGroup != topology {
+				continue
+			}
+		}
+		links = append(links, &l)
+	}
+	return links, nil
 }
