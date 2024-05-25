@@ -21,6 +21,7 @@ import (
 
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // NetworkDeviceDeviceSpec defines the desired state of NetworkDevice
@@ -171,6 +172,10 @@ type NetworkDeviceStatus struct {
 	// ConditionedStatus provides the status of the NetworkDevice using conditions
 	// - a ready condition indicates the overall status of the resource
 	conditionv1alpha1.ConditionedStatus `json:",inline" yaml:",inline" protobuf:"bytes,1,opt,name=conditionedStatus"`
+
+	// ProviderConfig defines the configs based on the provider processing
+	//+kubebuilder:pruning:PreserveUnknownFields
+	ProviderConfig *runtime.RawExtension `json:"providerConfig,omitempty" yaml:"providerConfig,omitempty" protobuf:"bytes,2,opt,name=value"`
 }
 
 // +kubebuilder:object:root=true

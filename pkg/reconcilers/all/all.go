@@ -21,5 +21,6 @@ import (
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/link"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkconfig"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/network"
+	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkparams"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkdevice"
 )

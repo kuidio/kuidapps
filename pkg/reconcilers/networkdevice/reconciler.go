@@ -135,8 +135,8 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	// check if the processing was done properly
-	if cr.GetCondition(netwv1alpha1.ConditionTypeNetworkDeviceProviderReady).Status == metav1.ConditionFalse {
+	// check if the processing was done properly of the network parameter controller
+	if cr.GetCondition(netwv1alpha1.ConditionTypeNetworkParamReady).Status == metav1.ConditionFalse {
 		cr.SetConditions(netwv1alpha1.NetworkDeviceProcessing("network parameter controller not ready"))
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
