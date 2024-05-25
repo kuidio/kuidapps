@@ -119,14 +119,23 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Update(ctx, cr), errUpdateStatus)
 	}
 
-	if err, requeue := r.apply(ctx, cr); err != nil {
+	eps, requeue, err := r.getEndpoints(ctx, cr)
+	if err != nil {
+		r.handleError(ctx, cr, "endpoints not found", err)
+		if requeue {
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, perrors.Wrap(r.Client.Update(ctx, cr), errUpdateStatus)
+		}
+		return ctrl.Result{}, perrors.Wrap(r.Client.Update(ctx, cr), errUpdateStatus)
+	}
+
+	if err := r.apply(ctx, cr, eps); err != nil {
 		if errd, _ := r.delete(ctx, cr); errd != nil {
 			err = errors.Join(err, errd)
 			r.handleError(ctx, cr, "cannot delete resource after apply failed", err)
-			return reconcile.Result{Requeue: requeue, RequeueAfter: 1 * time.Second}, perrors.Wrap(r.Update(ctx, cr), errUpdateStatus)
+			return reconcile.Result{RequeueAfter: 1 * time.Second}, perrors.Wrap(r.Update(ctx, cr), errUpdateStatus)
 		}
 		r.handleError(ctx, cr, "cannot apply resource", err)
-		return ctrl.Result{Requeue: requeue}, perrors.Wrap(r.Client.Update(ctx, cr), errUpdateStatus)
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, perrors.Wrap(r.Client.Update(ctx, cr), errUpdateStatus)
 	}
 
 	cr.SetConditions(conditionv1alpha1.Ready())
@@ -147,61 +156,74 @@ func (r *reconciler) handleError(ctx context.Context, cr *infrabev1alpha1.Link, 
 	}
 }
 
-func (r *reconciler) apply(ctx context.Context, cr *infrabev1alpha1.Link) (error, bool) {
-	// the nil values of ep is alaready checked before so we just look at non nil values
+func (r *reconciler) getEndpoints(ctx context.Context, cr *infrabev1alpha1.Link) ([]*infrabev1alpha1.Endpoint, bool, error) {
+	endpoints := []*infrabev1alpha1.Endpoint{}
+
+	requeue := true
 	var errm error
-	var requeue bool
 	if cr.GetEndPointIDA() != nil {
-		err, rq := r.claimEndpoint(ctx, cr, cr.GetEndPointIDA())
+		ep, err := r.getEndpoint(ctx, cr, cr.GetEndPointIDA())
 		if err != nil {
 			errm = errors.Join(errm, err)
-			if rq {
-				requeue = true
+		} else {
+			owned, ref := ep.IsClaimed(cr)
+			switch owned {
+			case infrabev1alpha1.Free, infrabev1alpha1.Owned:
+				endpoints = append(endpoints, ep)
+			case infrabev1alpha1.Claimed:
+				requeue = false
+				errm = errors.Join(errm, fmt.Errorf("owned by another reference, ref : %v", ref))
+			default:
+				requeue = false
+				errm = errors.Join(errm, fmt.Errorf("unexpected owner status got %v", owned))
 			}
 		}
 	}
 
 	if cr.GetEndPointIDB() != nil {
-		err, rq := r.claimEndpoint(ctx, cr, cr.GetEndPointIDB())
+		ep, err := r.getEndpoint(ctx, cr, cr.GetEndPointIDB())
 		if err != nil {
 			errm = errors.Join(errm, err)
-			if rq {
-				requeue = true
+		} else {
+			owned, ref := ep.IsClaimed(cr)
+			switch owned {
+			case infrabev1alpha1.Free, infrabev1alpha1.Owned:
+				endpoints = append(endpoints, ep)
+			case infrabev1alpha1.Claimed:
+				requeue = false
+				errm = errors.Join(errm, fmt.Errorf("owned by another reference, ref : %v", ref))
+			default:
+				requeue = false
+				errm = errors.Join(errm, fmt.Errorf("unexpected owner status got %v", owned))
 			}
 		}
 	}
-	return errm, requeue
+	return endpoints, requeue, errm
 }
 
-func (r *reconciler) claimEndpoint(ctx context.Context, cr *infrabev1alpha1.Link, epID *infrabev1alpha1.NodeGroupEndpointID) (error, bool) {
+func (r *reconciler) apply(ctx context.Context, cr *infrabev1alpha1.Link, eps []*infrabev1alpha1.Endpoint) error {
+	// the nil values of ep is alaready checked before so we just look at non nil values
+
+	for _, ep := range eps {
+		ep.Claim(cr)
+		if err := r.Client.Update(ctx, ep); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *reconciler) getEndpoint(ctx context.Context, cr *infrabev1alpha1.Link, epID *infrabev1alpha1.NodeGroupEndpointID) (*infrabev1alpha1.Endpoint, error) {
 	key := types.NamespacedName{
 		Namespace: cr.GetNamespace(),
 		Name:      epID.KuidString(),
 	}
 	ep := &infrabev1alpha1.Endpoint{}
 	if err := r.Client.Get(ctx, key, ep); err != nil {
-		if resource.IgnoreNotFound(err) != nil {
-			return err, true
-		}
-		return err, true
+		return nil, err
 	}
-
-	owned, ref := ep.IsClaimed(cr)
-	switch owned {
-	case infrabev1alpha1.Free:
-		ep.Claim(cr)
-		if err := r.Client.Update(ctx, ep); err != nil {
-			return err, true
-		}
-		return nil, false
-	case infrabev1alpha1.Owned:
-		// do nothing
-		return nil, false
-	case infrabev1alpha1.Claimed:
-		return fmt.Errorf("owned by another reference, ref : %v", ref), false
-	default:
-		return fmt.Errorf("unexpected owner status got %v", owned), false
-	}
+	return ep, nil
 }
 
 func (r *reconciler) delete(ctx context.Context, cr *infrabev1alpha1.Link) (error, bool) {
