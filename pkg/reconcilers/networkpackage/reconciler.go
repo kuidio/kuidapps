@@ -48,6 +48,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/kustomize/kyaml/yaml"
+	syaml "sigs.k8s.io/yaml"
 )
 
 func init() {
@@ -147,13 +148,16 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		network, err := r.gatherNetworkInPRR(ctx, cr)
 		if err != nil {
 			// TODO this needs to be reworked like KFORM where we store the applied resources in inventory
-			r.handleError(ctx, cr, "cannot get network resource in package", err)
+			r.handleError(ctx, cr, "delete, cannot get network resource in package", err)
 			return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		}
+		log.Info("delete network with package", "network", network)
 		if err := r.Client.Delete(ctx, network); err != nil {
-			// TODO this needs to be reworked like KFORM where we store the applied resources in inventory
-			r.handleError(ctx, cr, "cannot get network resource in package", err)
-			return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+			if !strings.Contains(err.Error(), "not found") {
+				// TODO this needs to be reworked like KFORM where we store the applied resources in inventory
+				r.handleError(ctx, cr, "cannot delete network resource from package", err)
+				return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+			}
 		}
 
 		if err := r.finalizer.RemoveFinalizer(ctx, cr); err != nil {
@@ -195,7 +199,13 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			} else {
 				network.SetConditions(conditionv1alpha1.Processing(network.GetProcessingMessage()))
 			}
-			return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		}
+
+		network.SetConditions(conditionv1alpha1.Ready())
+		if err := r.Client.Status().Update(ctx, network); err != nil {
+			r.handleError(ctx, cr, "cannot update network cr", err)
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		}
 
 		if err := r.applyResourcesToPRR(ctx, cr, network); err != nil {
@@ -234,6 +244,7 @@ func (r *reconciler) handleError(ctx context.Context, cr *pkgv1alpha1.PackageRev
 }
 
 func (r *reconciler) applyNetworkCR(ctx context.Context, network *netwv1alpha1.Network) (*netwv1alpha1.Network, error) {
+	log := log.FromContext(ctx)
 	key := types.NamespacedName{
 		Name:      network.Name,
 		Namespace: network.Namespace,
@@ -241,21 +252,27 @@ func (r *reconciler) applyNetworkCR(ctx context.Context, network *netwv1alpha1.N
 	if len(network.Annotations) == 0 {
 		network.Annotations = map[string]string{}
 	}
+	log.Info("applyNetworkCR", "networkCR", network)
 	network.Annotations["kuid.dev/gitops"] = "true"
 	existingNetwork := &netwv1alpha1.Network{}
 	if err := r.Client.Get(ctx, key, existingNetwork); err != nil {
 		if resource.IgnoreNotFound(err) != nil {
+			log.Error("applyNetworkCR get failed", "error", err.Error())
 			return nil, err
 		}
 
 		if err := r.Client.Create(ctx, network); err != nil {
+			log.Error("applyNetworkCR create failed", "error", err.Error())
 			return nil, err
 		}
 	}
-	if err := r.Client.Update(ctx, network); err != nil {
+	existingNetwork.Spec = network.Spec
+	if err := r.Client.Update(ctx, existingNetwork); err != nil {
+		log.Error("applyNetworkCR update failed", "error", err.Error(), "existing network CR", existingNetwork)
 		return nil, err
 	}
 	if err := r.Client.Get(ctx, key, network); err != nil {
+		log.Error("applyNetworkCR end get failed", "error", err.Error())
 		return nil, err
 	}
 	return network, nil
@@ -281,10 +298,11 @@ func (r *reconciler) applyResourcesToPRR(ctx context.Context, cr *pkgv1alpha1.Pa
 			return err
 		}
 
-		b, err := yaml.Marshal(config)
+		b, err := syaml.Marshal(config)
 		if err != nil {
 			return err
 		}
+
 		deviceConfigs[fmt.Sprintf(
 			"out/%s.%s.%s.%s.yaml",
 			strings.ReplaceAll(config.APIVersion, "/", "_"),
@@ -294,6 +312,7 @@ func (r *reconciler) applyResourcesToPRR(ctx context.Context, cr *pkgv1alpha1.Pa
 		)] = string(b)
 	}
 
+	log.Info("applyResourcesToPRR", "resourceVersion", cr.ResourceVersion)
 	newPkgrevResources := pkgv1alpha1.BuildPackageRevisionResources(
 		*cr.ObjectMeta.DeepCopy(),
 		pkgv1alpha1.PackageRevisionResourcesSpec{
@@ -386,21 +405,21 @@ func getNodeName(name string) string {
 func (r *reconciler) gatherNetworkInPRR(ctx context.Context, cr *pkgv1alpha1.PackageRevision) (*netwv1alpha1.Network, error) {
 	log := log.FromContext(ctx)
 
-	key := types.NamespacedName{
-		Name:      cr.Name,
-		Namespace: cr.Namespace,
-	}
+	/*
+		key := types.NamespacedName{
+			Name:      cr.Name,
+			Namespace: cr.Namespace,
+		}
+			pkgRevResources := &pkgv1alpha1.PackageRevisionResources{}
+			if err := r.Client.Get(ctx, key, pkgRevResources); err != nil {
+				return nil, err
+			}
+	*/
 
-	pkgRevResources := &pkgv1alpha1.PackageRevisionResources{}
-	if err := r.Client.Get(ctx, key, pkgRevResources); err != nil {
+	pkgRevResources, err := r.clientset.PkgV1alpha1().PackageRevisionResourceses(cr.GetNamespace()).Get(ctx, cr.GetName(), metav1.GetOptions{})
+	if err != nil {
 		return nil, err
 	}
-	/*
-		pkgRevResources, err := r.clientset.PkgV1alpha1().PackageRevisionResourceses(cr.GetNamespace()).Get(ctx, cr.GetName(), metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-	*/
 
 	networks := []*netwv1alpha1.Network{}
 	for path, v := range pkgRevResources.Spec.Resources {
@@ -416,6 +435,8 @@ func (r *reconciler) gatherNetworkInPRR(ctx context.Context, cr *pkgv1alpha1.Pac
 				continue // not. ayaml file
 			}
 
+			log.Info("gatherNetworkInPRR", "path", path)
+
 			reader := pkgio.YAMLReader{Reader: strings.NewReader(v), Path: path}
 			datastore, err := reader.Read(ctx)
 			if err != nil {
@@ -426,11 +447,12 @@ func (r *reconciler) gatherNetworkInPRR(ctx context.Context, cr *pkgv1alpha1.Pac
 				if rn.GetApiVersion() == netwv1alpha1.SchemeGroupVersion.Identifier() &&
 					rn.GetKind() == netwv1alpha1.NetworkKind {
 
-					var network *netwv1alpha1.Network
-					if err := yaml.Unmarshal([]byte(rn.MustString()), network); err != nil {
+					log.Info("gatherNetworkInPRR network resource", "path", path, "data", rn.MustString())
+					network := netwv1alpha1.Network{}
+					if err := syaml.Unmarshal([]byte(rn.MustString()), &network); err != nil {
 						log.Error("cannot unmarshal network", "err", err.Error())
 					}
-					networks = append(networks, network)
+					networks = append(networks, &network)
 				}
 			})
 		}

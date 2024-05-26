@@ -209,7 +209,7 @@ func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network) error 
 	}
 
 	for _, nd := range nds {
-		log.Info("nd config", "name", nd.Name)
+		log.Debug("nd config", "name", nd.Name)
 		if nd.Status.ProviderConfig == nil || nd.Status.ProviderConfig.Raw == nil {
 			return fmt.Errorf("something went wrong, cannot not apply configs with emoty config")
 		}

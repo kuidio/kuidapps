@@ -34,6 +34,8 @@ import (
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/all"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
+	"github.com/pkgserver-dev/pkgserver/apis/generated/clientset/versioned"
+	pkgv1alpha1 "github.com/pkgserver-dev/pkgserver/apis/pkg/v1alpha1"
 	configv1alpha1 "github.com/sdcio/config-server/apis/config/v1alpha1"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,7 +45,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	pkgv1alpha1 "github.com/pkgserver-dev/pkgserver/apis/pkg/v1alpha1"
 )
 
 func main() {
@@ -95,7 +96,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrlCfg := &ctrlconfig.ControllerConfig{}
+	clientset, err := versioned.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		panic(err.Error())
+	}
+	ctrlCfg := &ctrlconfig.ControllerConfig{
+		ClientSet: clientset,
+	}
 	for name, reconciler := range reconcilers.Reconcilers {
 		log.Info("reconciler", "name", name, "enabled", IsReconcilerEnabled(name))
 		if IsReconcilerEnabled(name) {
