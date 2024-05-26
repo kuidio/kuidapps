@@ -17,11 +17,12 @@ limitations under the License.
 package all
 
 import (
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/topology"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/link"
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkconfig"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/network"
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkparams"
+	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkconfig"
 	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkdevice"
-	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkdeploy"
+	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkpackage"
+	_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkparams"
+	_ "github.com/kuidio/kuidapps/pkg/reconcilers/topology"
+	//_ "github.com/kuidio/kuidapps/pkg/reconcilers/networkconfigdeploy"
 )

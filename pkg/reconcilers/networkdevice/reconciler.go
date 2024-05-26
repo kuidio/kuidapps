@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -276,6 +277,11 @@ func (r *reconciler) AreAllDeviceConfigsReady(ctx context.Context, cr *netwv1alp
 			}
 		}
 	}
+
+	sort.SliceStable(devicesStatus, func(i, j int) bool {
+		return devicesStatus[i].Node < devicesStatus[j].Node
+	})
+
 	cr.Status.DevicesConfigStatus = devicesStatus
 	return ready, failures, nil
 }

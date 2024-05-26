@@ -122,7 +122,6 @@ type NetworkStatusDeviceStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="PARAM-READY",type="string",JSONPath=".status.conditions[?(@.type=='NetworkPararmReady')].status"
 // +kubebuilder:printcolumn:name="DEVICES-READY",type="string",JSONPath=".status.conditions[?(@.type=='NetworkDeviceReady')].status"
-// +kubebuilder:printcolumn:name="DEPLOY-READY",type="string",JSONPath=".status.conditions[?(@.type=='NetworkDeployReady')].status"
 // +kubebuilder:resource:categories={kuid, net}
 // Network is the Network for the Network API
 // +k8s:openapi-gen=true

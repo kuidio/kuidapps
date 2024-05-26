@@ -43,6 +43,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	pkgv1alpha1 "github.com/pkgserver-dev/pkgserver/apis/pkg/v1alpha1"
 )
 
 func main() {
@@ -78,6 +79,7 @@ func main() {
 		ipambev1alpha1.AddToScheme,
 		netwv1alpha1.AddToScheme,
 		configv1alpha1.AddToScheme,
+		pkgv1alpha1.AddToScheme,
 	}) {
 		if err := api(runScheme); err != nil {
 			log.Error("cannot add scheme", "err", err)

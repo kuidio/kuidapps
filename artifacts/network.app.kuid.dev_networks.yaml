@@ -27,9 +27,6 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='NetworkDeviceReady')].status
       name: DEVICES-READY
       type: string
-    - jsonPath: .status.conditions[?(@.type=='NetworkDeployReady')].status
-      name: DEPLOY-READY
-      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:

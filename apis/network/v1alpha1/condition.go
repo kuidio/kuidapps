@@ -106,6 +106,7 @@ func NetworkDeviceFailed(msg string) conditionv1alpha1.Condition {
 		}}
 }
 
+/*
 // NetworkDeviceReady returns a condition that indicates the resource is
 // satofying this condition
 func NetworkDeployReady() conditionv1alpha1.Condition {
@@ -143,3 +144,4 @@ func NetworkDeployFailed(msg string) conditionv1alpha1.Condition {
 			Message:            msg,
 		}}
 }
+*/

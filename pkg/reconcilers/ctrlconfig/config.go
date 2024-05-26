@@ -21,9 +21,11 @@ import (
 
 	"github.com/henderiw/logger/log"
 	"k8s.io/apimachinery/pkg/types"
+	"github.com/pkgserver-dev/pkgserver/apis/generated/clientset/versioned"
 )
 
 type ControllerConfig struct {
+	ClientSet *versioned.Clientset
 }
 
 func InitContext(ctx context.Context, controllerName string, req types.NamespacedName) context.Context {

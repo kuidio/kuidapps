@@ -14,13 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package networkdeploy
+package networkconfigdeploy
 
+/*
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -50,8 +52,8 @@ func init() {
 }
 
 const (
-	crName                    = "networkdeploy"
-	controllerName            = "NetworkDeployController"
+	crName                    = "networkconfigdeploy"
+	controllerName            = "NetworkConfigDeployController"
 	finalizer                 = crName + "." + "network.app.kuid.dev/finalizer"
 	controllerCondition       = string(netwv1alpha1.ConditionTypeNetworkDeployReady)
 	controllerConditionWithCR = controllerCondition + "." + crName
@@ -148,6 +150,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
+	// check the condition if all the configs were successfull
 	allDevicesready, failures, err := r.AreAllDeviceConfigsReady(ctx, cr)
 	if err != nil {
 		r.handleError(ctx, cr, "cannot gather network device status", err)
@@ -160,6 +163,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		cr.SetConditions(netwv1alpha1.NetworkDeployProcessing("some devices are still processing"))
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
+
 
 	cr.SetConditions(netwv1alpha1.NetworkDeployReady()) // This is the DeviceConfigReady condition, not the Ready condition
 	r.recorder.Eventf(cr, corev1.EventTypeNormal, controllerConditionWithCR, "ready")
@@ -290,6 +294,10 @@ func (r *reconciler) AreAllDeviceConfigsReady(ctx context.Context, cr *netwv1alp
 			}
 		}
 	}
+	sort.SliceStable(devicesStatus, func(i, j int) bool {
+		return devicesStatus[i].Node < devicesStatus[j].Node
+	})
+
 	cr.Status.DevicesDeployStatus = devicesStatus
 	return ready, failures, nil
 }
@@ -302,3 +310,4 @@ func getNodeName(name string) string {
 	}
 	return name[lastDotIndex+1:]
 }
+*/

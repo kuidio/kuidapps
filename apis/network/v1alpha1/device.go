@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,6 +79,9 @@ func (r *Device) GetOrCreateInterface(name string) *NetworkDeviceInterface {
 		Name: name,
 	}
 	r.nd.Spec.Interfaces = append(r.nd.Spec.Interfaces, newItfce)
+	sort.SliceStable(r.nd.Spec.Interfaces, func(i, j int) bool {
+		return r.nd.Spec.Interfaces[i].Name < r.nd.Spec.Interfaces[j].Name
+	})
 	return newItfce
 }
 
@@ -104,20 +108,23 @@ func (r *Device) GetOrCreateTunnelInterface(name string) *NetworkDeviceTunnelInt
 		Name: name,
 	}
 	r.nd.Spec.TunnelInterfaces = append(r.nd.Spec.TunnelInterfaces, newTun)
+	sort.SliceStable(r.nd.Spec.TunnelInterfaces, func(i, j int) bool {
+		return r.nd.Spec.TunnelInterfaces[i].Name < r.nd.Spec.TunnelInterfaces[j].Name
+	})
 	return newTun
 }
 
-func (r *NetworkDeviceInterface) AddOrUpdateSubInterface(new *NetworkDeviceInterfaceSubInterface) {
+func (r *NetworkDeviceInterface) AddOrUpdateInterfaceSubInterface(new *NetworkDeviceInterfaceSubInterface) {
 	if r.SubInterfaces == nil {
 		r.SubInterfaces = []*NetworkDeviceInterfaceSubInterface{}
 	}
-	x := r.GetOrCreateSubInterface(new.ID)
+	x := r.GetOrCreateInterfaceSubInterface(new.ID)
 	x.PeerName = new.PeerName
 	x.VLAN = new.VLAN
 	x.Type = new.Type
 }
 
-func (r *NetworkDeviceInterface) GetOrCreateSubInterface(id uint32) *NetworkDeviceInterfaceSubInterface {
+func (r *NetworkDeviceInterface) GetOrCreateInterfaceSubInterface(id uint32) *NetworkDeviceInterfaceSubInterface {
 	for _, si := range r.SubInterfaces {
 		if si.ID == id {
 			return si
@@ -127,18 +134,21 @@ func (r *NetworkDeviceInterface) GetOrCreateSubInterface(id uint32) *NetworkDevi
 		ID: id,
 	}
 	r.SubInterfaces = append(r.SubInterfaces, newSI)
+	sort.SliceStable(r.SubInterfaces, func(i, j int) bool {
+		return r.SubInterfaces[i].ID < r.SubInterfaces[j].ID
+	})
 	return newSI
 }
 
-func (r *NetworkDeviceTunnelInterface) AddOrUpdateSubInterface(new *NetworkDeviceTunnelInterfaceSubInterface) {
+func (r *NetworkDeviceTunnelInterface) AddOrUpdateTunnelInterfaceSubInterface(new *NetworkDeviceTunnelInterfaceSubInterface) {
 	if r.SubInterfaces == nil {
 		r.SubInterfaces = []*NetworkDeviceTunnelInterfaceSubInterface{}
 	}
-	x := r.GetOrCreateSubInterface(new.ID)
+	x := r.GetOrCreateTunnelInterfaceSubInterface(new.ID)
 	x.Type = new.Type
 }
 
-func (r *NetworkDeviceTunnelInterface) GetOrCreateSubInterface(id uint32) *NetworkDeviceTunnelInterfaceSubInterface {
+func (r *NetworkDeviceTunnelInterface) GetOrCreateTunnelInterfaceSubInterface(id uint32) *NetworkDeviceTunnelInterfaceSubInterface {
 	for _, si := range r.SubInterfaces {
 		if si.ID == id {
 			return si
@@ -148,6 +158,9 @@ func (r *NetworkDeviceTunnelInterface) GetOrCreateSubInterface(id uint32) *Netwo
 		ID: id,
 	}
 	r.SubInterfaces = append(r.SubInterfaces, newSI)
+	sort.SliceStable(r.SubInterfaces, func(i, j int) bool {
+		return r.SubInterfaces[i].ID < r.SubInterfaces[j].ID
+	})
 	return newSI
 }
 
@@ -185,38 +198,41 @@ func (r *Device) GetOrCreateNetworkInstance(name string) *NetworkDeviceNetworkIn
 		Name: name,
 	}
 	r.nd.Spec.NetworkInstances = append(r.nd.Spec.NetworkInstances, newNI)
+	sort.SliceStable(r.nd.Spec.NetworkInstances, func(i, j int) bool {
+		return r.nd.Spec.NetworkInstances[i].Name < r.nd.Spec.NetworkInstances[j].Name
+	})
 	return newNI
 }
 
-func (r *NetworkDeviceNetworkInstance) GetOrCreateprotocols() *NetworkDeviceNetworkInstanceProtocols {
+func (r *NetworkDeviceNetworkInstance) GetOrCreateNetworkInstanceProtocols() *NetworkDeviceNetworkInstanceProtocols {
 	if r.Protocols == nil {
 		r.Protocols = &NetworkDeviceNetworkInstanceProtocols{}
 	}
 	return r.Protocols
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateBGP() *NetworkDeviceNetworkInstanceProtocolBGP {
+func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateNetworkInstanceProtocolsBGP() *NetworkDeviceNetworkInstanceProtocolBGP {
 	if r.BGP == nil {
 		r.BGP = &NetworkDeviceNetworkInstanceProtocolBGP{}
 	}
 	return r.BGP
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateBGPEVPN() *NetworkDeviceNetworkInstanceProtocolBGPEVPN {
+func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateNetworkInstanceProtocolsBGPEVPN() *NetworkDeviceNetworkInstanceProtocolBGPEVPN {
 	if r.BGPEVPN == nil {
 		r.BGPEVPN = &NetworkDeviceNetworkInstanceProtocolBGPEVPN{}
 	}
 	return r.BGPEVPN
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateBGPVPN() *NetworkDeviceNetworkInstanceProtocolBGPVPN {
+func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateNetworkInstanceProtocolsBGPVPN() *NetworkDeviceNetworkInstanceProtocolBGPVPN {
 	if r.BGPVPN == nil {
 		r.BGPVPN = &NetworkDeviceNetworkInstanceProtocolBGPVPN{}
 	}
 	return r.BGPVPN
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdatePeerGroup(new *NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {
+func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdateNetworkInstanceProtocolBGPPeerGroup(new *NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {
 	if r.PeerGroups == nil {
 		r.PeerGroups = []*NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{}
 	}
@@ -226,12 +242,12 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdatePeerGroup(new *Netw
 	if new.Name == "" {
 		return
 	}
-	x := r.GetOrCreatePeerGroup(new.Name)
+	x := r.GetOrCreateNetworkInstanceProtocolBGPPeerGroup(new.Name)
 	x.AddressFamilies = new.AddressFamilies
 	x.RouteReflector = new.RouteReflector
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreatePeerGroup(name string) *NetworkDeviceNetworkInstanceProtocolBGPPeerGroup {
+func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNetworkInstanceProtocolBGPPeerGroup(name string) *NetworkDeviceNetworkInstanceProtocolBGPPeerGroup {
 	for _, peerGroup := range r.PeerGroups {
 		if peerGroup.Name == name {
 			return peerGroup
@@ -241,6 +257,9 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreatePeerGroup(name stri
 		Name: name,
 	}
 	r.PeerGroups = append(r.PeerGroups, newPeerGroup)
+	sort.SliceStable(r.PeerGroups, func(i, j int) bool {
+		return r.PeerGroups[i].Name < r.PeerGroups[j].Name
+	})
 	return newPeerGroup
 }
 
@@ -273,17 +292,20 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNetworkInstanceProt
 		PeerAddress: peerAddress,
 	}
 	r.Neighbors = append(r.Neighbors, newNeighbor)
+	sort.SliceStable(r.Neighbors, func(i, j int) bool {
+		return r.Neighbors[i].PeerAddress < r.Neighbors[j].PeerAddress
+	})
 	return newNeighbor
 }
 
 func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNetworkInstanceProtocolBGPDynamicNeighbors() *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors {
 	if r.DynamicNeighbors == nil {
-		r.DynamicNeighbors = &NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors{} 
+		r.DynamicNeighbors = &NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors{}
 	}
 	return r.DynamicNeighbors
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrCreateNetworkInstanceProtocolBGPDynamicNeighbors(new *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors)  {
+func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrCreateNetworkInstanceProtocolBGPDynamicNeighbors(new *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) {
 	x := r.GetOrCreateNetworkInstanceProtocolBGPDynamicNeighbors()
 	x.PeerAS = new.PeerAS
 	x.PeerGroup = new.PeerGroup
@@ -316,6 +338,9 @@ func (r *Device) GetOrCreateRoutingPolicy(name string) *NetworkDeviceRoutingPoli
 		Name: name,
 	}
 	r.nd.Spec.RoutingPolicies = append(r.nd.Spec.RoutingPolicies, newrp)
+	sort.SliceStable(r.nd.Spec.RoutingPolicies, func(i, j int) bool {
+		return r.nd.Spec.RoutingPolicies[i].Name < r.nd.Spec.RoutingPolicies[j].Name
+	})
 	return newrp
 }
 

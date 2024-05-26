@@ -1,6 +1,7 @@
 package devbuilder
 
 import (
+	"sort"
 	"sync"
 
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
@@ -48,7 +49,7 @@ func (r *Devices) AddAS(nodeName, niName string, as uint32) {
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGP().AS = as
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AS = as
 }
 
 func (r *Devices) AddRouterID(nodeName, niName string, routerID string) {
@@ -58,7 +59,7 @@ func (r *Devices) AddRouterID(nodeName, niName string, routerID string) {
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGP().RouterID = routerID
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().RouterID = routerID
 }
 
 func (r *Devices) AddInterface(nodeName string, x *netwv1alpha1.NetworkDeviceInterface) {
@@ -92,12 +93,14 @@ func (r *Devices) AddSubInterface(nodeName, ifName string, x *netwv1alpha1.Netwo
 	if x.VLAN != nil {
 		itfce.VLANTagging = true // HACK need to be properly fixed
 	}
-	itfce.AddOrUpdateSubInterface(x)
-	si := itfce.GetOrCreateSubInterface(x.ID)
+	itfce.AddOrUpdateInterfaceSubInterface(x)
+	si := itfce.GetOrCreateInterfaceSubInterface(x.ID)
 	if len(ipv4) != 0 {
+		sort.Strings(ipv4)
 		si.GetOrCreateIPv4().Addresses = ipv4
 	}
 	if len(ipv6) != 0 {
+		sort.Strings(ipv6)
 		si.GetOrCreateIPv6().Addresses = ipv6
 	}
 }
@@ -110,8 +113,8 @@ func (r *Devices) AddTunnelSubInterface(nodeName, ifName string, x *netwv1alpha1
 	}
 	d := r.devices[nodeName]
 	itfce := d.GetOrCreateTunnelInterface(ifName)
-	itfce.AddOrUpdateSubInterface(x)
-	si := itfce.GetOrCreateSubInterface(x.ID)
+	itfce.AddOrUpdateTunnelInterfaceSubInterface(x)
+	si := itfce.GetOrCreateTunnelInterfaceSubInterface(x.ID)
 	si.Type = x.Type
 }
 
@@ -166,7 +169,7 @@ func (r *Devices) AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, niName str
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGP().AddOrUpdateNetworkInstanceProtocolBGNeighbor(x)
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AddOrUpdateNetworkInstanceProtocolBGNeighbor(x)
 }
 
 func (r *Devices) AddAddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, niName string, new *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) {
@@ -176,7 +179,7 @@ func (r *Devices) AddAddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, niN
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGP().AddOrCreateNetworkInstanceProtocolBGPDynamicNeighbors(new)
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AddOrCreateNetworkInstanceProtocolBGPDynamicNeighbors(new)
 }
 
 func (r *Devices) AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {
@@ -186,7 +189,7 @@ func (r *Devices) AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName st
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGP().AddOrUpdatePeerGroup(x)
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AddOrUpdateNetworkInstanceProtocolBGPPeerGroup(x)
 }
 
 func (r *Devices) GetSystemIP(nodeName, ifName string, id uint32, ipv4 bool) string {
@@ -196,7 +199,7 @@ func (r *Devices) GetSystemIP(nodeName, ifName string, id uint32, ipv4 bool) str
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	si := d.GetOrCreateInterface(ifName).GetOrCreateSubInterface(id)
+	si := d.GetOrCreateInterface(ifName).GetOrCreateInterfaceSubInterface(id)
 	if ipv4 {
 		if si.IPv4 != nil && len(si.IPv4.Addresses) > 0 {
 			return si.IPv4.Addresses[0]
@@ -229,7 +232,7 @@ func (r *Devices) AddNetworkInstanceProtocolsBGPVPN(nodeName, niName string, x *
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	bgpvpn := d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGPVPN()
+	bgpvpn := d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGPVPN()
 	bgpvpn.ExportRouteTarget = x.ExportRouteTarget
 	bgpvpn.ImportRouteTarget = x.ImportRouteTarget
 }
@@ -241,7 +244,7 @@ func (r *Devices) AddNetworkInstanceProtocolsBGPEVPN(nodeName, niName string, x 
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	bgpevpn := d.GetOrCreateNetworkInstance(niName).GetOrCreateprotocols().GetOrCreateBGPEVPN()
+	bgpevpn := d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGPEVPN()
 	bgpevpn.ECMP = x.ECMP
 	bgpevpn.EVI = x.EVI
 	bgpevpn.VXLANInterface = x.VXLANInterface
