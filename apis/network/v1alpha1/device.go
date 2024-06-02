@@ -122,6 +122,7 @@ func (r *NetworkDeviceInterface) AddOrUpdateInterfaceSubInterface(new *NetworkDe
 	x.PeerName = new.PeerName
 	x.VLAN = new.VLAN
 	x.Type = new.Type
+
 }
 
 func (r *NetworkDeviceInterface) GetOrCreateInterfaceSubInterface(id uint32) *NetworkDeviceInterfaceSubInterface {
@@ -232,6 +233,186 @@ func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateNetworkInstanceProtoc
 	return r.BGPVPN
 }
 
+func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateNetworkInstanceProtocolsISIS() *NetworkDeviceNetworkInstanceProtocolISIS {
+	if r.ISIS == nil {
+		r.ISIS = &NetworkDeviceNetworkInstanceProtocolISIS{}
+	}
+	return r.ISIS
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocols) GetOrCreateNetworkInstanceProtocolsOSPF() *NetworkDeviceNetworkInstanceProtocolOSPF {
+	if r.OSPF == nil {
+		r.OSPF = &NetworkDeviceNetworkInstanceProtocolOSPF{}
+	}
+	return r.OSPF
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolISIS) AddOrUpdateNetworkInstanceProtocolISISInstances(new *NetworkDeviceNetworkInstanceProtocolISISInstance) {
+	if r.Instances == nil {
+		r.Instances = []*NetworkDeviceNetworkInstanceProtocolISISInstance{}
+	}
+	x := r.GetOrCreateNetworkInstanceProtocolISISInstance(new.Name)
+	x.AddressFamilies = new.AddressFamilies
+	x.LevelCapability = new.LevelCapability
+	x.Net = new.Net
+	x.MaxECMPPaths = new.MaxECMPPaths
+	x.Interfaces = new.Interfaces
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolISIS) GetOrCreateNetworkInstanceProtocolISISInstance(name string) *NetworkDeviceNetworkInstanceProtocolISISInstance {
+	for _, instance := range r.Instances {
+		if instance.Name == name {
+			return instance
+		}
+	}
+	newInstance := &NetworkDeviceNetworkInstanceProtocolISISInstance{
+		Name: name,
+	}
+	r.Instances = append(r.Instances, newInstance)
+	sort.SliceStable(r.Instances, func(i, j int) bool {
+		return r.Instances[i].Name < r.Instances[j].Name
+	})
+	return newInstance
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolISISInstance) AddOrUpdateNetworkInstanceProtocolISISInstanceInterface(new *NetworkDeviceNetworkInstanceProtocolISISInstanceInterface) {
+	if r.Interfaces == nil {
+		r.Interfaces = []*NetworkDeviceNetworkInstanceProtocolISISInstanceInterface{}
+	}
+	x := r.GetOrCreateNetworkInstanceProtocolISISInstanceInterface(new.SubInterfaceName)
+	x.IPv4 = new.IPv4
+	x.IPv6 = new.IPv6
+	x.Level = new.Level
+	x.Passive = new.Passive
+	x.Type = new.Type
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolISISInstance) GetOrCreateNetworkInstanceProtocolISISInstanceInterface(siName NetworkDeviceNetworkInstanceInterface) *NetworkDeviceNetworkInstanceProtocolISISInstanceInterface {
+	for _, itfce := range r.Interfaces {
+		if itfce.SubInterfaceName == siName {
+			return itfce
+		}
+	}
+	newInterface := &NetworkDeviceNetworkInstanceProtocolISISInstanceInterface{
+		SubInterfaceName: siName,
+	}
+	r.Interfaces = append(r.Interfaces, newInterface)
+	sort.SliceStable(r.Interfaces, func(i, j int) bool {
+		return fmt.Sprintf("%s.%d", r.Interfaces[i].SubInterfaceName.Name, r.Interfaces[i].SubInterfaceName.ID) <
+			fmt.Sprintf("%s.%d", r.Interfaces[j].SubInterfaceName.Name, r.Interfaces[j].SubInterfaceName.ID)
+	})
+	return newInterface
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolISISInstanceInterface) GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceIPv4() *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv4 {
+	if r.IPv4 == nil {
+		r.IPv4 = &NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv4{}
+	}
+	return r.IPv4
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolISISInstanceInterface) GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceIPv6() *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv6 {
+	if r.IPv6 == nil {
+		r.IPv6 = &NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv6{}
+	}
+	return r.IPv6
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolOSPF) AddOrUpdateNetworkInstanceProtocolOSPFInstances(new *NetworkDeviceNetworkInstanceProtocolOSPFInstance) {
+	if r.Instances == nil {
+		r.Instances = []*NetworkDeviceNetworkInstanceProtocolOSPFInstance{}
+	}
+	x := r.GetOrCreateNetworkInstanceProtocolOSPFInstance(new.Name)
+	x.ASBR = new.ASBR
+	x.Areas = new.Areas
+	x.MaxECMPPaths = new.MaxECMPPaths
+	x.RouterID = new.RouterID
+	x.Version = new.Version
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolOSPF) GetOrCreateNetworkInstanceProtocolOSPFInstance(name string) *NetworkDeviceNetworkInstanceProtocolOSPFInstance {
+	for _, instance := range r.Instances {
+		if instance.Name == name {
+			return instance
+		}
+	}
+	newInstance := &NetworkDeviceNetworkInstanceProtocolOSPFInstance{
+		Name: name,
+	}
+	r.Instances = append(r.Instances, newInstance)
+	sort.SliceStable(r.Instances, func(i, j int) bool {
+		return r.Instances[i].Name < r.Instances[j].Name
+	})
+	return newInstance
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolOSPFInstance) AddOrUpdateNetworkInstanceProtocolOSPFInstanceArea(new *NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea) {
+	if r.Areas == nil {
+		r.Areas = []*NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea{}
+	}
+	x := r.GetOrCreateNetworkInstanceProtocolOSPFInstanceArea(new.Name)
+	x.Interfaces = new.Interfaces
+	x.NSSA = new.NSSA
+	x.Stub = new.Stub
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolOSPFInstance) GetOrCreateNetworkInstanceProtocolOSPFInstanceArea(name string) *NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea {
+	for _, area := range r.Areas {
+		if area.Name == name {
+			return area
+		}
+	}
+	newArea := &NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea{
+		Name: name,
+	}
+	r.Areas = append(r.Areas, newArea)
+	sort.SliceStable(r.Areas, func(i, j int) bool {
+		return r.Areas[i].Name < r.Areas[j].Name
+	})
+	return newArea
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea) GetOrCreateNetworkInstanceProtocolOSPFInstanceAreaStub() *NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaStub {
+	if r.Stub == nil {
+		r.Stub = &NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaStub{}
+	}
+	return r.Stub
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea) GetOrCreateNetworkInstanceProtocolOSPFInstanceAreaNSSA() *NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaNSSA {
+	if r.NSSA == nil {
+		r.NSSA = &NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaNSSA{}
+	}
+	return r.NSSA
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea) AddOrUpdateNetworkInstanceProtocolOSPFInstanceAreaInterface(new *NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface) {
+	if r.Interfaces == nil {
+		r.Interfaces = []*NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface{}
+	}
+	x := r.GetOrCreateNetworkInstanceProtocolOSPFInstanceAreaInterface(new.SubInterfaceName)
+	x.Type = new.Type
+	x.Passive = new.Passive
+	x.BFD = new.BFD
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea) GetOrCreateNetworkInstanceProtocolOSPFInstanceAreaInterface(siName NetworkDeviceNetworkInstanceInterface) *NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface {
+	for _, itfce := range r.Interfaces {
+		if itfce.SubInterfaceName == siName {
+			return itfce
+		}
+	}
+	newInterface := &NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface{
+		SubInterfaceName: siName,
+	}
+	r.Interfaces = append(r.Interfaces, newInterface)
+	sort.SliceStable(r.Interfaces, func(i, j int) bool {
+		return fmt.Sprintf("%s.%d", r.Interfaces[i].SubInterfaceName.Name, r.Interfaces[i].SubInterfaceName.ID) <
+			fmt.Sprintf("%s.%d", r.Interfaces[j].SubInterfaceName.Name, r.Interfaces[j].SubInterfaceName.ID)
+	})
+	return newInterface
+}
+
 func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdateNetworkInstanceProtocolBGPPeerGroup(new *NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {
 	if r.PeerGroups == nil {
 		r.PeerGroups = []*NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{}
@@ -305,12 +486,50 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNetworkInstanceProt
 	return r.DynamicNeighbors
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrCreateNetworkInstanceProtocolBGPDynamicNeighbors(new *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) {
-	x := r.GetOrCreateNetworkInstanceProtocolBGPDynamicNeighbors()
+func (r *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) AddOrUpdateetworkInstanceProtocolBGPDynamicNeighborsInterface(new *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface) {
+	if r.Interfaces == nil {
+		r.Interfaces = []*NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{}
+	}
+	if new == nil {
+		return
+	}
+	if new.Name == "" {
+		return
+	}
+	x := r.GetOrCreateNetworkInstanceProtocolBGPDynamicNeighborsInterface(new.Name)
 	x.PeerAS = new.PeerAS
 	x.PeerGroup = new.PeerGroup
-	x.PeerPrefixes = new.PeerPrefixes
+}
 
+func (r *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) GetOrCreateNetworkInstanceProtocolBGPDynamicNeighborsInterface(name string) *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface {
+	for _, itfce := range r.Interfaces {
+		if itfce.Name == name {
+			return itfce
+		}
+	}
+	newInterface := &NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{
+		Name: name,
+	}
+	r.Interfaces = append(r.Interfaces, newInterface)
+	sort.SliceStable(r.Interfaces, func(i, j int) bool {
+		return r.Interfaces[i].Name < r.Interfaces[j].Name
+	})
+	return newInterface
+}
+
+func (r *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) AddOrUpdateetworkInstanceProtocolBGPDynamicNeighborsPrefix(new *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface) {
+	if r.Prefixes == nil {
+		r.Interfaces = []*NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{}
+	}
+	if new == nil {
+		return
+	}
+	if new.Name == "" {
+		return
+	}
+	x := r.GetOrCreateNetworkInstanceProtocolBGPDynamicNeighborsInterface(new.Name)
+	x.PeerAS = new.PeerAS
+	x.PeerGroup = new.PeerGroup
 }
 
 func (r *Device) AddOrUpdateRoutingPolicy(new *NetworkDeviceRoutingPolicy) {

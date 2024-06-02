@@ -77,7 +77,7 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 		For(&netwv1alpha1.Network{}).
 		Owns(&ipambev1alpha1.IPClaim{}).
 		Owns(&asbev1alpha1.ASClaim{}).
-		Watches(&netwv1alpha1.NetworkConfig{},
+		Watches(&netwv1alpha1.NetworkDesign{},
 			&eventhandler.NetworkConfigForNetworkEventHandler{
 				Client:  mgr.GetClient(),
 				ObjList: &netwv1alpha1.NetworkList{},
@@ -152,7 +152,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	nc, err := r.getNetworkConfig(ctx, cr)
+	nc, err := r.getNetworkDesign(ctx, cr)
 	if err != nil {
 		if cr.IsDefaultNetwork() {
 			// we need networkconfig for the default network
@@ -194,7 +194,7 @@ func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.Network, 
 	}
 }
 
-func (r *reconciler) applyDefaultNetwork(ctx context.Context, cr *netwv1alpha1.Network, nc *netwv1alpha1.NetworkConfig) error {
+func (r *reconciler) applyDefaultNetwork(ctx context.Context, cr *netwv1alpha1.Network, nd *netwv1alpha1.NetworkDesign) error {
 	res := resources.New(r.Client, resources.Config{
 		Owns: []schema.GroupVersionKind{
 			ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPClaimKind),
@@ -207,11 +207,11 @@ func (r *reconciler) applyDefaultNetwork(ctx context.Context, cr *netwv1alpha1.N
 		return err
 	}
 	for _, n := range nodes {
-		for _, ipclaim := range nc.GetNodeIPClaims(cr, n) {
+		for _, ipclaim := range nd.GetNodeIPClaims(cr, n) {
 			res.AddNewResource(ctx, cr, ipclaim)
 		}
 
-		if asClaim := nc.GetNodeASClaim(cr, n); asClaim != nil {
+		if asClaim := nd.GetNodeASClaim(cr, n); asClaim != nil {
 			res.AddNewResource(ctx, cr, asClaim)
 		}
 	}
@@ -220,7 +220,7 @@ func (r *reconciler) applyDefaultNetwork(ctx context.Context, cr *netwv1alpha1.N
 		return err
 	}
 	for _, l := range links {
-		for _, ipclaim := range nc.GetLinkIPClaims(cr, l) {
+		for _, ipclaim := range nd.GetLinkIPClaims(cr, l) {
 			res.AddNewResource(ctx, cr, ipclaim)
 		}
 	}
@@ -231,7 +231,7 @@ func (r *reconciler) applyDefaultNetwork(ctx context.Context, cr *netwv1alpha1.N
 	return nil
 }
 
-func (r *reconciler) applyNetwork(_ context.Context, _ *netwv1alpha1.Network, _ *netwv1alpha1.NetworkConfig) error {
+func (r *reconciler) applyNetwork(_ context.Context, _ *netwv1alpha1.Network, _ *netwv1alpha1.NetworkDesign) error {
 	/*
 		res := resources.New(r.Client, resources.Config{
 			Owns: []schema.GroupVersionKind{
@@ -258,14 +258,14 @@ func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.Network) error
 	return nil
 }
 
-func (r *reconciler) getNetworkConfig(ctx context.Context, cr *netwv1alpha1.Network) (*netwv1alpha1.NetworkConfig, error) {
+func (r *reconciler) getNetworkDesign(ctx context.Context, cr *netwv1alpha1.Network) (*netwv1alpha1.NetworkDesign, error) {
 	//log := log.FromContext((ctx))
 	key := types.NamespacedName{
 		Namespace: cr.Namespace,
 		Name:      cr.Name,
 	}
 
-	o := &netwv1alpha1.NetworkConfig{}
+	o := &netwv1alpha1.NetworkDesign{}
 	if err := r.Client.Get(ctx, key, o); err != nil {
 		return nil, err
 	}

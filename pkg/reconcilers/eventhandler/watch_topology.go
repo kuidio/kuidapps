@@ -32,7 +32,7 @@ import (
 
 type TopologyEventHandler struct {
 	Client  client.Client
-	ObjList *netwv1alpha1.NetworkConfigList
+	ObjList *netwv1alpha1.NetworkDesignList
 }
 
 // Create enqueues a request

@@ -8,11 +8,12 @@ require (
 	github.com/henderiw/resource v0.0.0-20231228040228-cf28542fa2c6
 	github.com/henderiw/store v0.0.0-20240513051819-0202d08d7b42
 	github.com/kform-dev/kform v0.0.10-0.20240526044419-ef44918d1d50
-	github.com/kuidio/kuid v0.0.4
+	github.com/kuidio/kuid v0.0.5-0.20240602053821-5c899cb0a058
 	github.com/pkg/errors v0.9.1
 	github.com/pkgserver-dev/pkgserver v0.0.4
 	github.com/sdcio/config-server v0.0.22
 	github.com/srl-labs/clabernetes v0.0.30
+	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.30.1
 	k8s.io/apimachinery v0.30.1
@@ -21,6 +22,7 @@ require (
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
 	sigs.k8s.io/controller-runtime v0.18.2
 	sigs.k8s.io/kustomize/kyaml v0.17.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
@@ -42,6 +44,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.11.2 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
+	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -66,6 +69,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
+	github.com/hansthienpondt/nipam v0.0.5 // indirect
 	github.com/henderiw/apiserver-builder v0.0.2-0.20240414132730-35630f41575d // indirect
 	github.com/henderiw/apiserver-store v0.0.0-20240419050621-a69e6046534c // indirect
 	github.com/henderiw/idxtable v0.0.0-20240507134400-54d7d0b2a708 // indirect
@@ -74,6 +78,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kentik/patricia v1.2.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.5 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -85,6 +90,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/oras-project/oras-credentials-go v0.4.0 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.18.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.46.0 // indirect
@@ -142,5 +148,4 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.29.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
-	sigs.k8s.io/yaml v1.4.0 // indirect
 )

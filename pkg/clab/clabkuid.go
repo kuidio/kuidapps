@@ -81,22 +81,25 @@ func (r *clabkuid) GetLinks(ctx context.Context) []backend.GenericObject {
 				continue
 			}
 		}
-		eps := r.getEndpoints(ctx, l)
-		if eps == nil {
+		epSpecs := r.getEndpoints(ctx, l)
+		if epSpecs == nil {
 			return nil
 		}
-		if len(eps) != 2 {
-			log.Error("cannot create link if len endpoints != 2", "endpoints", len(eps))
+		if len(epSpecs) != 2 {
+			log.Error("cannot create link if len endpoints != 2", "endpoints", len(epSpecs))
 			return nil
 		}
 
 		links = append(links, infrav1alpha1.BuildLink(
 			metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s.%s", eps[0].KuidString(), eps[1].KuidString()),
+				Name:      fmt.Sprintf("%s.%s", epSpecs[0].NodeGroupEndpointID.KuidString(), epSpecs[1].NodeGroupEndpointID.KuidString()),
 				Namespace: "default",
 			},
 			&infrav1alpha1.LinkSpec{
-				Endpoints: eps,
+				Endpoints: []*infrav1alpha1.NodeGroupEndpointID{
+					&epSpecs[0].NodeGroupEndpointID,
+					&epSpecs[1].NodeGroupEndpointID,
+				},
 				UserDefinedLabels: v1alpha1.UserDefinedLabels{
 					Labels: l.Labels,
 				},
@@ -107,9 +110,42 @@ func (r *clabkuid) GetLinks(ctx context.Context) []backend.GenericObject {
 	return links
 }
 
-func (r *clabkuid) getEndpoints(ctx context.Context, l *containerlab.LinkDefinition) []*infrav1alpha1.NodeGroupEndpointID {
+func (r *clabkuid) GetEndpoints(ctx context.Context) []backend.GenericObject {
 	log := log.FromContext(ctx)
-	endpoints := make([]*infrav1alpha1.NodeGroupEndpointID, 0, 2)
+	endpoints := make([]backend.GenericObject, 0, 2*len(r.cfg.Topology.Links))
+	for _, l := range r.cfg.Topology.Links {
+		if len(l.Labels) != 0 {
+			if _, ok := l.Labels[backend.KuidINVExclude]; ok {
+				continue
+			}
+		}
+		eps := r.getEndpoints(ctx, l)
+		if eps == nil {
+			return nil
+		}
+		if len(eps) != 2 {
+			log.Error("cannot create link if len endpoints != 2", "endpoints", len(eps))
+			return nil
+		}
+
+		for _, epSpec := range eps {
+			endpoints = append(endpoints, infrav1alpha1.BuildEndpoint(
+				metav1.ObjectMeta{
+					Name:      epSpec.KuidString(),
+					Namespace: "default",
+				},
+				epSpec,
+				nil,
+			))
+		}
+
+	}
+	return endpoints
+}
+
+func (r *clabkuid) getEndpoints(ctx context.Context, l *containerlab.LinkDefinition) []*infrav1alpha1.EndpointSpec {
+	log := log.FromContext(ctx)
+	endpoints := make([]*infrav1alpha1.EndpointSpec, 0, 2)
 	if len(l.Endpoints) != 2 {
 		return nil
 	}
@@ -129,13 +165,18 @@ func (r *clabkuid) getEndpoints(ctx context.Context, l *containerlab.LinkDefinit
 			return nil
 		}
 
+		nodeKind, _ := r.cfg.Topology.GetNodeKindType(nodeName)
+
 		nodeGroupNodeID := r.getNodeGroupNodeID(nodeName, n.Labels)
 
-		endpoints = append(endpoints, &infrav1alpha1.NodeGroupEndpointID{
-			NodeGroup: r.cfg.Name,
-			EndpointID: infrav1alpha1.EndpointID{
-				NodeID:   nodeGroupNodeID.NodeID,
-				Endpoint: epName,
+		endpoints = append(endpoints, &infrav1alpha1.EndpointSpec{
+			Provider: r.getProvider(nodeKind),
+			NodeGroupEndpointID: infrav1alpha1.NodeGroupEndpointID{
+				NodeGroup: r.cfg.Name,
+				EndpointID: infrav1alpha1.EndpointID{
+					NodeID:   nodeGroupNodeID.NodeID,
+					Endpoint: epName,
+				},
 			},
 		})
 

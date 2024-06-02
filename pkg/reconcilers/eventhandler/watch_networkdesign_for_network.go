@@ -56,7 +56,7 @@ func (r *NetworkConfigForNetworkEventHandler) Generic(ctx context.Context, evt e
 }
 
 func (r *NetworkConfigForNetworkEventHandler) add(ctx context.Context, obj runtime.Object, queue adder) {
-	cr, ok := obj.(*netwv1alpha1.NetworkConfig)
+	nd, ok := obj.(*netwv1alpha1.NetworkDesign)
 	if !ok {
 		return
 	}
@@ -65,7 +65,7 @@ func (r *NetworkConfigForNetworkEventHandler) add(ctx context.Context, obj runti
 	//log.Info("event", "gvk", ipambev1alpha1.SchemeGroupVersion.WithKind(ipambev1alpha1.IPEntryKind).String(), "name", cr.GetName())
 
 	opts := []client.ListOption{
-		client.InNamespace(cr.Namespace),
+		client.InNamespace(nd.Namespace),
 	}
 	objList := r.ObjList
 	if err := r.Client.List(ctx, objList, opts...); err != nil {
@@ -79,7 +79,7 @@ func (r *NetworkConfigForNetworkEventHandler) add(ctx context.Context, obj runti
 		// check if the connection profile is referenced in the discoveryProfile
 		//log.Info("event", "objOwnerRef", obj.GetOwnerReference().String(), "crOwnerRef", cr.GetOwnerReference().String())
 
-		if obj.Name == cr.Name {
+		if obj.Name == nd.Name {
 			key := types.NamespacedName{
 				Namespace: obj.GetNamespace(),
 				Name:      obj.GetName()}

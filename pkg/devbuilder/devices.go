@@ -1,7 +1,22 @@
+/*
+Copyright 2024 Nokia.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package devbuilder
 
 import (
-	"sort"
 	"sync"
 
 	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
@@ -42,7 +57,7 @@ func (r *Devices) AddProvider(nodeName, provider string) {
 	d.AddProvider(provider)
 }
 
-func (r *Devices) AddAS(nodeName, niName string, as uint32) {
+func (r *Devices) AddNetworkInstanceProtocolsBGPAS(nodeName, niName string, as uint32) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
@@ -52,7 +67,7 @@ func (r *Devices) AddAS(nodeName, niName string, as uint32) {
 	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AS = as
 }
 
-func (r *Devices) AddRouterID(nodeName, niName string, routerID string) {
+func (r *Devices) AddNetworkInstanceProtocolsBGPRouterID(nodeName, niName string, routerID string) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
@@ -82,7 +97,7 @@ func (r *Devices) AddTunnelInterface(nodeName string, x *netwv1alpha1.NetworkDev
 	d.AddOrUpdateTunnelInterface(x)
 }
 
-func (r *Devices) AddSubInterface(nodeName, ifName string, x *netwv1alpha1.NetworkDeviceInterfaceSubInterface, ipv4, ipv6 []string) {
+func (r *Devices) AddSubInterface(nodeName, ifName string, x *netwv1alpha1.NetworkDeviceInterfaceSubInterface) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
@@ -95,14 +110,22 @@ func (r *Devices) AddSubInterface(nodeName, ifName string, x *netwv1alpha1.Netwo
 	}
 	itfce.AddOrUpdateInterfaceSubInterface(x)
 	si := itfce.GetOrCreateInterfaceSubInterface(x.ID)
-	if len(ipv4) != 0 {
-		sort.Strings(ipv4)
-		si.GetOrCreateIPv4().Addresses = ipv4
-	}
-	if len(ipv6) != 0 {
-		sort.Strings(ipv6)
-		si.GetOrCreateIPv6().Addresses = ipv6
-	}
+	si.IPv4 = x.IPv4
+	si.IPv6 = x.IPv6
+	si.PeerName = x.PeerName
+	si.VLAN = x.VLAN
+	si.Type = x.Type
+
+	/*
+		if len(ipv4) != 0 {
+			sort.Strings(ipv4)
+			si.GetOrCreateIPv4().Addresses = ipv4
+		}
+		if len(ipv6) != 0 {
+			sort.Strings(ipv6)
+			si.GetOrCreateIPv6().Addresses = ipv6
+		}
+	*/
 }
 
 func (r *Devices) AddTunnelSubInterface(nodeName, ifName string, x *netwv1alpha1.NetworkDeviceTunnelInterfaceSubInterface) {
@@ -162,7 +185,84 @@ func (r *Devices) AddNetworkInstanceSubInterfaceVXLAN(nodeName, niName string, v
 	d.GetOrCreateNetworkInstance(niName).VXLANInterface = vxlanItfce
 }
 
-func (r *Devices) AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor) {
+func (r *Devices) AddNetworkInstanceProtocolsISISInstance(nodeName, niName string, instance *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstance) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	isisInstance := d.GetOrCreateNetworkInstance(niName).
+		GetOrCreateNetworkInstanceProtocols().
+		GetOrCreateNetworkInstanceProtocolsISIS().
+		GetOrCreateNetworkInstanceProtocolISISInstance(instance.Name)
+	isisInstance.AddressFamilies = instance.AddressFamilies
+	isisInstance.LevelCapability = instance.LevelCapability
+	isisInstance.MaxECMPPaths = instance.MaxECMPPaths
+	isisInstance.Net = instance.Net
+}
+
+func (r *Devices) AddNetworkInstanceProtocolsISISInstanceInterface(nodeName, niName, instanceName string, itfce *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceInterface) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.GetOrCreateNetworkInstance(niName).
+		GetOrCreateNetworkInstanceProtocols().
+		GetOrCreateNetworkInstanceProtocolsISIS().
+		GetOrCreateNetworkInstanceProtocolISISInstance(instanceName).
+		AddOrUpdateNetworkInstanceProtocolISISInstanceInterface(itfce)
+}
+
+func (r *Devices) AddNetworkInstanceProtocolsOSPFInstance(nodeName, niName string, instance *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstance) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	ospfInstance := d.GetOrCreateNetworkInstance(niName).
+		GetOrCreateNetworkInstanceProtocols().
+		GetOrCreateNetworkInstanceProtocolsOSPF().
+		GetOrCreateNetworkInstanceProtocolOSPFInstance(instance.Name)
+	ospfInstance.RouterID = instance.RouterID
+	ospfInstance.Version = instance.Version
+	ospfInstance.MaxECMPPaths = instance.MaxECMPPaths
+	ospfInstance.ASBR = instance.ASBR
+}
+
+func (r *Devices) AddNetworkInstanceProtocolsOSPFInstanceArea(nodeName, niName, instanceName string, area *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.GetOrCreateNetworkInstance(niName).
+		GetOrCreateNetworkInstanceProtocols().
+		GetOrCreateNetworkInstanceProtocolsOSPF().
+		GetOrCreateNetworkInstanceProtocolOSPFInstance(instanceName).
+		AddOrUpdateNetworkInstanceProtocolOSPFInstanceArea(area)
+}
+
+func (r *Devices) AddNetworkInstanceProtocolsOSPFInstanceAreaInterface(nodeName, niName, instanceName, area string, itfce *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.GetOrCreateNetworkInstance(niName).
+		GetOrCreateNetworkInstanceProtocols().
+		GetOrCreateNetworkInstanceProtocolsOSPF().
+		GetOrCreateNetworkInstanceProtocolOSPFInstance(instanceName).
+		GetOrCreateNetworkInstanceProtocolOSPFInstanceArea(area).
+		AddOrUpdateNetworkInstanceProtocolOSPFInstanceAreaInterface(itfce)
+}
+
+func (r *Devices) AddNetworkInstanceprotocolsBGPNeighbor(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPNeighbor) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
@@ -172,14 +272,14 @@ func (r *Devices) AddAddNetworkInstanceprotocolsBGPNeighbor(nodeName, niName str
 	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AddOrUpdateNetworkInstanceProtocolBGNeighbor(x)
 }
 
-func (r *Devices) AddAddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, niName string, new *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) {
+func (r *Devices) AddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, niName string, new *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {
 		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
 	}
 	d := r.devices[nodeName]
-	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AddOrCreateNetworkInstanceProtocolBGPDynamicNeighbors(new)
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().GetOrCreateNetworkInstanceProtocolBGPDynamicNeighbors().AddOrUpdateetworkInstanceProtocolBGPDynamicNeighborsInterface(new)
 }
 
 func (r *Devices) AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {

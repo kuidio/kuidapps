@@ -136,19 +136,28 @@ spec:
                               type: integer
                             dynamicNeighbors:
                               properties:
-                                peerAS:
-                                  format: int32
-                                  type: integer
-                                peerGroup:
-                                  type: string
+                                interfaces:
+                                  items:
+                                    properties:
+                                      name:
+                                        type: string
+                                      peerAS:
+                                        format: int32
+                                        type: integer
+                                      peerGroup:
+                                        type: string
+                                    required:
+                                    - name
+                                    - peerAS
+                                    - peerGroup
+                                    type: object
+                                  type: array
                                 peerPrefixes:
                                   items:
                                     type: string
                                   type: array
                               required:
-                              - peerAS
-                              - peerGroup
-                              - peerPrefixes
+                              - interfaces
                               type: object
                             neighbors:
                               items:
@@ -194,6 +203,7 @@ spec:
                                 type: object
                               type: array
                             routerID:
+                              description: RouterID for the BGP Instance
                               type: string
                           required:
                           - as
@@ -223,6 +233,210 @@ spec:
                           required:
                           - exportRouteTarget
                           - importRouteTarget
+                          type: object
+                        isis:
+                          properties:
+                            instances:
+                              items:
+                                properties:
+                                  addressFamilies:
+                                    description: AddressFamilies defines the address
+                                      families enabled in the instance
+                                    items:
+                                      type: string
+                                    type: array
+                                  interfaces:
+                                    description: Interfaces define the interface parameters
+                                      used with ISIS
+                                    items:
+                                      properties:
+                                        ipv4:
+                                          description: IPv4 define the ipv4 interface
+                                            parameters
+                                          properties:
+                                            bfd:
+                                              description: BFD defines if bfd is enabled
+                                              type: boolean
+                                          required:
+                                          - bfd
+                                          type: object
+                                        ipv6:
+                                          description: IPv6 define the ipv6 interface
+                                            parameters
+                                          properties:
+                                            bfd:
+                                              description: BFD defines if bfd is enabled
+                                              type: boolean
+                                          required:
+                                          - bfd
+                                          type: object
+                                        levelCapability:
+                                          default: 2
+                                          description: Level defines the ISIS interface
+                                            level
+                                          format: int32
+                                          maximum: 2
+                                          minimum: 1
+                                          type: integer
+                                        passive:
+                                          description: Passive allow interface to
+                                            be advertised as an ISIS interface without
+                                            running the ISIS protocol
+                                          type: boolean
+                                        subInterfaceName:
+                                          description: SubInterfaceName defines the
+                                            name and id of the sub interface
+                                          properties:
+                                            id:
+                                              format: int32
+                                              type: integer
+                                            name:
+                                              type: string
+                                          required:
+                                          - id
+                                          - name
+                                          type: object
+                                        type:
+                                          default: pointToPoint
+                                          description: Type defines the type of interface
+                                          enum:
+                                          - pointToPoint
+                                          - broadcast
+                                          type: string
+                                      required:
+                                      - levelCapability
+                                      - subInterfaceName
+                                      - type
+                                      type: object
+                                    type: array
+                                  levelCapability:
+                                    description: LevelCapability defines the level
+                                      capability of the intermediate system (router)
+                                    type: string
+                                  maxECMPPaths:
+                                    default: 1
+                                    description: MaxECMPPaths defines the maximum
+                                      ecmp paths used
+                                    format: int32
+                                    maximum: 64
+                                    minimum: 1
+                                    type: integer
+                                  name:
+                                    description: Name defines the name of the instance
+                                    type: string
+                                  net:
+                                    description: ISIS network entity title (NET)
+                                    items:
+                                      type: string
+                                    type: array
+                                required:
+                                - interfaces
+                                - levelCapability
+                                - name
+                                - net
+                                type: object
+                              type: array
+                          required:
+                          - instances
+                          type: object
+                        ospf:
+                          properties:
+                            instances:
+                              items:
+                                properties:
+                                  areas:
+                                    description: ISIS network entity title (NET)
+                                    items:
+                                      properties:
+                                        interfaces:
+                                          description: Interfaces define the interface
+                                            parameters used with ISIS
+                                          items:
+                                            properties:
+                                              bfd:
+                                                description: BFD defines if bfd is
+                                                  enabled
+                                                type: boolean
+                                              passive:
+                                                description: Passive allow interface
+                                                  to be advertised as an interface
+                                                  without running the OSPF protocol
+                                                type: boolean
+                                              subInterfaceName:
+                                                description: SubInterfaceName defines
+                                                  the name and id of the sub interface
+                                                properties:
+                                                  id:
+                                                    format: int32
+                                                    type: integer
+                                                  name:
+                                                    type: string
+                                                required:
+                                                - id
+                                                - name
+                                                type: object
+                                              type:
+                                                default: pointToPoint
+                                                description: Type defines the type
+                                                  of interface
+                                                enum:
+                                                - pointToPoint
+                                                - broadcast
+                                                type: string
+                                            required:
+                                            - subInterfaceName
+                                            - type
+                                            type: object
+                                          type: array
+                                        name:
+                                          description: Name defines the name of the
+                                            area
+                                          type: string
+                                        nssa:
+                                          description: NSSA define the NSSA parameters
+                                          type: object
+                                        stub:
+                                          description: Stub define the stub parameters
+                                          type: object
+                                      required:
+                                      - interfaces
+                                      - name
+                                      type: object
+                                    type: array
+                                  asbr:
+                                    description: ASBR defines if the router is an
+                                      ASBR (Autonomous System Boundary Router)
+                                    type: boolean
+                                  maxECMPPaths:
+                                    default: 1
+                                    description: MaxECMPPaths defines the maximum
+                                      ecmp paths used
+                                    format: int32
+                                    maximum: 64
+                                    minimum: 1
+                                    type: integer
+                                  name:
+                                    description: Name defines the name of the instance
+                                    type: string
+                                  routerID:
+                                    description: RouterID of the instance
+                                    type: string
+                                  version:
+                                    default: v2
+                                    description: Version defines the Version used
+                                      for ospf
+                                    enum:
+                                    - v2
+                                    - v3
+                                    type: string
+                                required:
+                                - name
+                                - routerID
+                                - version
+                                type: object
+                              type: array
+                          required:
+                          - instances
                           type: object
                       type: object
                     type:

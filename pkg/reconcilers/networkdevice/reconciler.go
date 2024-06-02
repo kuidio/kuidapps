@@ -192,7 +192,7 @@ func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.Network, 
 	}
 }
 
-func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network, nc *netwv1alpha1.NetworkConfig) error {
+func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network, nd *netwv1alpha1.NetworkDesign) error {
 	res := resources.New(r.Client, resources.Config{
 		Owns: []schema.GroupVersionKind{
 			netwv1alpha1.SchemeGroupVersion.WithKind(netwv1alpha1.NetworkDeviceKind),
@@ -200,7 +200,7 @@ func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network, nc *ne
 	})
 
 	b := devbuilder.New(r.Client, types.NamespacedName{Namespace: cr.Namespace, Name: cr.Name})
-	if err := b.Build(ctx, cr, nc); err != nil {
+	if err := b.Build(ctx, cr, nd); err != nil {
 		return err
 	}
 	for _, nd := range b.GetNetworkDeviceConfigs() {
@@ -227,10 +227,10 @@ func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.Network) error
 	return nil
 }
 
-func (r *reconciler) getNetworkConfig(ctx context.Context, key types.NamespacedName) (*netwv1alpha1.NetworkConfig, error) {
+func (r *reconciler) getNetworkConfig(ctx context.Context, key types.NamespacedName) (*netwv1alpha1.NetworkDesign, error) {
 	//log := log.FromContext((ctx))
 
-	o := &netwv1alpha1.NetworkConfig{}
+	o := &netwv1alpha1.NetworkDesign{}
 	if err := r.Client.Get(ctx, key, o); err != nil {
 		return nil, err
 	}

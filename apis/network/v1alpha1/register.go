@@ -53,8 +53,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&Network{},
 		&NetworkList{},
-		&NetworkConfig{},
-		&NetworkConfigList{},
+		&NetworkDesign{},
+		&NetworkDesignList{},
 		&NetworkDevice{},
 		&NetworkDeviceList{},
 	)

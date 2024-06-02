@@ -77,8 +77,8 @@ func (r *NetworkInterface) IsDynamic() bool {
 	return r.Selector != nil
 }
 
-func (r *Network) IsBridgeDomainPresent(name string) bool {
-	for _, bd := range r.Spec.BridgeDomains {
+func (r *Network) IsBridgePresent(name string) bool {
+	for _, bd := range r.Spec.Bridges {
 		if bd.Name == name {
 			return true
 		}

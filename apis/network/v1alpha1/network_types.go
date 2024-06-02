@@ -27,18 +27,18 @@ import (
 // NetworkSpec defines the desired state of Network
 type NetworkSpec struct {
 	Topology string `json:"topology" yaml:"topology" protobuf:"bytes,1,opt,name=topology"`
-	// BridgeDomains define a set of logical ports that share the same
+	// Bridges define a set of logical ports that share the same
 	// flooding or broadcast characteristics. Like a virtual LAN (VLAN),
-	// a bridge domain spans one or more ports of multiple devices.
-	BridgeDomains []*NetworkBridgeDomain `json:"bridgeDomains,omitempty" yaml:"bridgeDomains,omitempty" protobuf:"bytes,2,rep,name=bridgeDomains"`
-	// RoutingTables defines a set of routes belonging to a given routing instance
-	// Multiple routing tables are also called virtual routing instances. Each virtual
+	// a bridge can span one or more ports of multiple devices.
+	Bridges []*NetworkBridge `json:"bridges,omitempty" yaml:"bridges,omitempty" protobuf:"bytes,2,rep,name=bridges"`
+	// Routers defines a set of routes belonging to a given routing instance
+	// A Router can also be called a virtual routing instances. Each virtual
 	// routing instance can hold overlapping IP information
-	// A routing table supports both ipv4 and ipv6
-	RoutingTables []*NetworkRoutingTable `json:"routingTables,omitempty" yaml:"routingTables,omitempty" protobuf:"bytes,3,rep,name=routingTables"`
+	// A router supports both ipv4 and ipv6
+	Routers []*NetworkRouter `json:"routers,omitempty" yaml:"routers,omitempty" protobuf:"bytes,3,rep,name=routers"`
 }
 
-type NetworkBridgeDomain struct {
+type NetworkBridge struct {
 	// Name defines the name of the bridge domain
 	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
 	// NetworkID defines the id of the bridge domain
@@ -47,27 +47,27 @@ type NetworkBridgeDomain struct {
 	Interfaces []*NetworkInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty"`
 }
 
-type NetworkRoutingTable struct {
+type NetworkRouter struct {
 	// Name defines the name of the routing table
 	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
-	// NetworkID defines the id of the bridge domain
+	// NetworkID defines the id of router
 	NetworkID int `json:"networkID,omitempty" yaml:"networkID,omitempty" protobuf:"bytes,2,opt,name=networkID"`
 	// Interfaces defines the interfaces belonging to the routing table
 	Interfaces []*NetworkInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,3,opt,name=interfaces"`
 }
 
-// Network defines the interface parameters
-// An interface can be attached to a routingTable and a bridgeDomain.
+// NetworkInterface defines the interface parameters
+// An interface can be attached to a Router and/or a Bridge.
 // Dynamic or static assignments are possible
 type NetworkInterface struct {
-	// BridgeDomain defines the name of the bridgeDomain belonging to the interface
-	// A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
+	// Bridge defines the name of the bridge belonging to the interface
+	// A bridge can only be attached to a router and is mutualy exclusive with a
 	// defined Endpoint
-	BridgeDomain *string `json:"bridgeDomain,omitempty" yaml:"bridgeDomain,omitempty" protobuf:"bytes,1,opt,name=bridgeDomain"`
+	Bridge *string `json:"bridge,omitempty" yaml:"bridge,omitempty" protobuf:"bytes,1,opt,name=bridge"`
 	// Endpoint
 	EndPoint *string `json:"endpoint,omitempty" yaml:"endpoint,omitempty" protobuf:"bytes,2,opt,name=endpoint"`
 	// NodeID defines the node identifier
-	// if omitted only possible with the bridgedomain
+	// if omitted only possible with a bridge
 	*infrabev1alpha1.NodeID `json:",inline" yaml:",inline" protobuf:"bytes,3,opt,name=nodeID"`
 	// IPs define the list of IP addresses on the interface
 	Addresses []*NetworkInterfaceAddress `json:"addresses,omitempty" yaml:"addresses,omitempty" protobuf:"bytes,4,opt,name=ipsaddresses"`

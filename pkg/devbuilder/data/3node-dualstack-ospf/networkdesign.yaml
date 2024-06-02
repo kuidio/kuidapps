@@ -1,0 +1,33 @@
+apiVersion: network.app.kuid.dev/v1alpha1
+kind: NetworkDesign
+metadata:
+  name: topo3nodesrl.default
+  namespace: default
+spec:
+  topology: topo3nodesrl
+  interfaces:
+    loopback:
+      addressing: dualstack
+      prefixes:
+      - prefix: 10.0.0.0/16
+      - prefix: 1000::/64
+    isl:
+      addressing: dualstack
+      prefixes:    
+      - prefix: 192.0.0.0/16
+      - prefix: 1192::/56
+      bfd: true
+  protocols:
+    ibgp:
+      as: 65535
+      localAS: true
+      routeReflectors:
+      - topo3nodesrl.default.core01.ipv4
+    ospf: 
+      instance: i1
+      area: "0.0.0.0"
+      version: v2
+    bgpEVPN: {}
+  encapsulation: 
+    vxlan: {}
+  

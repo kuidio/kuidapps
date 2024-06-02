@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package networkconfig
+package networkdesign
 
 import (
 	"context"
@@ -48,13 +48,13 @@ import (
 )
 
 func init() {
-	reconcilers.Register("networkconfig", &reconciler{})
+	reconcilers.Register(crName, &reconciler{})
 }
 
 const (
-	crName         = "networkconfig"
-	controllerName = "NetworkConfigController"
-	finalizer      = "networkconfig.network.app.kuid.dev/finalizer"
+	crName         = "networkdesign"
+	controllerName = "NetworkDesignController"
+	finalizer      = "networkdesign.network.app.kuid.dev/finalizer"
 	// errors
 	errGetCr        = "cannot get cr"
 	errUpdateStatus = "cannot update status"
@@ -74,7 +74,7 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 
 	return nil, ctrl.NewControllerManagedBy(mgr).
 		Named(controllerName).
-		For(&netwv1alpha1.NetworkConfig{}).
+		For(&netwv1alpha1.NetworkDesign{}).
 		Owns(&ipambev1alpha1.IPClaim{}).
 		Owns(&asbev1alpha1.ASClaim{}).
 		Owns(&asbev1alpha1.ASIndex{}).
@@ -82,13 +82,12 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 		Watches(&topov1alpha1.Topology{},
 			&eventhandler.TopologyEventHandler{
 				Client:  mgr.GetClient(),
-				ObjList: &netwv1alpha1.NetworkConfigList{},
+				ObjList: &netwv1alpha1.NetworkDesignList{},
 			}).
 		Complete(r)
 }
 
 type reconciler struct {
-	//resource.APIPatchingApplicator
 	client.Client
 	finalizer *resource.APIFinalizer
 	recorder  record.EventRecorder
@@ -99,7 +98,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	log := log.FromContext(ctx)
 	log.Info("reconcile")
 
-	cr := &netwv1alpha1.NetworkConfig{}
+	cr := &netwv1alpha1.NetworkDesign{}
 	if err := r.Client.Get(ctx, req.NamespacedName, cr); err != nil {
 		// if the resource no longer exists the reconcile loop is done
 		if resource.IgnoreNotFound(err) != nil {
@@ -152,7 +151,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 }
 
-func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.NetworkConfig, msg string, err error) {
+func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.NetworkDesign, msg string, err error) {
 	log := log.FromContext(ctx)
 	if err == nil {
 		cr.SetConditions(conditionv1alpha1.Failed(msg))
@@ -165,7 +164,7 @@ func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.NetworkCo
 	}
 }
 
-func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.NetworkConfig) error {
+func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.NetworkDesign) error {
 	// First claim the global identifiers
 	// the ASClaim depends on ASIndex
 	res := resources.New(r.Client, resources.Config{
@@ -203,7 +202,7 @@ func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.NetworkConfig) 
 	return nil
 }
 
-func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.NetworkConfig) error {
+func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.NetworkDesign) error {
 	// First claim the global identifiers
 	res := resources.New(r.Client, resources.Config{
 		Owns: []schema.GroupVersionKind{
@@ -220,7 +219,7 @@ func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.NetworkConfig)
 	return nil
 }
 
-func (r *reconciler) isTopologyReady(ctx context.Context, cr *netwv1alpha1.NetworkConfig) bool {
+func (r *reconciler) isTopologyReady(ctx context.Context, cr *netwv1alpha1.NetworkDesign) bool {
 	log := log.FromContext((ctx))
 	key := types.NamespacedName{
 		Namespace: cr.Namespace,

@@ -52,11 +52,11 @@ spec:
           spec:
             description: NetworkSpec defines the desired state of Network
             properties:
-              bridgeDomains:
+              bridges:
                 description: |-
-                  BridgeDomains define a set of logical ports that share the same
+                  Bridges define a set of logical ports that share the same
                   flooding or broadcast characteristics. Like a virtual LAN (VLAN),
-                  a bridge domain spans one or more ports of multiple devices.
+                  a bridge can span one or more ports of multiple devices.
                 items:
                   properties:
                     interfaces:
@@ -64,8 +64,8 @@ spec:
                         the bridge domain
                       items:
                         description: |-
-                          Network defines the interface parameters
-                          An interface can be attached to a routingTable and a bridgeDomain.
+                          NetworkInterface defines the interface parameters
+                          An interface can be attached to a Router and/or a Bridge.
                           Dynamic or static assignments are possible
                         properties:
                           addresses:
@@ -81,10 +81,10 @@ spec:
                               - address
                               type: object
                             type: array
-                          bridgeDomain:
+                          bridge:
                             description: |-
-                              BridgeDomain defines the name of the bridgeDomain belonging to the interface
-                              A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
+                              Bridge defines the name of the bridge belonging to the interface
+                              A bridge can only be attached to a router and is mutualy exclusive with a
                               defined Endpoint
                             type: string
                           endpoint:
@@ -189,12 +189,12 @@ spec:
                   - name
                   type: object
                 type: array
-              routingTables:
+              routers:
                 description: |-
-                  RoutingTables defines a set of routes belonging to a given routing instance
-                  Multiple routing tables are also called virtual routing instances. Each virtual
+                  Routers defines a set of routes belonging to a given routing instance
+                  A Router can also be called a virtual routing instances. Each virtual
                   routing instance can hold overlapping IP information
-                  A routing table supports both ipv4 and ipv6
+                  A router supports both ipv4 and ipv6
                 items:
                   properties:
                     interfaces:
@@ -202,8 +202,8 @@ spec:
                         the routing table
                       items:
                         description: |-
-                          Network defines the interface parameters
-                          An interface can be attached to a routingTable and a bridgeDomain.
+                          NetworkInterface defines the interface parameters
+                          An interface can be attached to a Router and/or a Bridge.
                           Dynamic or static assignments are possible
                         properties:
                           addresses:
@@ -219,10 +219,10 @@ spec:
                               - address
                               type: object
                             type: array
-                          bridgeDomain:
+                          bridge:
                             description: |-
-                              BridgeDomain defines the name of the bridgeDomain belonging to the interface
-                              A BridgeDomain can only be attached to a routingTable and is mutualy exclusive with a
+                              Bridge defines the name of the bridge belonging to the interface
+                              A bridge can only be attached to a router and is mutualy exclusive with a
                               defined Endpoint
                             type: string
                           endpoint:
@@ -321,7 +321,7 @@ spec:
                       description: Name defines the name of the routing table
                       type: string
                     networkID:
-                      description: NetworkID defines the id of the bridge domain
+                      description: NetworkID defines the id of router
                       type: integer
                   required:
                   - name

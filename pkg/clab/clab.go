@@ -25,4 +25,5 @@ import (
 type Clab interface {
 	GetNodes(ctx context.Context) []backend.GenericObject
 	GetLinks(ctx context.Context) []backend.GenericObject
+	GetEndpoints(ctx context.Context) []backend.GenericObject // only used for testing
 }
