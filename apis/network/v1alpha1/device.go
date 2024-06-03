@@ -256,7 +256,6 @@ func (r *NetworkDeviceNetworkInstanceProtocolISIS) AddOrUpdateNetworkInstancePro
 	x.LevelCapability = new.LevelCapability
 	x.Net = new.Net
 	x.MaxECMPPaths = new.MaxECMPPaths
-	x.Interfaces = new.Interfaces
 }
 
 func (r *NetworkDeviceNetworkInstanceProtocolISIS) GetOrCreateNetworkInstanceProtocolISISInstance(name string) *NetworkDeviceNetworkInstanceProtocolISISInstance {
@@ -324,7 +323,6 @@ func (r *NetworkDeviceNetworkInstanceProtocolOSPF) AddOrUpdateNetworkInstancePro
 	}
 	x := r.GetOrCreateNetworkInstanceProtocolOSPFInstance(new.Name)
 	x.ASBR = new.ASBR
-	x.Areas = new.Areas
 	x.MaxECMPPaths = new.MaxECMPPaths
 	x.RouterID = new.RouterID
 	x.Version = new.Version
@@ -351,7 +349,6 @@ func (r *NetworkDeviceNetworkInstanceProtocolOSPFInstance) AddOrUpdateNetworkIns
 		r.Areas = []*NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea{}
 	}
 	x := r.GetOrCreateNetworkInstanceProtocolOSPFInstanceArea(new.Name)
-	x.Interfaces = new.Interfaces
 	x.NSSA = new.NSSA
 	x.Stub = new.Stub
 }

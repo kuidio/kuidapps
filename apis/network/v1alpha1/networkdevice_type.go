@@ -268,7 +268,7 @@ type NetworkDeviceNetworkInstanceProtocolBGPNeighbor struct {
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors struct {
-	Prefixes   []string                                                            `json:"peerPrefixes,omitempty" yaml:"peerPrefixes,omitempty" protobuf:"bytes,1,opt,name=peerPrefixes"`
+	Prefixes   []string                                                            `json:"prefixes,omitempty" yaml:"prefixes,omitempty" protobuf:"bytes,1,opt,name=prefixes"`
 	Interfaces []*NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface `json:"interfaces" yaml:"interfaces" protobuf:"bytes,2,opt,name=interfaces"`
 }
 

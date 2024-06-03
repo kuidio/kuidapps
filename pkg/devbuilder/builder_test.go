@@ -56,7 +56,6 @@ func TestDeviceBuilder(t *testing.T) {
 		network     *netwv1alpha1.Network
 		expectedErr error
 	}{
-		/*
 		"3nodeDefaultDualStackOSPF": {
 			path: "data/3node-dualstack-ospf",
 			network: netwv1alpha1.BuildNetwork(
@@ -71,100 +70,100 @@ func TestDeviceBuilder(t *testing.T) {
 			),
 			expectedErr: nil,
 		},
+		/*
+			"3nodeDefaultDualStackEBGP": {
+				path: "data/3node-dualstack-ebgp",
+				network: netwv1alpha1.BuildNetwork(
+					v1.ObjectMeta{
+						Name:      "topo3nodesrl.default",
+						Namespace: "default",
+					},
+					&netwv1alpha1.NetworkSpec{
+						Topology: "topo3nodesrl",
+					},
+					nil,
+				),
+				expectedErr: nil,
+			},
 		*/
 		/*
-		"3nodeDefaultDualStackEBGP": {
-			path: "data/3node-dualstack-ebgp",
-			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
+			"3nodeDefaultDualStackISIS": {
+				path: "data/3node-dualstack-isis",
+				network: netwv1alpha1.BuildNetwork(
+					v1.ObjectMeta{
+						Name:      "topo3nodesrl.default",
+						Namespace: "default",
+					},
+					&netwv1alpha1.NetworkSpec{
+						Topology: "topo3nodesrl",
+					},
+					nil,
+				),
+				expectedErr: nil,
+			},
 		*/
 		/*
-		"3nodeDefaultDualStackISIS": {
-			path: "data/3node-dualstack-isis",
-			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
-		*/
-		"3nodeDefaultIpv6Unnumbered": {
-			path: "data/3node-ipv6unnumbered",
-			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
-		/*
-		"3nodeDefaultIpv4Unnumbered": {
-			path: "data/3node-ipv4unnumbered",
-			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
+			"3nodeDefaultIpv6Unnumbered": {
+				path: "data/3node-ipv6unnumbered",
+				network: netwv1alpha1.BuildNetwork(
+					v1.ObjectMeta{
+						Name:      "topo3nodesrl.default",
+						Namespace: "default",
+					},
+					&netwv1alpha1.NetworkSpec{
+						Topology: "topo3nodesrl",
+					},
+					nil,
+				),
+				expectedErr: nil,
+			},
+			/*
+			"3nodeDefaultIpv4Unnumbered": {
+				path: "data/3node-ipv4unnumbered",
+				network: netwv1alpha1.BuildNetwork(
+					v1.ObjectMeta{
+						Name:      "topo3nodesrl.default",
+						Namespace: "default",
+					},
+					&netwv1alpha1.NetworkSpec{
+						Topology: "topo3nodesrl",
+					},
+					nil,
+				),
+				expectedErr: nil,
+			},
 		*/
 		/*
-		"3nodeDefaultIpv4only": {
-			path: "data/3node-ipv4only",
-			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
+			"3nodeDefaultIpv4only": {
+				path: "data/3node-ipv4only",
+				network: netwv1alpha1.BuildNetwork(
+					v1.ObjectMeta{
+						Name:      "topo3nodesrl.default",
+						Namespace: "default",
+					},
+					&netwv1alpha1.NetworkSpec{
+						Topology: "topo3nodesrl",
+					},
+					nil,
+				),
+				expectedErr: nil,
+			},
 		*/
 		/*
-		"3nodeDefaultIpv6only": {
-			path: "data/3node-ipv6only",
-			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
+			"3nodeDefaultIpv6only": {
+				path: "data/3node-ipv6only",
+				network: netwv1alpha1.BuildNetwork(
+					v1.ObjectMeta{
+						Name:      "topo3nodesrl.default",
+						Namespace: "default",
+					},
+					&netwv1alpha1.NetworkSpec{
+						Topology: "topo3nodesrl",
+					},
+					nil,
+				),
+				expectedErr: nil,
+			},
 		*/
 	}
 

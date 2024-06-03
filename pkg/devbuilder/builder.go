@@ -582,6 +582,36 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 				ID:   0,
 			})
 
+			if nd.IsOSPFEnabled() {
+				instanceName := DefaultIGPINstance
+				if nd.Spec.Protocols.OSPF.Instance != nil {
+					instanceName = *nd.Spec.Protocols.OSPF.Instance
+				}
+				/*
+				r.devices.AddNetworkInstanceProtocolsOSPFInstance(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstance{
+					Name:    instanceName,
+					Version: nd.Spec.Protocols.OSPF.Version,
+					//RouterID:     routerID,
+					MaxECMPPaths: nd.Spec.Protocols.OSPF.MaxECMPPaths,
+					//ASBR: nd.Spec.Protocols.OSPF.ASBR, TODO
+				})
+				*/
+				area := nd.Spec.Protocols.OSPF.Area
+				r.devices.AddNetworkInstanceProtocolsOSPFInstanceArea(nodeName, niName, instanceName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea{
+					Name: area,
+					NSSA: nil, // TODO
+					Stub: nil, // TODO
+					//ASBR: nd.Spec.Protocols.OSPF.ASBR, TODO
+				})
+				r.devices.AddNetworkInstanceProtocolsOSPFInstanceAreaInterface(nodeName, niName, instanceName, area, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface{
+					SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+						Name: epName,
+						ID:   0,
+					},
+					Type: netwv1alpha1.OSPFInterfaceTypeP2P,
+					BFD:  nd.Spec.Interfaces.ISL.BFD,
+				})
+			}
 			if nd.IsISISEnabled() {
 				instanceName := DefaultIGPINstance
 				if nd.Spec.Protocols.ISIS.Instance != nil {
