@@ -447,7 +447,7 @@ spec:
                                     - peerGroup
                                     type: object
                                   type: array
-                                peerPrefixes:
+                                prefixes:
                                   items:
                                     type: string
                                   type: array
@@ -561,7 +561,7 @@ spec:
                                           required:
                                           - bfd
                                           type: object
-                                        levelCapability:
+                                        level:
                                           default: 2
                                           description: Level defines the ISIS interface level
                                           format: int32
@@ -591,7 +591,7 @@ spec:
                                           - broadcast
                                           type: string
                                       required:
-                                      - levelCapability
+                                      - level
                                       - subInterfaceName
                                       - type
                                       type: object
