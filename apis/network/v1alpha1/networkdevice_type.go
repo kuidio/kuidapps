@@ -163,7 +163,7 @@ type NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface struct {
 	// Type defines the type of interface
 	// +kubebuilder:validation:Enum=pointToPoint;broadcast
 	// +kubebuilder:default=pointToPoint
-	Type OSPFInterfaceType `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
+	Type *OSPFInterfaceType `json:"type,omitempty" yaml:"type,omitempty" protobuf:"bytes,2,opt,name=type"`
 	// Passive allow interface to be advertised as an interface without running the OSPF protocol
 	Passive bool `json:"passive,omitempty" yaml:"passive,omitempty" protobuf:"bytes,3,opt,name=passive"`
 	// BFD defines if bfd is enabled
@@ -204,8 +204,7 @@ type NetworkDeviceNetworkInstanceProtocolISISInstanceInterface struct {
 	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
 	// Type defines the type of interface
 	// +kubebuilder:validation:Enum=pointToPoint;broadcast
-	// +kubebuilder:default=pointToPoint
-	Type ISISInterfaceType `json:"type" yaml:"type" protobuf:"bytes,2,opt,name=type"`
+	Type *ISISInterfaceType `json:"type,omitempty" yaml:"type,omitempty" protobuf:"bytes,2,opt,name=type"`
 	// Level defines the ISIS interface level
 	// +kubebuilder:validation:Maximum=2
 	// +kubebuilder:validation:Minimum=1

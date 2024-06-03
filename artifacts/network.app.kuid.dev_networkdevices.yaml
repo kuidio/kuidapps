@@ -304,7 +304,6 @@ spec:
                                           - name
                                           type: object
                                         type:
-                                          default: pointToPoint
                                           description: Type defines the type of interface
                                           enum:
                                           - pointToPoint
@@ -313,7 +312,6 @@ spec:
                                       required:
                                       - level
                                       - subInterfaceName
-                                      - type
                                       type: object
                                     type: array
                                   levelCapability:
@@ -392,7 +390,6 @@ spec:
                                                 type: string
                                             required:
                                             - subInterfaceName
-                                            - type
                                             type: object
                                           type: array
                                         name:

@@ -485,7 +485,6 @@ func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, nodeName, niName strin
 				Name: SystemInterfaceName,
 				ID:   0,
 			},
-			Type:    netwv1alpha1.OSPFInterfaceTypeP2P,
 			Passive: true,
 			BFD:     nd.Spec.Interfaces.ISL.BFD,
 		})
@@ -608,7 +607,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 						Name: epName,
 						ID:   0,
 					},
-					Type: netwv1alpha1.OSPFInterfaceTypeP2P,
+					Type: ptr.To[netwv1alpha1.OSPFInterfaceType](netwv1alpha1.OSPFInterfaceTypeP2P),
 					BFD:  nd.Spec.Interfaces.ISL.BFD,
 				})
 			}
@@ -629,7 +628,8 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 						Name: epName,
 						ID:   0,
 					},
-					Type: netwv1alpha1.ISISInterfaceTypeP2P,
+					//Type: netwv1alpha1.ISISInterfaceTypeP2P,
+					Type: ptr.To[netwv1alpha1.ISISInterfaceType](netwv1alpha1.ISISInterfaceTypeP2P),
 				}
 				isisItfce.Level = 2
 				if nd.Spec.Protocols.ISIS.LevelCapability == netwv1alpha1.NetworkDesignProtocolsISISLevelCapabilityL1 {
