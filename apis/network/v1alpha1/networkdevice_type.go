@@ -82,11 +82,11 @@ type NetworkDeviceTunnelInterfaceSubInterface struct {
 }
 
 type NetworkDeviceInterfaceSubInterfaceIPv4 struct {
-	Addresses []string `json:"addresses" yaml:"addresses" protobuf:"bytes,1,opt,name=addresses"`
+	Addresses []string `json:"addresses,omitempty" yaml:"addresses,omitempty" protobuf:"bytes,1,opt,name=addresses"`
 }
 
 type NetworkDeviceInterfaceSubInterfaceIPv6 struct {
-	Addresses []string `json:"addresses" yaml:"addresses" protobuf:"bytes,1,opt,name=addresses"`
+	Addresses []string `json:"addresses,omitempty" yaml:"addresses,omitempty" protobuf:"bytes,1,opt,name=addresses"`
 }
 
 type NetworkDeviceNetworkInstance struct {
@@ -273,7 +273,8 @@ type NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors struct {
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface struct {
-	Name      string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
+	// SubInterfaceName defines the name and id of the sub interface
+	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
 	PeerAS    uint32 `json:"peerAS" yaml:"peerAS" protobuf:"bytes,2,opt,name=peerAS"`
 	PeerGroup string `json:"peerGroup" yaml:"peerGroup" protobuf:"bytes,3,opt,name=peerGroup"`
 }

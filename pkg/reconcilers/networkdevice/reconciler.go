@@ -143,7 +143,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// always use default network to fetch the SRE config
-	nc, err := r.getNetworkConfig(ctx, types.NamespacedName{
+	nc, err := r.getNetworkDesign(ctx, types.NamespacedName{
 		Namespace: cr.GetNamespace(),
 		Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, netwv1alpha1.DefaultNetwork),
 	})
@@ -227,7 +227,7 @@ func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.Network) error
 	return nil
 }
 
-func (r *reconciler) getNetworkConfig(ctx context.Context, key types.NamespacedName) (*netwv1alpha1.NetworkDesign, error) {
+func (r *reconciler) getNetworkDesign(ctx context.Context, key types.NamespacedName) (*netwv1alpha1.NetworkDesign, error) {
 	//log := log.FromContext((ctx))
 
 	o := &netwv1alpha1.NetworkDesign{}

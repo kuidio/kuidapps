@@ -490,43 +490,29 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) AddOrUpdateetw
 	if new == nil {
 		return
 	}
-	if new.Name == "" {
+	if new.SubInterfaceName.Name == "" {
 		return
 	}
-	x := r.GetOrCreateNetworkInstanceProtocolBGPDynamicNeighborsInterface(new.Name)
+	x := r.GetOrCreateNetworkInstanceProtocolBGPDynamicNeighborsInterface(new.SubInterfaceName)
 	x.PeerAS = new.PeerAS
 	x.PeerGroup = new.PeerGroup
 }
 
-func (r *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) GetOrCreateNetworkInstanceProtocolBGPDynamicNeighborsInterface(name string) *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface {
+func (r *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) GetOrCreateNetworkInstanceProtocolBGPDynamicNeighborsInterface(siName NetworkDeviceNetworkInstanceInterface) *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface {
 	for _, itfce := range r.Interfaces {
-		if itfce.Name == name {
+		if itfce.SubInterfaceName == siName {
 			return itfce
 		}
 	}
 	newInterface := &NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{
-		Name: name,
+		SubInterfaceName: siName,
 	}
 	r.Interfaces = append(r.Interfaces, newInterface)
 	sort.SliceStable(r.Interfaces, func(i, j int) bool {
-		return r.Interfaces[i].Name < r.Interfaces[j].Name
+		return fmt.Sprintf("%s.%d", r.Interfaces[i].SubInterfaceName.Name, r.Interfaces[i].SubInterfaceName.ID) <
+			fmt.Sprintf("%s.%d", r.Interfaces[j].SubInterfaceName.Name, r.Interfaces[j].SubInterfaceName.ID)
 	})
 	return newInterface
-}
-
-func (r *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors) AddOrUpdateetworkInstanceProtocolBGPDynamicNeighborsPrefix(new *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface) {
-	if r.Prefixes == nil {
-		r.Interfaces = []*NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{}
-	}
-	if new == nil {
-		return
-	}
-	if new.Name == "" {
-		return
-	}
-	x := r.GetOrCreateNetworkInstanceProtocolBGPDynamicNeighborsInterface(new.Name)
-	x.PeerAS = new.PeerAS
-	x.PeerGroup = new.PeerGroup
 }
 
 func (r *Device) AddOrUpdateRoutingPolicy(new *NetworkDeviceRoutingPolicy) {

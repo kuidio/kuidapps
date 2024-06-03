@@ -663,7 +663,10 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 						})
 					} else {
 						r.devices.AddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{
-							Name:      fmt.Sprintf("%s.%d", epName, 0),
+							SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+								Name: epName,
+								ID:   0,
+							},
 							PeerAS:    as[j],
 							PeerGroup: BGPUnderlayPeerGroupName,
 						})
@@ -683,7 +686,10 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 
 					} else {
 						r.devices.AddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{
-							Name:      fmt.Sprintf("%s.%d", epName, 0),
+							SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+								Name: epName,
+								ID:   0,
+							},
 							PeerAS:    as[j],
 							PeerGroup: BGPUnderlayPeerGroupName,
 						})
@@ -759,7 +765,10 @@ func (r *DeviceBuilder) UpdateProtocolsDynamicNeighbors(ctx context.Context, nod
 				})
 
 				r.devices.AddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{
-					Name:      fmt.Sprintf("%s.0", SystemInterfaceName),
+					SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+						Name: SystemInterfaceName,
+						ID:   0,
+					},
 					PeerAS:    nd.GetIBGPAS(),
 					PeerGroup: BGPOverlayPeerGroupName,
 				})

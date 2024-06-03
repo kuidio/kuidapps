@@ -42,7 +42,7 @@ rules:
   resources: [genidclaims, genidclaims/status]
   verbs: [get, watch, list, create, update, patch, delete]
 - apiGroups: [network.app.kuid.dev]
-  resources: [networkconfigs, networkconfigs/status]
+  resources: [networkdesigns, networkdesigns/status]
   verbs: [get, watch, list, create, update, patch, delete]
 - apiGroups: [network.app.kuid.dev]
   resources: [networks, networks/status]
