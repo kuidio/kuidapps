@@ -502,32 +502,132 @@ func (r *NetworkDesign) IsMPLSRSVPEnabled() bool {
 	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.MPLS != nil && r.Spec.Encapsultation.MPLS.RSVP != nil
 }
 
-func (r *NetworkDesign) ISSRv6Enabled() bool {
+func (r *NetworkDesign) IsSRv6Enabled() bool {
 	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.SRV6 != nil
 }
 
-func (r *NetworkDesign) ISSRv6USIDEnabled() bool {
+func (r *NetworkDesign) IsSRv6USIDEnabled() bool {
 	return r.Spec.Encapsultation != nil && r.Spec.Encapsultation.SRV6 != nil && r.Spec.Encapsultation.SRV6.MicroSID != nil
 }
 
-func (r *NetworkDesign) ISBGPEVPNEnabled() bool {
+func (r *NetworkDesign) IsBGPEVPNEnabled() bool {
 	return r.Spec.Protocols != nil && r.Spec.Protocols.BGPEVPN != nil
 }
 
+func (r *NetworkDesign) IsBGPIPVPNv4Enabled() bool {
+	return r.Spec.Protocols != nil && r.Spec.Protocols.BGPVPNv4 != nil
+}
+
+func (r *NetworkDesign) IsBGPIPVPNv6Enabled() bool {
+	return r.Spec.Protocols != nil && r.Spec.Protocols.BGPVPNv6 != nil
+}
+
+func (r *NetworkDesign) IsBGPRouteTargetEnabled() bool {
+	return r.Spec.Protocols != nil && r.Spec.Protocols.BGPRouteTarget != nil
+}
+
+func (r *NetworkDesign) IsBGPLabelUnicastv4Enabled() bool {
+	return r.Spec.Protocols != nil && r.Spec.Protocols.BGPLabeledUnicastv4 != nil
+}
+
+func (r *NetworkDesign) IsBGPLabelUnicastv6Enabled() bool {
+	return r.Spec.Protocols != nil && r.Spec.Protocols.BGPLabeledUnicastv6 != nil
+}
+
+/*
 func (r *NetworkDesign) GetOverlayProtocols() []string {
 	overlayProtocols := []string{}
-	if r.ISBGPEVPNEnabled() {
+	if r.IsBGPEVPNEnabled() {
 		overlayProtocols = append(overlayProtocols, "evpn")
 	}
 	return overlayProtocols
 }
+*/
 
-func (r *NetworkDesign) GetAddressFamilies() []string {
+func (r *NetworkDesign) GetUnderlayAddressFamiliesToBeDisabled() []string {
 	afs := []string{}
-	if r.IsISLIPv4Enabled() {
+	if r.IsISISEnabled() || r.IsOSPFEnabled() {
+	} else {
+		if !r.IsISLIPv4Enabled() || !r.IsLoopbackIPv4Enabled() {
+			afs = append(afs, "ipv4-unicast")
+		}
+		if !r.IsISLIPv6Enabled() || !r.IsLoopbackIPv6Enabled() {
+			afs = append(afs, "ipv6-unicast")
+		}
+	}
+	if r.IsBGPEVPNEnabled() {
+		afs = append(afs, "evpn")
+	}
+	if r.IsBGPIPVPNv4Enabled() {
+		afs = append(afs, "l3vpn-ipv4-unicast")
+	}
+	if r.IsBGPIPVPNv6Enabled() {
+		afs = append(afs, "l3vpn-ipv6-unicast")
+	}
+	if r.IsBGPRouteTargetEnabled() {
+		afs = append(afs, "route-target")
+	}
+	if r.IsBGPLabelUnicastv4Enabled() {
+		afs = append(afs, "ipv4-labeled-unicast")
+	}
+	if r.IsBGPLabelUnicastv6Enabled() {
+		afs = append(afs, "ipv6-labeled-unicast")
+	}
+	return afs
+}
+
+func (r *NetworkDesign) GetOverlayAddressFamiliesToBeDisabled() []string {
+	afs := []string{}
+	if r.IsISISEnabled() || r.IsOSPFEnabled() {
+	} else {
+		if r.IsISLIPv4Enabled() || r.IsLoopbackIPv4Enabled() {
+			afs = append(afs, "ipv4-unicast")
+		}
+		if r.IsISLIPv6Enabled() || r.IsLoopbackIPv6Enabled() {
+			afs = append(afs, "ipv6-unicast")
+		}
+	}
+	// we dont need to disable the specific overlay address families
+	return afs
+}
+
+// GetAllAddressFamilies retrun all address families enabled in the network design
+func (r *NetworkDesign) GetAllEnabledAddressFamilies() []string {
+	afs := []string{}
+	if !r.IsISISEnabled() && !r.IsOSPFEnabled() && (r.IsISLIPv4Enabled() || r.IsLoopbackIPv4Enabled()) {
 		afs = append(afs, "ipv4-unicast")
 	}
-	if r.IsISLIPv6Enabled() {
+	if !r.IsISISEnabled() && !r.IsOSPFEnabled() && (r.IsISLIPv6Enabled() || r.IsLoopbackIPv6Enabled()) {
+		afs = append(afs, "ipv6-unicast")
+	}
+	if r.IsBGPEVPNEnabled() {
+		afs = append(afs, "evpn")
+	}
+	if r.IsBGPIPVPNv4Enabled() {
+		afs = append(afs, "l3vpn-ipv4-unicast")
+	}
+	if r.IsBGPIPVPNv6Enabled() {
+		afs = append(afs, "l3vpn-ipv6-unicast")
+	}
+	if r.IsBGPRouteTargetEnabled() {
+		afs = append(afs, "route-target")
+	}
+	if r.IsBGPLabelUnicastv4Enabled() {
+		afs = append(afs, "ipv4-labeled-unicast")
+	}
+	if r.IsBGPLabelUnicastv6Enabled() {
+		afs = append(afs, "ipv6-labeled-unicast")
+	}
+	return afs
+}
+
+// GetIGPAddressFamilies retrun all address families enabled in the network design
+func (r *NetworkDesign) GetIGPAddressFamilies() []string {
+	afs := []string{}
+	if r.IsISLIPv4Enabled() || r.IsLoopbackIPv4Enabled() {
+		afs = append(afs, "ipv4-unicast")
+	}
+	if r.IsISLIPv6Enabled() || r.IsLoopbackIPv6Enabled() {
 		afs = append(afs, "ipv6-unicast")
 	}
 	return afs

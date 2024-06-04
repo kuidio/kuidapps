@@ -235,6 +235,8 @@ type NetworkDeviceNetworkInstanceProtocolBGP struct {
 	PeerGroups       []*NetworkDeviceNetworkInstanceProtocolBGPPeerGroup      `json:"peerGroups,omitempty" yaml:"peerGroups,omitempty" protobuf:"bytes,3,opt,name=peerGroups"`
 	Neighbors        []*NetworkDeviceNetworkInstanceProtocolBGPNeighbor       `json:"neighbors,omitempty" yaml:"neighbors,omitempty" protobuf:"bytes,4,opt,name=neighbors"`
 	DynamicNeighbors *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors `json:"dynamicNeighbors,omitempty" yaml:"dynamicNeighbors,omitempty" protobuf:"bytes,5,opt,name=dynamicNeighbors"`
+	// AddressFamilies defines the address families that need to be enabled globally
+	AddressFamilies  []string                                                 `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,6,rep,name=addressFamilies"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPEVPN struct {
@@ -250,6 +252,7 @@ type NetworkDeviceNetworkInstanceProtocolBGPVPN struct {
 
 type NetworkDeviceNetworkInstanceProtocolBGPPeerGroup struct {
 	Name            string                                                          `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
+	// Address families define the address families to be disabled
 	AddressFamilies []string                                                        `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,2,rep,name=addressFamilies"`
 	RouteReflector  *NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector `json:"routeReflector,omitempty" yaml:"routeReflector,omitempty" protobuf:"bytes,3,opt,name=routeReflector"`
 }
@@ -274,8 +277,8 @@ type NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors struct {
 type NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface struct {
 	// SubInterfaceName defines the name and id of the sub interface
 	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
-	PeerAS    uint32 `json:"peerAS" yaml:"peerAS" protobuf:"bytes,2,opt,name=peerAS"`
-	PeerGroup string `json:"peerGroup" yaml:"peerGroup" protobuf:"bytes,3,opt,name=peerGroup"`
+	PeerAS           uint32                                `json:"peerAS" yaml:"peerAS" protobuf:"bytes,2,opt,name=peerAS"`
+	PeerGroup        string                                `json:"peerGroup" yaml:"peerGroup" protobuf:"bytes,3,opt,name=peerGroup"`
 }
 
 type NetworkDeviceSystem struct {

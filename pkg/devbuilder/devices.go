@@ -77,6 +77,16 @@ func (r *Devices) AddNetworkInstanceProtocolsBGPRouterID(nodeName, niName string
 	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().RouterID = routerID
 }
 
+func (r *Devices) AddNetworkInstanceProtocolsBGPAddressFamilies(nodeName, niName string, afs []string) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AddressFamilies = afs
+}
+
 func (r *Devices) AddInterface(nodeName string, x *netwv1alpha1.NetworkDeviceInterface) {
 	r.m.Lock()
 	defer r.m.Unlock()
@@ -282,7 +292,7 @@ func (r *Devices) AddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, niName
 	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().GetOrCreateNetworkInstanceProtocolBGPDynamicNeighbors().AddOrUpdateetworkInstanceProtocolBGPDynamicNeighborsInterface(new)
 }
 
-func (r *Devices) AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {
+func (r *Devices) AddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName string, x *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {

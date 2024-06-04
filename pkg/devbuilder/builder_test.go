@@ -56,23 +56,9 @@ func TestDeviceBuilder(t *testing.T) {
 		network     *netwv1alpha1.Network
 		expectedErr error
 	}{
-		"3nodeDefaultDualStackOSPF": {
-			path: "data/3node-dualstack-ospf",
-			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
 		/*
-			"3nodeDefaultDualStackEBGP": {
-				path: "data/3node-dualstack-ebgp",
+			"3nodeDefaultDualStackOSPF": {
+				path: "data/3node-dualstack-ospf",
 				network: netwv1alpha1.BuildNetwork(
 					v1.ObjectMeta{
 						Name:      "topo3nodesrl.default",
@@ -86,6 +72,22 @@ func TestDeviceBuilder(t *testing.T) {
 				expectedErr: nil,
 			},
 		*/
+
+		"3nodeDefaultDualStackEBGP": {
+			path: "data/3node-dualstack-ebgp",
+			network: netwv1alpha1.BuildNetwork(
+				v1.ObjectMeta{
+					Name:      "topo3nodesrl.default",
+					Namespace: "default",
+				},
+				&netwv1alpha1.NetworkSpec{
+					Topology: "topo3nodesrl",
+				},
+				nil,
+			),
+			expectedErr: nil,
+		},
+
 		/*
 			"3nodeDefaultDualStackISIS": {
 				path: "data/3node-dualstack-isis",

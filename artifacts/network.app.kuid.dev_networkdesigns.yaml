@@ -150,7 +150,15 @@ spec:
                 properties:
                   bgpEVPN:
                     type: object
-                  bgpVPN:
+                  bgpLabeledUnicastv4:
+                    type: object
+                  bgpLabeledUnicastv6:
+                    type: object
+                  bgpRouteTarget:
+                    type: object
+                  bgpVPNv4:
+                    type: object
+                  bgpVPNv6:
                     type: object
                   ebgp:
                     properties:

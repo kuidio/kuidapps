@@ -58,7 +58,7 @@ func (r *DeviceBuilder) GetNetworkDeviceConfigs() []*netwv1alpha1.NetworkDevice 
 	return r.devices.GetNetworkDeviceConfigs()
 }
 
-func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc *netwv1alpha1.NetworkDesign) error {
+func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nd *netwv1alpha1.NetworkDesign) error {
 	//log := log.FromContext(ctx)
 	networkName := cr.GetNetworkName()
 	if cr.IsDefaultNetwork() {
@@ -77,12 +77,12 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 			nodeName := n.Spec.NodeID.Node
 
 			r.devices.AddProvider(nodeName, n.Spec.Provider)
-			if nc.IsVXLANEnabled() {
+			if nd.IsVXLANEnabled() {
 				r.devices.AddTunnelInterface(nodeName, &netwv1alpha1.NetworkDeviceTunnelInterface{
 					Name: VXLANInterfaceName,
 				})
 			}
-			if nc.ISBGPEVPNEnabled() {
+			if nd.IsBGPEVPNEnabled() {
 				r.devices.AddSystemProtocolsBGPVPN(nodeName, &netwv1alpha1.NetworkDeviceSystemProtocolsBGPVPN{})
 			}
 			// add IRB interface
@@ -91,16 +91,17 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 			})
 
 			r.UpdateNetworkInstance(ctx, nodeName, niName, netwv1alpha1.NetworkInstanceType_DEFAULT)
-			r.UpdateRoutingPolicies(ctx, nodeName, cr.IsDefaultNetwork(), nc)
-			if err := r.UpdateNodeAS(ctx, nodeName, niName, nc); err != nil {
+			r.UpdateRoutingPolicies(ctx, nodeName, cr.IsDefaultNetwork(), nd)
+			r.devices.AddNetworkInstanceProtocolsBGPAddressFamilies(nodeName, niName, nd.GetAllEnabledAddressFamilies())
+			if err := r.UpdateNodeAS(ctx, nodeName, niName, nd); err != nil {
 				return err
 			}
-			if err := r.UpdateNodeIP(ctx, nodeName, niName, nc); err != nil {
+			if err := r.UpdateNodeIP(ctx, nodeName, niName, nd); err != nil {
 				return err
 			}
 		}
 
-		if err := r.UpdateInterfaces(ctx, niName, nc, links); err != nil {
+		if err := r.UpdateInterfaces(ctx, niName, nd, links); err != nil {
 			return err
 		}
 
@@ -118,7 +119,7 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 
 			if netwworkDeviceType == "edge" || netwworkDeviceType == "pe" {
 				var err error
-				if err = r.UpdateProtocolsEdge(ctx, nodeName, niName, nc, edgePeers); err != nil {
+				if err = r.UpdateProtocolsEdge(ctx, nodeName, niName, nd, edgePeers); err != nil {
 					return err
 				}
 			}
@@ -132,7 +133,7 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 				return nil
 			}
 			if edgePeers.Len() != 0 && netwworkDeviceType != "edge" && netwworkDeviceType != "pe" {
-				if err := r.UpdateProtocolsRR(ctx, nodeName, niName, nc, edgePeers); err != nil {
+				if err := r.UpdateProtocolsRR(ctx, nodeName, niName, nd, edgePeers); err != nil {
 					return err
 				}
 			}
@@ -191,7 +192,7 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 						Name: ep.Spec.Endpoint,
 						ID:   id,
 					})
-					if nc.IsVXLANEnabled() {
+					if nd.IsVXLANEnabled() {
 						r.devices.AddTunnelSubInterface(nodeName, VXLANInterfaceName, &netwv1alpha1.NetworkDeviceTunnelInterfaceSubInterface{
 							ID:   id,
 							Type: netwv1alpha1.SubInterfaceType_Bridged,
@@ -207,8 +208,8 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 						VXLANInterface: VXLANInterfaceName,
 					})
 					r.devices.AddNetworkInstanceProtocolsBGPVPN(nodeName, bdName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN{
-						ImportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
-						ExportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
+						ImportRouteTarget: fmt.Sprintf("target:%d:%d", nd.GetIBGPAS(), id),
+						ExportRouteTarget: fmt.Sprintf("target:%d:%d", nd.GetIBGPAS(), id),
 					})
 					continue
 				}
@@ -264,7 +265,7 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 						Name: niName,
 						Type: netwv1alpha1.NetworkInstanceType_IPVRF,
 					})
-					if nc.IsVXLANEnabled() {
+					if nd.IsVXLANEnabled() {
 						r.devices.AddTunnelSubInterface(nodeName, VXLANInterfaceName, &netwv1alpha1.NetworkDeviceTunnelInterfaceSubInterface{
 							ID:   id,
 							Type: netwv1alpha1.SubInterfaceType_Routed,
@@ -280,8 +281,8 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nc 
 						VXLANInterface: VXLANInterfaceName,
 					})
 					r.devices.AddNetworkInstanceProtocolsBGPVPN(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPVPN{
-						ImportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
-						ExportRouteTarget: fmt.Sprintf("target:%d:%d", nc.GetIBGPAS(), id),
+						ImportRouteTarget: fmt.Sprintf("target:%d:%d", nd.GetIBGPAS(), id),
+						ExportRouteTarget: fmt.Sprintf("target:%d:%d", nd.GetIBGPAS(), id),
 					})
 
 					vlan := ptr.To[uint32](id)
@@ -445,7 +446,7 @@ func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, nodeName, niName strin
 			LevelCapability: nd.Spec.Protocols.ISIS.LevelCapability,
 			Net:             nd.Spec.Protocols.ISIS.Net,
 			MaxECMPPaths:    nd.Spec.Protocols.ISIS.MaxECMPPaths,
-			AddressFamilies: nd.GetAddressFamilies(),
+			AddressFamilies: nd.GetIGPAddressFamilies(),
 		})
 		isisItfce := &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceInterface{
 			SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
@@ -621,7 +622,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 					LevelCapability: nd.Spec.Protocols.ISIS.LevelCapability,
 					Net:             nd.Spec.Protocols.ISIS.Net,
 					MaxECMPPaths:    nd.Spec.Protocols.ISIS.MaxECMPPaths,
-					AddressFamilies: nd.GetAddressFamilies(),
+					AddressFamilies: nd.GetIGPAddressFamilies(),
 				})
 				isisItfce := &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceInterface{
 					SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
@@ -695,9 +696,9 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 						})
 					}
 				}
-				r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+				r.devices.AddNetworkInstanceprotocolsBGPPeerGroup(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 					Name:            BGPUnderlayPeerGroupName,
-					AddressFamilies: nd.GetAddressFamilies(),
+					AddressFamilies: nd.GetUnderlayAddressFamiliesToBeDisabled(),
 				})
 			}
 		}
@@ -711,9 +712,9 @@ func (r *DeviceBuilder) UpdateProtocolsDynamicNeighbors(ctx context.Context, nod
 	//nodeName := nodeID.Node
 	//networkName := cr.GetNetworkName()
 	if nd.IsIBGPEnabled() {
-		r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+		r.devices.AddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 			Name:            BGPOverlayPeerGroupName,
-			AddressFamilies: nd.GetOverlayProtocols(),
+			AddressFamilies: nd.GetOverlayAddressFamiliesToBeDisabled(),
 		})
 
 		fullNodeName := fmt.Sprintf("%s.%s", r.nsn.Name, nodeName)
@@ -756,9 +757,9 @@ func (r *DeviceBuilder) UpdateProtocolsDynamicNeighbors(ctx context.Context, nod
 
 			if rrNodeNameAF == fullNodeNameIPv4 || rrNodeNameAF == fullNodeNameIPv6 {
 				// this is the rr - we add the peer group again as this cannot harm
-				r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+				r.devices.AddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 					Name:            BGPOverlayPeerGroupName,
-					AddressFamilies: nd.GetOverlayProtocols(),
+					AddressFamilies: nd.GetOverlayAddressFamiliesToBeDisabled(),
 					RouteReflector: &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector{
 						ClusterID: rrIP,
 					},
@@ -781,9 +782,9 @@ func (r *DeviceBuilder) UpdateProtocolsDynamicNeighbors(ctx context.Context, nod
 func (r *DeviceBuilder) UpdateProtocolsRR(ctx context.Context, nodeName, networkName string, nd *netwv1alpha1.NetworkDesign, edgePeers sets.Set[string]) error {
 	//log := log.FromContext(ctx)
 	if nd.IsIBGPEnabled() {
-		r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+		r.devices.AddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 			Name:            BGPOverlayPeerGroupName,
-			AddressFamilies: nd.GetOverlayProtocols(),
+			AddressFamilies: nd.GetOverlayAddressFamiliesToBeDisabled(),
 		})
 
 		fullNodeName := fmt.Sprintf("%s.%s", r.nsn.Name, nodeName)
@@ -809,9 +810,9 @@ func (r *DeviceBuilder) UpdateProtocolsRR(ctx context.Context, nodeName, network
 			}
 			if rrNodeNameAF == fullNodeNameIPv4 || rrNodeNameAF == fullNodeNameIPv6 {
 				// this is the rr - we add the peer group again as this cannot harm
-				r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+				r.devices.AddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 					Name:            BGPOverlayPeerGroupName,
-					AddressFamilies: nd.GetOverlayProtocols(),
+					AddressFamilies: nd.GetOverlayAddressFamiliesToBeDisabled(),
 					RouteReflector: &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector{
 						ClusterID: peerPrefix.GetIPAddress().String(),
 					},
@@ -834,9 +835,9 @@ func (r *DeviceBuilder) UpdateProtocolsRR(ctx context.Context, nodeName, network
 
 func (r *DeviceBuilder) UpdateProtocolsEdge(ctx context.Context, nodeName, networkName string, nd *netwv1alpha1.NetworkDesign, edgePeers sets.Set[string]) error {
 	if nd.IsIBGPEnabled() {
-		r.devices.AddAddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
+		r.devices.AddNetworkInstanceprotocolsBGPPeerGroup(nodeName, networkName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 			Name:            BGPOverlayPeerGroupName,
-			AddressFamilies: nd.GetOverlayProtocols(),
+			AddressFamilies: nd.GetOverlayAddressFamiliesToBeDisabled(),
 		})
 
 		for _, rrNodeNameAF := range nd.Spec.Protocols.IBGP.RouteReflectors {

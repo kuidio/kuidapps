@@ -110,12 +110,16 @@ type NetworkDesignEncapsulationMPLSSRv6MicroSID struct {
 }
 
 type NetworkDesignProtocols struct {
-	OSPF    *NetworkDesignProtocolsOSPF    `json:"ospf,omitempty" yaml:"ospf,omitempty" protobuf:"bytes,1,opt,name=ospf"`
-	ISIS    *NetworkDesignProtocolsISIS    `json:"isis,omitempty" yaml:"isis,omitempty" protobuf:"bytes,2,opt,name=isis"`
-	IBGP    *NetworkDesignProtocolsIBGP    `json:"ibgp,omitempty" yaml:"ibgp,omitempty" protobuf:"bytes,3,opt,name=ibgp"`
-	EBGP    *NetworkDesignProtocolsEBGP    `json:"ebgp,omitempty" yaml:"ebgp,omitempty" protobuf:"bytes,4,opt,name=ebgp"`
-	BGPEVPN *NetworkDesignProtocolsBGPEVPN `json:"bgpEVPN,omitempty" yaml:"bgpEVPN,omitempty" protobuf:"bytes,5,opt,name=bgpEVPN"`
-	IPVPN   *NetworkDesignProtocolsIPVPN   `json:"bgpVPN,omitempty" yaml:"bgpVPN,omitempty" protobuf:"bytes,6,opt,name=bgpVPN"`
+	OSPF                *NetworkDesignProtocolsOSPF                `json:"ospf,omitempty" yaml:"ospf,omitempty" protobuf:"bytes,1,opt,name=ospf"`
+	ISIS                *NetworkDesignProtocolsISIS                `json:"isis,omitempty" yaml:"isis,omitempty" protobuf:"bytes,2,opt,name=isis"`
+	IBGP                *NetworkDesignProtocolsIBGP                `json:"ibgp,omitempty" yaml:"ibgp,omitempty" protobuf:"bytes,3,opt,name=ibgp"`
+	EBGP                *NetworkDesignProtocolsEBGP                `json:"ebgp,omitempty" yaml:"ebgp,omitempty" protobuf:"bytes,4,opt,name=ebgp"`
+	BGPEVPN             *NetworkDesignProtocolsBGPEVPN             `json:"bgpEVPN,omitempty" yaml:"bgpEVPN,omitempty" protobuf:"bytes,5,opt,name=bgpEVPN"`
+	BGPVPNv4           *NetworkDesignProtocolsBGPVPNv4            `json:"bgpVPNv4,omitempty" yaml:"bgpVPNv4,omitempty" protobuf:"bytes,6,opt,name=bgpVPNv4"`
+	BGPVPNv6            *NetworkDesignProtocolsBGPVPNv6            `json:"bgpVPNv6,omitempty" yaml:"bgpVPNv6,omitempty" protobuf:"bytes,7,opt,name=bgpVPNv6"`
+	BGPRouteTarget      *NetworkDesignProtocolsBGPRouteTarget      `json:"bgpRouteTarget,omitempty" yaml:"bgpRouteTarget,omitempty" protobuf:"bytes,8,opt,name=bgpRouteTarget"`
+	BGPLabeledUnicastv4 *NetworkDesignProtocolsBGPLabeledUnicastv4 `json:"bgpLabeledUnicastv4,omitempty" yaml:"bgpLabeledUnicastv4,omitempty" protobuf:"bytes,9,opt,name=bgpLabeledUnicastv4"`
+	BGPLabeledUnicastv6 *NetworkDesignProtocolsBGPLabeledUnicastv6 `json:"bgpLabeledUnicastv6,omitempty" yaml:"bgpLabeledUnicastv6,omitempty" protobuf:"bytes,10,opt,name=bgpLabeledUnicastv6"`
 }
 
 type NetworkDesignProtocolsOSPFVersion string
@@ -178,8 +182,18 @@ type NetworkDesignProtocolsEBGP struct {
 type NetworkDesignProtocolsBGPEVPN struct {
 }
 
-type NetworkDesignProtocolsIPVPN struct {
+type NetworkDesignProtocolsBGPVPNv4 struct {
 }
+
+type NetworkDesignProtocolsBGPVPNv6 struct {
+}
+
+type NetworkDesignProtocolsBGPRouteTarget struct {
+}
+
+type NetworkDesignProtocolsBGPLabeledUnicastv4 struct{}
+
+type NetworkDesignProtocolsBGPLabeledUnicastv6 struct{}
 
 // NetworkDesignStatus defines the observed state of NetworkDesign
 type NetworkDesignStatus struct {

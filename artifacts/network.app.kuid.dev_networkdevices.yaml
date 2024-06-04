@@ -127,6 +127,12 @@ spec:
                       properties:
                         bgp:
                           properties:
+                            addressFamilies:
+                              description: AddressFamilies defines the address families
+                                that need to be enabled globally
+                              items:
+                                type: string
+                              type: array
                             as:
                               format: int32
                               type: integer
@@ -193,6 +199,8 @@ spec:
                               items:
                                 properties:
                                   addressFamilies:
+                                    description: Address families define the address
+                                      families to be disabled
                                     items:
                                       type: string
                                     type: array
