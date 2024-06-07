@@ -78,7 +78,7 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 		Owns(&ipambev1alpha1.IPClaim{}).
 		Owns(&asbev1alpha1.ASClaim{}).
 		Watches(&netwv1alpha1.NetworkDesign{},
-			&eventhandler.NetworkConfigForNetworkEventHandler{
+			&eventhandler.NetworkDesignForNetworkEventHandler{
 				Client:  mgr.GetClient(),
 				ObjList: &netwv1alpha1.NetworkList{},
 			}).

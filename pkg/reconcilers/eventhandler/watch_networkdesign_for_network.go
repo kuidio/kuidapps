@@ -29,33 +29,33 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type NetworkConfigForNetworkEventHandler struct {
+type NetworkDesignForNetworkEventHandler struct {
 	Client  client.Client
 	ObjList *netwv1alpha1.NetworkList
 }
 
 // Create enqueues a request
-func (r *NetworkConfigForNetworkEventHandler) Create(ctx context.Context, evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+func (r *NetworkDesignForNetworkEventHandler) Create(ctx context.Context, evt event.CreateEvent, q workqueue.RateLimitingInterface) {
 	r.add(ctx, evt.Object, q)
 }
 
 // Create enqueues a request
-func (r *NetworkConfigForNetworkEventHandler) Update(ctx context.Context, evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+func (r *NetworkDesignForNetworkEventHandler) Update(ctx context.Context, evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	r.add(ctx, evt.ObjectOld, q)
 	r.add(ctx, evt.ObjectNew, q)
 }
 
 // Create enqueues a request
-func (r *NetworkConfigForNetworkEventHandler) Delete(ctx context.Context, evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+func (r *NetworkDesignForNetworkEventHandler) Delete(ctx context.Context, evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	r.add(ctx, evt.Object, q)
 }
 
 // Create enqueues a request
-func (r *NetworkConfigForNetworkEventHandler) Generic(ctx context.Context, evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+func (r *NetworkDesignForNetworkEventHandler) Generic(ctx context.Context, evt event.GenericEvent, q workqueue.RateLimitingInterface) {
 	r.add(ctx, evt.Object, q)
 }
 
-func (r *NetworkConfigForNetworkEventHandler) add(ctx context.Context, obj runtime.Object, queue adder) {
+func (r *NetworkDesignForNetworkEventHandler) add(ctx context.Context, obj runtime.Object, queue adder) {
 	nd, ok := obj.(*netwv1alpha1.NetworkDesign)
 	if !ok {
 		return
