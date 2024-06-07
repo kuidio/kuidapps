@@ -39,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
@@ -278,6 +279,12 @@ func (r *testCtx) initializeTopology(ctx context.Context, path string) error {
 
 	for _, o := range clab.GetNodes(ctx) {
 		r.client.Create(ctx, o)
+
+		n := &infrabev1alpha1.Node{}
+		_ = r.client.Get(ctx, types.NamespacedName{Namespace: "default", Name: o.GetName()}, n)
+		n.Status.SystemID = ptr.To[string]("00:01:02:03:04:05")
+		_ = r.client.Update(ctx, n)
+
 	}
 	for _, o := range clab.GetLinks(ctx) {
 		r.client.Create(ctx, o)
