@@ -179,6 +179,11 @@ spec:
                     type: object
                   isis:
                     properties:
+                      areas:
+                        description: Areas defines the ISIS areas
+                        items:
+                          type: string
+                        type: array
                       instance:
                         description: Instance defines the name of the ISIS instance
                         type: string
@@ -199,13 +204,8 @@ spec:
                         maximum: 64
                         minimum: 1
                         type: integer
-                      net:
-                        description: Net defines the ISIS network entity title (NET)
-                        items:
-                          type: string
-                        type: array
                     required:
-                    - net
+                    - areas
                     type: object
                   ospf:
                     properties:

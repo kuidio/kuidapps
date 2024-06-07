@@ -616,8 +616,8 @@ func (in *NetworkDesignProtocolsISIS) DeepCopyInto(out *NetworkDesignProtocolsIS
 		*out = new(string)
 		**out = **in
 	}
-	if in.Net != nil {
-		in, out := &in.Net, &out.Net
+	if in.Areas != nil {
+		in, out := &in.Areas, &out.Areas
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

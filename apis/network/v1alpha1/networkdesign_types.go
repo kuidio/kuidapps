@@ -160,8 +160,8 @@ type NetworkDesignProtocolsISIS struct {
 	// +kubebuilder:validation:Enum=L2;L2;L1L2
 	// +kubebuilder:default=L2
 	LevelCapability NetworkDesignProtocolsISISLevelCapability `json:"levelCapability,omitempty" yaml:"levelCapability,omitempty" protobuf:"bytes,2,opt,name=levelCapability"`
-	// Net defines the ISIS network entity title (NET)
-	Net []string `json:"net" yaml:"net" protobuf:"bytes,3,rep,name=net"`
+	// Areas defines the ISIS areas
+	Areas []string `json:"areas" yaml:"areas" protobuf:"bytes,3,rep,name=areas"`
 	// MaxECMPPaths defines the maximum ecmp paths used in OSPF
 	// +kubebuilder:validation:Maximum=64
 	// +kubebuilder:validation:Minimum=1

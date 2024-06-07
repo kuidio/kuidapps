@@ -26,8 +26,8 @@ spec:
     isis: 
       instance: i1
       levelCapability: L2
-      net: 
-      - "49.0001.1921.6800.1002.00"
+      areas: 
+      - "49.0001"
     bgpEVPN: {}
   encapsulation: 
     vxlan: {}

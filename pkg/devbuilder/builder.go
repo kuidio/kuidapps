@@ -19,6 +19,7 @@ package devbuilder
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/henderiw/iputil"
 	"github.com/henderiw/logger/log"
@@ -96,12 +97,17 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nd 
 			if err := r.UpdateNodeAS(ctx, nodeName, niName, nd); err != nil {
 				return err
 			}
-			if err := r.UpdateNodeIP(ctx, nodeName, niName, nd); err != nil {
+
+			if n.Status.SystemID == nil {
+				return fmt.Errorf("cannot update node parameters without a systemID")
+			}
+
+			if err := r.UpdateNodeIP(ctx, nodeName, niName, *n.Status.SystemID, nd); err != nil {
 				return err
 			}
 		}
 
-		if err := r.UpdateInterfaces(ctx, niName, nd, links); err != nil {
+		if err := r.UpdateInterfaces(ctx, niName, nd, links, nodes); err != nil {
 			return err
 		}
 
@@ -380,7 +386,7 @@ func (r *DeviceBuilder) UpdateNodeAS(ctx context.Context, nodeName, niName strin
 	return nil
 }
 
-func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, nodeName, niName string, nd *netwv1alpha1.NetworkDesign) error {
+func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, nodeName, niName, systemID string, nd *netwv1alpha1.NetworkDesign) error {
 	//nodeID := infrabev1alpha1.String2NodeGroupNodeID(n.GetName())
 	//nodeName := nodeID.Node
 	//networkName := cr.GetNetworkName()
@@ -441,10 +447,11 @@ func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, nodeName, niName strin
 		if nd.Spec.Protocols.ISIS.Instance != nil {
 			instanceName = *nd.Spec.Protocols.ISIS.Instance
 		}
+
 		r.devices.AddNetworkInstanceProtocolsISISInstance(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstance{
 			Name:            instanceName,
 			LevelCapability: nd.Spec.Protocols.ISIS.LevelCapability,
-			Net:             nd.Spec.Protocols.ISIS.Net,
+			Net:             getISISNetIDs(nd.Spec.Protocols.ISIS.Areas, systemID),
 			MaxECMPPaths:    nd.Spec.Protocols.ISIS.MaxECMPPaths,
 			AddressFamilies: nd.GetIGPAddressFamilies(),
 		})
@@ -494,7 +501,20 @@ func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, nodeName, niName strin
 	return nil
 }
 
-func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd *netwv1alpha1.NetworkDesign, links []*infrabev1alpha1.Link) error {
+func getISISNetIDs(areas []string, systemID string) []string {
+	nets := make([]string, 0, len(areas))
+	// Split the MAC address into parts
+	parts := strings.Split(systemID, ":")
+	if len(parts) != 6 {
+		return nets
+	}
+	for _, area := range areas {
+		nets = append(nets, fmt.Sprintf("%s.%s.00", area, fmt.Sprintf("%s%s.%s%s.%s%s", parts[0], parts[1], parts[2], parts[3], parts[4], parts[5])))
+	}
+	return nets
+}
+
+func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd *netwv1alpha1.NetworkDesign, links []*infrabev1alpha1.Link, nodes []*infrabev1alpha1.Node) error {
 	//networkName := cr.GetNetworkName()
 	for _, l := range links {
 		as := make([]uint32, 2)
@@ -588,13 +608,13 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 					instanceName = *nd.Spec.Protocols.OSPF.Instance
 				}
 				/*
-				r.devices.AddNetworkInstanceProtocolsOSPFInstance(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstance{
-					Name:    instanceName,
-					Version: nd.Spec.Protocols.OSPF.Version,
-					//RouterID:     routerID,
-					MaxECMPPaths: nd.Spec.Protocols.OSPF.MaxECMPPaths,
-					//ASBR: nd.Spec.Protocols.OSPF.ASBR, TODO
-				})
+					r.devices.AddNetworkInstanceProtocolsOSPFInstance(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstance{
+						Name:    instanceName,
+						Version: nd.Spec.Protocols.OSPF.Version,
+						//RouterID:     routerID,
+						MaxECMPPaths: nd.Spec.Protocols.OSPF.MaxECMPPaths,
+						//ASBR: nd.Spec.Protocols.OSPF.ASBR, TODO
+					})
 				*/
 				area := nd.Spec.Protocols.OSPF.Area
 				r.devices.AddNetworkInstanceProtocolsOSPFInstanceArea(nodeName, niName, instanceName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea{
@@ -620,7 +640,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 				r.devices.AddNetworkInstanceProtocolsISISInstance(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstance{
 					Name:            instanceName,
 					LevelCapability: nd.Spec.Protocols.ISIS.LevelCapability,
-					Net:             nd.Spec.Protocols.ISIS.Net,
+					Net:             getISISNetIDs(nd.Spec.Protocols.ISIS.Areas, getNodeSystemID(nodes, nodeName)),
 					MaxECMPPaths:    nd.Spec.Protocols.ISIS.MaxECMPPaths,
 					AddressFamilies: nd.GetIGPAddressFamilies(),
 				})
@@ -704,6 +724,17 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 		}
 	}
 	return nil
+}
+
+func getNodeSystemID(nodes []*infrabev1alpha1.Node, nodeName string) string {
+	for _, node := range nodes {
+		if node.Spec.NodeID.Node == nodeName {
+			if node.Status.SystemID != nil {
+				return *node.Status.SystemID
+			}
+		}
+	}
+	return ""
 }
 
 func (r *DeviceBuilder) UpdateProtocolsDynamicNeighbors(ctx context.Context, nodeName, networkName string, nd *netwv1alpha1.NetworkDesign, nodeLabels map[string]string) error {
