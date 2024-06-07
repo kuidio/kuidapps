@@ -80,6 +80,11 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 				Client:  mgr.GetClient(),
 				ObjList: &netwv1alpha1.NetworkList{},
 			}).
+		Watches(&netwv1alpha1.NetworkDesign{},
+			&eventhandler.NetworkDeviceForNetworkEventHandler{
+				Client:  mgr.GetClient(),
+				ObjList: &netwv1alpha1.NetworkList{},
+			}).
 		Complete(r)
 }
 
@@ -143,6 +148,19 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		r.handleError(ctx, cr, "cannot add finalizer", err)
 		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
+
+	/*
+		nd, err := r.getNetworkDesign(ctx, cr)
+		if err != nil {
+			if cr.IsDefaultNetwork() {
+				// we need a networkdesign for the default network
+				// we do not release resources at this stage -> decision do far is no
+				r.handleError(ctx, cr, "cannot reconcile a network without a network design", nil)
+				return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+			}
+		}
+		nd.ResourceVersion
+	*/
 
 	// Check preconditions before deploying the CR(s) on the cluster
 	// First the Network global params need to be ready, after the device configs need to be derived and after the specific
@@ -318,3 +336,19 @@ func getNodeName(name string) string {
 	}
 	return name[lastDotIndex+1:]
 }
+
+/*
+func (r *reconciler) getNetworkDesign(ctx context.Context, cr *netwv1alpha1.Network) (*netwv1alpha1.NetworkDesign, error) {
+	//log := log.FromContext((ctx))
+	key := types.NamespacedName{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}
+
+	o := &netwv1alpha1.NetworkDesign{}
+	if err := r.Client.Get(ctx, key, o); err != nil {
+		return nil, err
+	}
+	return o, nil
+}
+*/

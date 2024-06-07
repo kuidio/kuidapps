@@ -155,9 +155,9 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	nc, err := r.getNetworkDesign(ctx, cr)
 	if err != nil {
 		if cr.IsDefaultNetwork() {
-			// we need networkconfig for the default network
+			// a network design for the default network is mandatory
 			// we do not release resources at this stage -> decision do far is no
-			r.handleError(ctx, cr, "cannot reconcile a network without a network config", nil)
+			r.handleError(ctx, cr, "cannot reconcile a network without a network design", nil)
 			return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		}
 	}

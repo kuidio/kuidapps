@@ -32,6 +32,7 @@ import (
 	"github.com/kuidio/kuidapps/pkg/devbuilder"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
+	"github.com/kuidio/kuidapps/pkg/reconcilers/eventhandler"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/lease"
 	perrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -76,7 +77,11 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 		Named(controllerName).
 		For(&netwv1alpha1.Network{}).
 		Owns(&netwv1alpha1.NetworkDevice{}).
-		// we only do a watch at the higher level object -> not sure if we need to revisit this
+		Watches(&netwv1alpha1.NetworkDesign{},
+			&eventhandler.NetworkDeviceForNetworkEventHandler{
+				Client:  mgr.GetClient(),
+				ObjList: &netwv1alpha1.NetworkList{},
+			}).
 		Complete(r)
 }
 
@@ -143,19 +148,19 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// always use default network to fetch the SRE config
-	nc, err := r.getNetworkDesign(ctx, types.NamespacedName{
+	nd, err := r.getNetworkDesign(ctx, types.NamespacedName{
 		Namespace: cr.GetNamespace(),
 		Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, netwv1alpha1.DefaultNetwork),
 	})
 	if err != nil {
-		// we need networkconfig for the default network
+		// a network design for the default network is mandatory
 		// we do not release resources at this stage -> decision do far is no
-		r.handleError(ctx, cr, "cannot reconcile a network without a default network config", nil)
+		r.handleError(ctx, cr, "cannot reconcile a network without a default network design", nil)
 		//return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	if err := r.apply(ctx, cr, nc); err != nil {
+	if err := r.apply(ctx, cr, nd); err != nil {
 		// The delete is not needed as the condition will indicate this is not ready and the resources will not be picked
 		r.handleError(ctx, cr, "cannot apply resource", err)
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
