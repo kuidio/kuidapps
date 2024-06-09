@@ -49,6 +49,70 @@ spec:
           spec:
             description: NetworkDeviceDeviceSpec defines the desired state of NetworkDevice
             properties:
+              bfd:
+                description: BFD defines the bfd parameters for the device config
+                properties:
+                  interfaces:
+                    items:
+                      properties:
+                        bfd:
+                          description: BFD defines the bfd parameters of the interface
+                          properties:
+                            disabled:
+                              description: Disabled defines if bfd is disabled or
+                                not
+                              type: boolean
+                            minEchoRx:
+                              default: 0
+                              description: MinEchoRx defines the echo function timer,
+                                in msec.
+                              format: int32
+                              type: integer
+                            minRx:
+                              default: 1000
+                              description: MinTx defines the required minimal interval
+                                for receiving BFD packets, in msec.
+                              format: int32
+                              type: integer
+                            minTx:
+                              default: 1000
+                              description: MinTx defines the desired minimal interval
+                                for sending BFD packets, in msec.
+                              format: int32
+                              type: integer
+                            multiplier:
+                              default: 5
+                              description: Multiplier defines the number of missed
+                                packets before the session is considered down
+                              format: int32
+                              type: integer
+                            ttl:
+                              default: 1
+                              description: TTL defines the time to live on the outgoing
+                                BFD packet
+                              format: int32
+                              maximum: 255
+                              minimum: 1
+                              type: integer
+                          type: object
+                        subInterfaceName:
+                          description: SubInterfaceName defines the name and id of
+                            the sub interface
+                          properties:
+                            id:
+                              format: int32
+                              type: integer
+                            name:
+                              type: string
+                          required:
+                          - id
+                          - name
+                          type: object
+                      required:
+                      - subInterfaceName
+                      type: object
+                    type: array
+                type: object
               interfaces:
                 description: Interfaces defines the interfaces for the device config
                 items:
@@ -286,13 +350,16 @@ spec:
                                           - bfd
                                           type: object
                                         level:
-                                          default: 2
                                           description: Level defines the ISIS interface
                                             level
-                                          format: int32
-                                          maximum: 2
-                                          minimum: 1
-                                          type: integer
+                                          type: string
+                                        networkType:
+                                          description: NetworkType defines the type
+                                            of network on the interface
+                                          enum:
+                                          - pointToPoint
+                                          - broadcast
+                                          type: string
                                         passive:
                                           description: Passive allow interface to
                                             be advertised as an ISIS interface without
@@ -311,12 +378,6 @@ spec:
                                           - id
                                           - name
                                           type: object
-                                        type:
-                                          description: Type defines the type of interface
-                                          enum:
-                                          - pointToPoint
-                                          - broadcast
-                                          type: string
                                       required:
                                       - level
                                       - subInterfaceName
@@ -358,7 +419,8 @@ spec:
                               items:
                                 properties:
                                   areas:
-                                    description: ISIS network entity title (NET)
+                                    description: Areas define the areas in the ospf
+                                      instance
                                     items:
                                       properties:
                                         interfaces:
@@ -370,6 +432,14 @@ spec:
                                                 description: BFD defines if bfd is
                                                   enabled
                                                 type: boolean
+                                              networkType:
+                                                default: pointToPoint
+                                                description: Type defines the type
+                                                  of interface
+                                                enum:
+                                                - pointToPoint
+                                                - broadcast
+                                                type: string
                                               passive:
                                                 description: Passive allow interface
                                                   to be advertised as an interface
@@ -388,14 +458,6 @@ spec:
                                                 - id
                                                 - name
                                                 type: object
-                                              type:
-                                                default: pointToPoint
-                                                description: Type defines the type
-                                                  of interface
-                                                enum:
-                                                - pointToPoint
-                                                - broadcast
-                                                type: string
                                             required:
                                             - subInterfaceName
                                             type: object

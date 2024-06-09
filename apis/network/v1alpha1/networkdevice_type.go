@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"reflect"
 
+	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,6 +44,19 @@ type NetworkDeviceSpec struct {
 	RoutingPolicies []*NetworkDeviceRoutingPolicy `json:"routingPolicies,omitempty" yaml:"routingPolicies,omitempty" protobuf:"bytes,6,opt,name=routingPolicies"`
 	// System defines the system parameters for the device config
 	System *NetworkDeviceSystem `json:"system,omitempty" yaml:"system,omitempty" protobuf:"bytes,7,opt,name=system"`
+	// BFD defines the bfd parameters for the device config
+	BFD *NetworkDeviceBFD `json:"bfd,omitempty" yaml:"bfd,omitempty" protobuf:"bytes,4,opt,name=bfd"`
+}
+
+type NetworkDeviceBFD struct {
+	Interfaces []*NetworkDeviceBFDInterface `json:"interfaces,omitempty" yaml:"interfaces,omitempty" protobuf:"bytes,1,opt,name=interfaces"`
+}
+
+type NetworkDeviceBFDInterface struct {
+	// SubInterfaceName defines the name and id of the sub interface
+	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
+	// BFD defines the bfd parameters of the interface
+	BFD infrabev1alpha1.BFDLinkParameters `json:"bfd" yaml:"bfd" protobuf:"bytes,2,opt,name=bfd"`
 }
 
 type NetworkDeviceRoutingPolicy struct {
@@ -121,16 +135,16 @@ type NetworkDeviceNetworkInstanceProtocolOSPFInstance struct {
 	// Version defines the Version used for ospf
 	// +kubebuilder:validation:Enum=v2;v3
 	// +kubebuilder:default=v2
-	Version NetworkDesignProtocolsOSPFVersion `json:"version" yaml:"version" protobuf:"bytes,2,opt,name=version"`
+	Version infrabev1alpha1.OSPFVersion `json:"version" yaml:"version" protobuf:"bytes,2,opt,name=version"`
 	// RouterID of the instance
 	RouterID string `json:"routerID" yaml:"routerID" protobuf:"bytes,3,opt,name=routerID"`
-	// ISIS network entity title (NET)
+	// Areas define the areas in the ospf instance
 	Areas []*NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea `json:"areas,omitempty" yaml:"areas,omitempty" protobuf:"bytes,4,rep,name=areas"`
 	// MaxECMPPaths defines the maximum ecmp paths used
 	// +kubebuilder:validation:Maximum=64
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default=1
-	MaxECMPPaths *uint32 `json:"maxECMPPaths,omitempty" yaml:"maxECMPPaths,omitempty" protobuf:"bytes,5,opt,name=maxECMPPaths"`
+	MaxECMPPaths uint32 `json:"maxECMPPaths,omitempty" yaml:"maxECMPPaths,omitempty" protobuf:"bytes,5,opt,name=maxECMPPaths"`
 	// ASBR defines if the router is an ASBR (Autonomous System Boundary Router)
 	ASBR bool `json:"asbr,omitempty" yaml:"asbr,omitempty" protobuf:"bytes,6,opt,name=asbr"`
 }
@@ -150,20 +164,13 @@ type NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaNSSA struct{}
 
 type NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaStub struct{}
 
-type OSPFInterfaceType string
-
-const (
-	OSPFInterfaceTypeP2P       OSPFInterfaceType = "pointToPoint"
-	OSPFInterfaceTypeBroadcast ISISInterfaceType = "broadcast"
-)
-
 type NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface struct {
 	// SubInterfaceName defines the name and id of the sub interface
 	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
 	// Type defines the type of interface
 	// +kubebuilder:validation:Enum=pointToPoint;broadcast
 	// +kubebuilder:default=pointToPoint
-	Type *OSPFInterfaceType `json:"type,omitempty" yaml:"type,omitempty" protobuf:"bytes,2,opt,name=type"`
+	NetworkType infrabev1alpha1.NetworkType `json:"networkType,omitempty" yaml:"networkType,omitempty" protobuf:"bytes,2,opt,name=networkType"`
 	// Passive allow interface to be advertised as an interface without running the OSPF protocol
 	Passive bool `json:"passive,omitempty" yaml:"passive,omitempty" protobuf:"bytes,3,opt,name=passive"`
 	// BFD defines if bfd is enabled
@@ -180,42 +187,48 @@ type NetworkDeviceNetworkInstanceProtocolISISInstance struct {
 	// ISIS network entity title (NET)
 	Net []string `json:"net" yaml:"net" protobuf:"bytes,2,rep,name=net"`
 	// LevelCapability defines the level capability of the intermediate system (router)
-	LevelCapability NetworkDesignProtocolsISISLevelCapability `json:"levelCapability" yaml:"levelCapability" protobuf:"bytes,3,opt,name=levelCapability"`
+	LevelCapability infrabev1alpha1.ISISLevel `json:"levelCapability" yaml:"levelCapability" protobuf:"bytes,3,opt,name=levelCapability"`
+	// Level1 defines the ISIS interface level1
+	Level1 *NetworkDeviceNetworkInstanceProtocolISISInstanceLevel `json:"level1" yaml:"level1" protobuf:"bytes,3,opt,name=level1"`
+	// Level2 defines the ISIS interface level2
+	Level2 *NetworkDeviceNetworkInstanceProtocolISISInstanceLevel `json:"level2" yaml:"level2" protobuf:"bytes,3,opt,name=level2"`
 	// Interfaces define the interface parameters used with ISIS
 	Interfaces []*NetworkDeviceNetworkInstanceProtocolISISInstanceInterface `json:"interfaces" yaml:"interfaces" protobuf:"bytes,4,opt,name=interfaces"`
 	// MaxECMPPaths defines the maximum ecmp paths used
 	// +kubebuilder:validation:Maximum=64
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default=1
-	MaxECMPPaths *uint32 `json:"maxECMPPaths,omitempty" yaml:"maxECMPPaths,omitempty" protobuf:"bytes,5,opt,name=maxECMPPaths"`
+	MaxECMPPaths uint32 `json:"maxECMPPaths,omitempty" yaml:"maxECMPPaths,omitempty" protobuf:"bytes,5,opt,name=maxECMPPaths"`
 	// AddressFamilies defines the address families enabled in the instance
 	AddressFamilies []string `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,2,rep,name=addressFamilies"`
 }
 
-type ISISInterfaceType string
-
-const (
-	ISISInterfaceTypeP2P       ISISInterfaceType = "pointToPoint"
-	ISISInterfaceTypeBroadcast ISISInterfaceType = "broadcast"
-)
+type NetworkDeviceNetworkInstanceProtocolISISInstanceLevel struct {
+	MetricStyle infrabev1alpha1.ISISMetricStyle `json:"metricStryle" yaml:"metricStryle" protobuf:"bytes,1,opt,name=metricStryle"`
+}
 
 type NetworkDeviceNetworkInstanceProtocolISISInstanceInterface struct {
 	// SubInterfaceName defines the name and id of the sub interface
 	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
-	// Type defines the type of interface
+	// NetworkType defines the type of network on the interface
 	// +kubebuilder:validation:Enum=pointToPoint;broadcast
-	Type *ISISInterfaceType `json:"type,omitempty" yaml:"type,omitempty" protobuf:"bytes,2,opt,name=type"`
-	// Level defines the ISIS interface level
-	// +kubebuilder:validation:Maximum=2
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:default=2
-	Level uint32 `json:"level" yaml:"level" protobuf:"bytes,3,opt,name=level"`
+	NetworkType infrabev1alpha1.NetworkType `json:"networkType,omitempty" yaml:"networkType,omitempty" protobuf:"bytes,2,opt,name=networkType"`
+	// Level1 defines the ISIS interface level1
+	Level1 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel `json:"level1" yaml:"level1" protobuf:"bytes,3,opt,name=level1"`
+	// Level2 defines the ISIS interface level2
+	Level2 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel `json:"level2" yaml:"level2" protobuf:"bytes,3,opt,name=level2"`
 	// IPv4 define the ipv4 interface parameters
 	IPv4 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv4 `json:"ipv4,omitempty" yaml:"ipv4,omitempty" protobuf:"bytes,4,opt,name=ipv4"`
 	// IPv6 define the ipv6 interface parameters
 	IPv6 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv6 `json:"ipv6,omitempty" yaml:"ipv6,omitempty" protobuf:"bytes,5,opt,name=ipv6"`
 	// Passive allow interface to be advertised as an ISIS interface without running the ISIS protocol
 	Passive bool `json:"passive,omitempty" yaml:"passive,omitempty" protobuf:"bytes,6,opt,name=passive"`
+}
+
+type NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel struct {
+	Metric            *uint32 `json:"metric,omitempty" yaml:"metric,omitempty" protobuf:"bytes,1,opt,name=metric"`
+	MetricIPv6Unicast *uint32 `json:"metricIPv6Unicast,omitempty" yaml:"metricIPv6Unicast,omitempty" protobuf:"bytes,2,opt,name=metricIPv6Unicast"`
+	Disable           bool    `json:"disable" yaml:"disable" protobuf:"bytes,3,opt,name=disable"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv4 struct {
@@ -236,7 +249,7 @@ type NetworkDeviceNetworkInstanceProtocolBGP struct {
 	Neighbors        []*NetworkDeviceNetworkInstanceProtocolBGPNeighbor       `json:"neighbors,omitempty" yaml:"neighbors,omitempty" protobuf:"bytes,4,opt,name=neighbors"`
 	DynamicNeighbors *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors `json:"dynamicNeighbors,omitempty" yaml:"dynamicNeighbors,omitempty" protobuf:"bytes,5,opt,name=dynamicNeighbors"`
 	// AddressFamilies defines the address families that need to be enabled globally
-	AddressFamilies  []string                                                 `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,6,rep,name=addressFamilies"`
+	AddressFamilies []string `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,6,rep,name=addressFamilies"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPEVPN struct {
@@ -251,7 +264,7 @@ type NetworkDeviceNetworkInstanceProtocolBGPVPN struct {
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPPeerGroup struct {
-	Name            string                                                          `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
+	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
 	// Address families define the address families to be disabled
 	AddressFamilies []string                                                        `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,2,rep,name=addressFamilies"`
 	RouteReflector  *NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector `json:"routeReflector,omitempty" yaml:"routeReflector,omitempty" protobuf:"bytes,3,opt,name=routeReflector"`

@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"reflect"
 
+	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	ipambev1alpha1 "github.com/kuidio/kuid/apis/backend/ipam/v1alpha1"
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +29,7 @@ type InterfaceKind string
 
 const (
 	InterfaceKindLoopback InterfaceKind = "loopback"
-	InterfaceKindISL      InterfaceKind = "isl"
+	InterfaceKindUnderlay InterfaceKind = "underlay"
 )
 
 type Addressing string
@@ -54,19 +55,19 @@ type NetworkDesignSpec struct {
 
 type NetworkDesignInterfaces struct {
 	Loopback *NetworkDesignInterfacesLoopback `json:"loopback,omitempty" yaml:"loopback,omitempty" protobuf:"bytes,1,opt,name=loopback"`
-	ISL      *NetworkDesignInterfacesISL      `json:"isl,omitempty" yaml:"isl,omitempty" protobuf:"bytes,2,opt,name=isl"`
+	Underlay *NetworkDesignInterfacesUnderlay `json:"underlay,omitempty" yaml:"underlay,omitempty" protobuf:"bytes,2,opt,name=underlay"`
 }
 
 type NetworkDesignInterfacesLoopback struct {
 	NetworkDesignInterfaceParameters `json:",inline" yaml:",inline" protobuf:"bytes,1,opt,name=parameters"`
 }
 
-type NetworkDesignInterfacesISL struct {
+type NetworkDesignInterfacesUnderlay struct {
 	NetworkDesignInterfaceParameters `json:",inline" yaml:",inline" protobuf:"bytes,1,opt,name=parameters"`
 	// VLANTagging defines if VLAN tagging should be used or not
 	VLANTagging bool `json:"vlanTagging,omitempty" yaml:"vlanTagging,,omitempty" protobuf:"bytes,2,opt,name=vlanTagging"`
-	// BFD defines if BFD is enabled on the interfaces or not
-	BFD bool `json:"bfd,omitempty" yaml:"bfd,,omitempty" protobuf:"bytes,3,opt,name=bfd"`
+	// BFD defines the bfd parameters on the interface
+	BFD *infrabev1alpha1.BFDLinkParameters `json:"bfd,omitempty" yaml:"bfd,,omitempty" protobuf:"bytes,3,opt,name=bfd"`
 }
 
 type NetworkDesignInterfaceParameters struct {
@@ -77,6 +78,8 @@ type NetworkDesignInterfaceParameters struct {
 	// +kubebuilder:validation:Enum=dualstack;ipv4only;ipv6only;ipv4unnumbered;ipv6unnumbered
 	// +kubebuilder:default=dualstack
 	Addressing Addressing `json:"addressing,omitempty" yaml:"addressing,omitempty" protobuf:"bytes,2,opt,name=addressing"`
+	// BFD defines if BFD is enabled on the interfaces or not
+	//BFD *infrabev1alpha1.BFDLinkParameters `json:"bfd,omitempty" yaml:"bfd,,omitempty" protobuf:"bytes,3,opt,name=bfd"`
 }
 
 type NetworkDesignEncapsulation struct {
@@ -115,19 +118,12 @@ type NetworkDesignProtocols struct {
 	IBGP                *NetworkDesignProtocolsIBGP                `json:"ibgp,omitempty" yaml:"ibgp,omitempty" protobuf:"bytes,3,opt,name=ibgp"`
 	EBGP                *NetworkDesignProtocolsEBGP                `json:"ebgp,omitempty" yaml:"ebgp,omitempty" protobuf:"bytes,4,opt,name=ebgp"`
 	BGPEVPN             *NetworkDesignProtocolsBGPEVPN             `json:"bgpEVPN,omitempty" yaml:"bgpEVPN,omitempty" protobuf:"bytes,5,opt,name=bgpEVPN"`
-	BGPVPNv4           *NetworkDesignProtocolsBGPVPNv4            `json:"bgpVPNv4,omitempty" yaml:"bgpVPNv4,omitempty" protobuf:"bytes,6,opt,name=bgpVPNv4"`
+	BGPVPNv4            *NetworkDesignProtocolsBGPVPNv4            `json:"bgpVPNv4,omitempty" yaml:"bgpVPNv4,omitempty" protobuf:"bytes,6,opt,name=bgpVPNv4"`
 	BGPVPNv6            *NetworkDesignProtocolsBGPVPNv6            `json:"bgpVPNv6,omitempty" yaml:"bgpVPNv6,omitempty" protobuf:"bytes,7,opt,name=bgpVPNv6"`
 	BGPRouteTarget      *NetworkDesignProtocolsBGPRouteTarget      `json:"bgpRouteTarget,omitempty" yaml:"bgpRouteTarget,omitempty" protobuf:"bytes,8,opt,name=bgpRouteTarget"`
 	BGPLabeledUnicastv4 *NetworkDesignProtocolsBGPLabeledUnicastv4 `json:"bgpLabeledUnicastv4,omitempty" yaml:"bgpLabeledUnicastv4,omitempty" protobuf:"bytes,9,opt,name=bgpLabeledUnicastv4"`
 	BGPLabeledUnicastv6 *NetworkDesignProtocolsBGPLabeledUnicastv6 `json:"bgpLabeledUnicastv6,omitempty" yaml:"bgpLabeledUnicastv6,omitempty" protobuf:"bytes,10,opt,name=bgpLabeledUnicastv6"`
 }
-
-type NetworkDesignProtocolsOSPFVersion string
-
-const (
-	NetworkDesignProtocolsOSPFVersionV2 NetworkDesignProtocolsOSPFVersion = "v2"
-	NetworkDesignProtocolsOSPFVersionV3 NetworkDesignProtocolsOSPFVersion = "v3"
-)
 
 type NetworkDesignProtocolsOSPF struct {
 	// Instance defines the name of the OSPF instance
@@ -135,7 +131,7 @@ type NetworkDesignProtocolsOSPF struct {
 	// Version defines the Version used for ospf
 	// +kubebuilder:validation:Enum=v2;v3
 	// +kubebuilder:default=v2
-	Version NetworkDesignProtocolsOSPFVersion `json:"version" yaml:"version" protobuf:"bytes,2,opt,name=version"`
+	Version infrabev1alpha1.OSPFVersion `json:"version" yaml:"version" protobuf:"bytes,2,opt,name=version"`
 	// Area defines the default area used if not further refined on the interface.
 	Area string `json:"area" yaml:"area" protobuf:"bytes,3,opt,name=area"`
 	// MaxECMPPaths defines the maximum ecmp paths used in OSPF
@@ -143,23 +139,16 @@ type NetworkDesignProtocolsOSPF struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default=1
 	MaxECMPPaths *uint32 `json:"maxECMPPaths,omitempty" yaml:"maxECMPPaths,omitempty" protobuf:"bytes,4,opt,name=maxECMPPaths"`
+	// BFD defines if BFD is enabled globally on OSPF
+	BFD bool `json:"bfd,omitempty" yaml:"bfd,,omitempty" protobuf:"bytes,3,opt,name=bfd"`
 }
-
-type NetworkDesignProtocolsISISLevelCapability string
-
-const (
-	NetworkDesignProtocolsISISLevelCapabilityL1   NetworkDesignProtocolsISISLevelCapability = "L1"
-	NetworkDesignProtocolsISISLevelCapabilityL2   NetworkDesignProtocolsISISLevelCapability = "L2"
-	NetworkDesignProtocolsISISLevelCapabilityL1L2 NetworkDesignProtocolsISISLevelCapability = "L1L2"
-)
-
 type NetworkDesignProtocolsISIS struct {
 	// Instance defines the name of the ISIS instance
 	Instance *string `json:"instance,omitempty" yaml:"instance,omitempty" protobuf:"bytes,1,opt,name=instance"`
 	// LevelCapability defines the level capability of the ISIS in the topology
 	// +kubebuilder:validation:Enum=L2;L2;L1L2
 	// +kubebuilder:default=L2
-	LevelCapability NetworkDesignProtocolsISISLevelCapability `json:"levelCapability,omitempty" yaml:"levelCapability,omitempty" protobuf:"bytes,2,opt,name=levelCapability"`
+	Level infrabev1alpha1.ISISLevel `json:"level,omitempty" yaml:"level,omitempty" protobuf:"bytes,2,opt,name=level"`
 	// Areas defines the ISIS areas
 	Areas []string `json:"areas" yaml:"areas" protobuf:"bytes,3,rep,name=areas"`
 	// MaxECMPPaths defines the maximum ecmp paths used in OSPF
@@ -167,6 +156,8 @@ type NetworkDesignProtocolsISIS struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default=1
 	MaxECMPPaths *uint32 `json:"maxECMPPaths,omitempty" yaml:"maxECMPPaths,omitempty" protobuf:"bytes,4,opt,name=maxECMPPaths"`
+	// BFD defines if BFD is enabled globally on ISIS
+	BFD bool `json:"bfd,omitempty" yaml:"bfd,,omitempty" protobuf:"bytes,3,opt,name=bfd"`
 }
 
 type NetworkDesignProtocolsIBGP struct {
@@ -177,6 +168,8 @@ type NetworkDesignProtocolsIBGP struct {
 
 type NetworkDesignProtocolsEBGP struct {
 	ASPool *string `json:"asPool,omitempty" yaml:"asPool,omitempty" protobuf:"bytes,3,opt,name=asPool"`
+	// BFD defines if BFD is enabled globally on EBGP
+	BFD bool `json:"bfd,omitempty" yaml:"bfd,,omitempty" protobuf:"bytes,3,opt,name=bfd"`
 }
 
 type NetworkDesignProtocolsBGPEVPN struct {

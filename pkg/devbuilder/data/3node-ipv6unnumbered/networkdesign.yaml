@@ -11,7 +11,7 @@ spec:
       prefixes:
       - prefix: 10.0.0.0/16
       - prefix: 1000::/64
-    isl:
+    underlay:
       addressing: ipv6unnumbered
   protocols:
     ibgp:

@@ -33,6 +33,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	VXLANInterfaceName       = "vxlan0"
+	IRBInterfaceName         = "irb0"
+	SystemInterfaceName      = "system0"
+	BGPUnderlayPeerGroupName = "underlay"
+	BGPOverlayPeerGroupName  = "overlay"
+	DefaultIGPInstance       = "i1"
+)
+
 // GetCondition returns the condition based on the condition kind
 func (r *NetworkDesign) GetCondition(t conditionv1alpha1.ConditionType) conditionv1alpha1.Condition {
 	return r.Status.GetCondition(t)
@@ -61,12 +70,12 @@ func (r *NetworkDesign) GetIPClaims() []*ipambev1alpha1.IPClaim {
 				claims = append(claims, ipambev1alpha1.GetIPClaimFromPrefix(r, prefix))
 			}
 		}
-		if r.Spec.Interfaces.ISL != nil {
-			for _, prefix := range r.Spec.Interfaces.ISL.Prefixes {
+		if r.Spec.Interfaces.Underlay != nil {
+			for _, prefix := range r.Spec.Interfaces.Underlay.Prefixes {
 				if len(prefix.Labels) == 0 {
 					prefix.Labels = map[string]string{}
 				}
-				prefix.Labels[backend.KuidINVPurpose] = string(InterfaceKindISL)
+				prefix.Labels[backend.KuidINVPurpose] = string(InterfaceKindUnderlay)
 				prefix.Labels[backend.KuidIPAMIPPrefixTypeKey] = string(ipambev1alpha1.IPPrefixType_Network)
 				claims = append(claims, ipambev1alpha1.GetIPClaimFromPrefix(r, prefix))
 			}
@@ -151,40 +160,40 @@ func (r *NetworkDesign) IsLoopbackIPv6Enabled() bool {
 			r.Spec.Interfaces.Loopback.Addressing == Addressing_IPv6Only)
 }
 
-func (r *NetworkDesign) IsISLIPv4Enabled() bool {
-	return r.Spec.Interfaces != nil && r.Spec.Interfaces.ISL != nil &&
-		(r.Spec.Interfaces.ISL.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.ISL.Addressing == Addressing_IPv4Only ||
-			r.Spec.Interfaces.ISL.Addressing == Addressing_IPv4Unnumbered)
+func (r *NetworkDesign) IsUnderlayIPv4Enabled() bool {
+	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
+		(r.Spec.Interfaces.Underlay.Addressing == Addressing_DualStack ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Only ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Unnumbered)
 }
 
-func (r *NetworkDesign) IsISLIPv4Numbered() bool {
-	return r.Spec.Interfaces != nil && r.Spec.Interfaces.ISL != nil &&
-		(r.Spec.Interfaces.ISL.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.ISL.Addressing == Addressing_IPv4Only)
+func (r *NetworkDesign) IsUnderlayIPv4Numbered() bool {
+	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
+		(r.Spec.Interfaces.Underlay.Addressing == Addressing_DualStack ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Only)
 }
 
-func (r *NetworkDesign) IsISLIPv4UnNumbered() bool {
-	return r.Spec.Interfaces != nil && r.Spec.Interfaces.ISL != nil &&
-		(r.Spec.Interfaces.ISL.Addressing == Addressing_IPv4Unnumbered)
+func (r *NetworkDesign) IsUnderlayIPv4UnNumbered() bool {
+	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
+		(r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Unnumbered)
 }
 
-func (r *NetworkDesign) IsISLIPv6Enabled() bool {
-	return r.Spec.Interfaces != nil && r.Spec.Interfaces.ISL != nil &&
-		(r.Spec.Interfaces.ISL.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.ISL.Addressing == Addressing_IPv6Only ||
-			r.Spec.Interfaces.ISL.Addressing == Addressing_IPv6Unnumbered)
+func (r *NetworkDesign) IsUnderlayIPv6Enabled() bool {
+	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
+		(r.Spec.Interfaces.Underlay.Addressing == Addressing_DualStack ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Only ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Unnumbered)
 }
 
-func (r *NetworkDesign) IsISLIPv6Numbered() bool {
-	return r.Spec.Interfaces != nil && r.Spec.Interfaces.ISL != nil &&
-		(r.Spec.Interfaces.ISL.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.ISL.Addressing == Addressing_IPv6Only)
+func (r *NetworkDesign) IsUnderlayIPv6Numbered() bool {
+	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
+		(r.Spec.Interfaces.Underlay.Addressing == Addressing_DualStack ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Only)
 }
 
-func (r *NetworkDesign) IsISLIPv6UnNumbered() bool {
-	return r.Spec.Interfaces != nil && r.Spec.Interfaces.ISL != nil &&
-		(r.Spec.Interfaces.ISL.Addressing == Addressing_IPv6Unnumbered)
+func (r *NetworkDesign) IsUnderlayIPv6UnNumbered() bool {
+	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
+		(r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Unnumbered)
 }
 
 // GetNodeIPClaims get the ip claims based on the addressing that is enabled in the network design
@@ -308,7 +317,7 @@ func getReducedLinkName(cr client.Object, link *infrabev1alpha1.Link) string {
 func (r *NetworkDesign) GetLinkIPClaims(cr client.Object, link *infrabev1alpha1.Link) []*ipambev1alpha1.IPClaim {
 	ipclaims := make([]*ipambev1alpha1.IPClaim, 0)
 	linkName := getReducedLinkName(cr, link)
-	if r.IsISLIPv4Numbered() {
+	if r.IsUnderlayIPv4Numbered() {
 		ipClaimLinkName := fmt.Sprintf("%s.ipv4", linkName) // linkName.ipv4
 		ipclaims = append(ipclaims, ipambev1alpha1.BuildIPClaim(
 			metav1.ObjectMeta{
@@ -325,7 +334,7 @@ func (r *NetworkDesign) GetLinkIPClaims(cr client.Object, link *infrabev1alpha1.
 				ClaimLabels: commonv1alpha1.ClaimLabels{
 					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
-							backend.KuidINVPurpose:          string(InterfaceKindISL),
+							backend.KuidINVPurpose:          string(InterfaceKindUnderlay),
 							backend.KuidIPAMddressFamilyKey: "ipv4",
 						},
 					},
@@ -357,7 +366,7 @@ func (r *NetworkDesign) GetLinkIPClaims(cr client.Object, link *infrabev1alpha1.
 			))
 		}
 	}
-	if r.IsISLIPv6Numbered() {
+	if r.IsUnderlayIPv6Numbered() {
 		ipClaimLinkName := fmt.Sprintf("%s.ipv6", linkName) // linkName.ipv4
 		ipclaims = append(ipclaims, ipambev1alpha1.BuildIPClaim(
 			metav1.ObjectMeta{
@@ -374,7 +383,7 @@ func (r *NetworkDesign) GetLinkIPClaims(cr client.Object, link *infrabev1alpha1.
 				ClaimLabels: commonv1alpha1.ClaimLabels{
 					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
-							backend.KuidINVPurpose:          string(InterfaceKindISL),
+							backend.KuidINVPurpose:          string(InterfaceKindUnderlay),
 							backend.KuidIPAMddressFamilyKey: "ipv6",
 						},
 					},
@@ -548,10 +557,10 @@ func (r *NetworkDesign) GetUnderlayAddressFamiliesToBeDisabled() []string {
 	afs := []string{}
 	if r.IsISISEnabled() || r.IsOSPFEnabled() {
 	} else {
-		if !r.IsISLIPv4Enabled() || !r.IsLoopbackIPv4Enabled() {
+		if !r.IsUnderlayIPv4Enabled() || !r.IsLoopbackIPv4Enabled() {
 			afs = append(afs, "ipv4-unicast")
 		}
-		if !r.IsISLIPv6Enabled() || !r.IsLoopbackIPv6Enabled() {
+		if !r.IsUnderlayIPv6Enabled() || !r.IsLoopbackIPv6Enabled() {
 			afs = append(afs, "ipv6-unicast")
 		}
 	}
@@ -580,10 +589,10 @@ func (r *NetworkDesign) GetOverlayAddressFamiliesToBeDisabled() []string {
 	afs := []string{}
 	if r.IsISISEnabled() || r.IsOSPFEnabled() {
 	} else {
-		if r.IsISLIPv4Enabled() || r.IsLoopbackIPv4Enabled() {
+		if r.IsUnderlayIPv4Enabled() || r.IsLoopbackIPv4Enabled() {
 			afs = append(afs, "ipv4-unicast")
 		}
-		if r.IsISLIPv6Enabled() || r.IsLoopbackIPv6Enabled() {
+		if r.IsUnderlayIPv6Enabled() || r.IsLoopbackIPv6Enabled() {
 			afs = append(afs, "ipv6-unicast")
 		}
 	}
@@ -594,10 +603,10 @@ func (r *NetworkDesign) GetOverlayAddressFamiliesToBeDisabled() []string {
 // GetAllAddressFamilies retrun all address families enabled in the network design
 func (r *NetworkDesign) GetAllEnabledAddressFamilies() []string {
 	afs := []string{}
-	if !r.IsISISEnabled() && !r.IsOSPFEnabled() && (r.IsISLIPv4Enabled() || r.IsLoopbackIPv4Enabled()) {
+	if !r.IsISISEnabled() && !r.IsOSPFEnabled() && (r.IsUnderlayIPv4Enabled() || r.IsLoopbackIPv4Enabled()) {
 		afs = append(afs, "ipv4-unicast")
 	}
-	if !r.IsISISEnabled() && !r.IsOSPFEnabled() && (r.IsISLIPv6Enabled() || r.IsLoopbackIPv6Enabled()) {
+	if !r.IsISISEnabled() && !r.IsOSPFEnabled() && (r.IsUnderlayIPv6Enabled() || r.IsLoopbackIPv6Enabled()) {
 		afs = append(afs, "ipv6-unicast")
 	}
 	if r.IsBGPEVPNEnabled() {
@@ -624,11 +633,126 @@ func (r *NetworkDesign) GetAllEnabledAddressFamilies() []string {
 // GetIGPAddressFamilies retrun all address families enabled in the network design
 func (r *NetworkDesign) GetIGPAddressFamilies() []string {
 	afs := []string{}
-	if r.IsISLIPv4Enabled() || r.IsLoopbackIPv4Enabled() {
+	if r.IsUnderlayIPv4Enabled() || r.IsLoopbackIPv4Enabled() {
 		afs = append(afs, "ipv4-unicast")
 	}
-	if r.IsISLIPv6Enabled() || r.IsLoopbackIPv6Enabled() {
+	if r.IsUnderlayIPv6Enabled() || r.IsLoopbackIPv6Enabled() {
 		afs = append(afs, "ipv6-unicast")
 	}
 	return afs
+}
+
+func (r *NetworkDesign) IsISISBFDEnabled() bool {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.ISIS != nil &&
+		r.Spec.Protocols.ISIS.BFD {
+		return true
+	}
+	return false
+}
+
+func (r *NetworkDesign) IsOSPFBFDEnabled() bool {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.OSPF != nil &&
+		r.Spec.Protocols.OSPF.BFD {
+		return true
+	}
+	return false
+}
+
+func (r *NetworkDesign) IsEBGPBFDEnabled() bool {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.EBGP != nil &&
+		r.Spec.Protocols.EBGP.BFD {
+		return true
+	}
+	return false
+}
+
+func (r *NetworkDesign) IsBFDEnabled() bool {
+	if r.IsISISBFDEnabled() {
+		return true
+	}
+	if r.IsOSPFBFDEnabled() {
+		return true
+	}
+	if r.IsEBGPBFDEnabled() {
+		return true
+	}
+	return false
+}
+
+func (r *NetworkDesign) GetUnderlayBFDParameters() *infrabev1alpha1.BFDLinkParameters {
+	bfdParams := &infrabev1alpha1.BFDLinkParameters{}
+	if r.Spec.Interfaces != nil &&
+		r.Spec.Interfaces.Underlay != nil {
+		return r.Spec.Interfaces.Underlay.BFD
+	}
+	return bfdParams
+}
+
+func (r *NetworkDesign) GetISISInstanceName() string {
+	instanceName := DefaultIGPInstance
+	if r.Spec.Protocols.ISIS.Instance != nil {
+		instanceName = *r.Spec.Protocols.ISIS.Instance
+	}
+	return instanceName
+}
+
+func (r *NetworkDesign) GetOSPFInstanceName() string {
+	instanceName := DefaultIGPInstance
+	if r.Spec.Protocols.OSPF.Instance != nil {
+		instanceName = *r.Spec.Protocols.OSPF.Instance
+	}
+	return instanceName
+}
+
+func (r *NetworkDesign) GetOSPFVersion() infrabev1alpha1.OSPFVersion {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.OSPF != nil {
+		return r.Spec.Protocols.OSPF.Version
+	}
+	return infrabev1alpha1.OSPFVersionUnknown
+}
+
+func (r *NetworkDesign) GetOSPFGetMaxECMPLPaths() uint32 {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.OSPF != nil &&
+		r.Spec.Protocols.OSPF.MaxECMPPaths != nil {
+		return *r.Spec.Protocols.OSPF.MaxECMPPaths
+	}
+	return 1
+}
+
+func (r *NetworkDesign) GetOSPFArea() string {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.OSPF != nil {
+		return r.Spec.Protocols.OSPF.Area
+	}
+	return ""
+}
+
+func (r *NetworkDesign) GetISISLevel() infrabev1alpha1.ISISLevel {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.ISIS != nil {
+		return r.Spec.Protocols.ISIS.Level
+	}
+	return infrabev1alpha1.ISISLevelUnknown
+}
+
+func (r *NetworkDesign) GetISISAreas() []string {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.ISIS != nil {
+		return r.Spec.Protocols.ISIS.Areas
+	}
+	return []string{}
+}
+
+func (r *NetworkDesign) GetISISGetMaxECMPLPaths() uint32 {
+	if r.Spec.Protocols != nil &&
+		r.Spec.Protocols.ISIS != nil &&
+		r.Spec.Protocols.ISIS.MaxECMPPaths != nil {
+		return *r.Spec.Protocols.OSPF.MaxECMPPaths
+	}
+	return 1
 }

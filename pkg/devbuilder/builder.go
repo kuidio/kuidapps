@@ -32,15 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	VXLANInterfaceName       = "vxlan0"
-	IRBInterfaceName         = "irb0"
-	SystemInterfaceName      = "system0"
-	BGPUnderlayPeerGroupName = "underlay"
-	BGPOverlayPeerGroupName  = "overlay"
-	DefaultIGPINstance       = "i1"
-)
-
 func New(client client.Client, nsn types.NamespacedName) *DeviceBuilder {
 	return &DeviceBuilder{
 		Client:  client,
@@ -57,6 +48,160 @@ type DeviceBuilder struct {
 
 func (r *DeviceBuilder) GetNetworkDeviceConfigs() []*netwv1alpha1.NetworkDevice {
 	return r.devices.GetNetworkDeviceConfigs()
+}
+
+func (r *DeviceBuilder) BuildNew(ctx context.Context, network *netwv1alpha1.Network, networkDesign *netwv1alpha1.NetworkDesign) error {
+	if network.IsDefaultNetwork() {
+		return r.BuildUnderlay(ctx, network, networkDesign)
+	}
+	return r.BuildOverlay(ctx, network, networkDesign)
+}
+
+func (r *DeviceBuilder) BuildUnderlay(ctx context.Context, network *netwv1alpha1.Network, networkDesign *netwv1alpha1.NetworkDesign) error {
+	links, err := r.GetLinks(ctx, network)
+	if err != nil {
+		return err
+	}
+	nodes := sets.New[string]()
+	for _, link := range links {
+		l, err := r.gatherLinkInfo(ctx, networkDesign, link)
+		if err != nil {
+			return nil
+		}
+		r.updateUnderlayDeviceConfig(ctx, network.GetNetworkName(), networkDesign, l)
+	}
+}
+
+func (r *DeviceBuilder) gatherLinkInfo(ctx context.Context, networkDesign *netwv1alpha1.NetworkDesign, link *infrabev1alpha1.Link) (*link, error) {
+	l := newLink(link)
+	// gather IP and if EBGP is enabled AS numbers
+	for i := uint(0); i < 2; i++ {
+		nodeID := link.Spec.Endpoints[i].NodeID
+		nodeName := nodeID.Node
+		epName := link.Spec.Endpoints[i].Endpoint
+		l.addNodeID(i, nodeID)
+		l.addNodeName(i, nodeName)
+		l.addEPName(i, epName)
+		if networkDesign.IsEBGPEnabled() {
+			as, err := r.getASClaim(ctx, types.NamespacedName{
+				Namespace: r.nsn.Namespace,
+				Name:      fmt.Sprintf("%s.%s", r.nsn.Name, nodeName),
+			})
+			if err != nil {
+				return l, err
+			}
+			l.addAS(i, as)
+		}
+		if networkDesign.IsUnderlayIPv4Numbered() {
+			localEPNodeName := fmt.Sprintf("%s.%s.%s.ipv4", r.nsn.Name, nodeName, epName)
+
+			ipv4, err := r.getIPClaim(ctx, types.NamespacedName{
+				Namespace: r.nsn.Namespace,
+				Name:      localEPNodeName,
+			})
+			if err != nil {
+				return l, err
+			}
+			l.addIpv4(i, ipv4)
+		}
+		if networkDesign.IsUnderlayIPv6Numbered() {
+			localEPNodeName := fmt.Sprintf("%s.%s.%s.ipv6", r.nsn.Name, nodeName, epName)
+
+			ipv6, err := r.getIPClaim(ctx, types.NamespacedName{
+				Namespace: r.nsn.Namespace,
+				Name:      localEPNodeName,
+			})
+			if err != nil {
+				return l, err
+			}
+			l.addIpv6(i, ipv6)
+		}
+	}
+	return l, nil
+}
+
+func (r *DeviceBuilder) updateUnderlayDeviceConfig(ctx context.Context, niName string, networkDesign *netwv1alpha1.NetworkDesign, l *link) error {
+	for i := uint(0); i < 2; i++ {
+		//nodeID := l.getNodeID(i)
+		nodeName := l.getNodeName(i)
+		epName := l.getEPName(i)
+		//j := i ^ 1
+		//peerNodeID := l.getNodeID(j)
+		//peerNodeName := l.getNodeName(j)
+		//peerEPName := l.getEPName(i)
+
+		r.devices.AddInterface(nodeName, &netwv1alpha1.NetworkDeviceInterface{
+			Name: epName,
+			//Speed: "100G", -> to be changed and look at the inventory
+		})
+		id := uint32(0)
+		r.devices.AddSubInterface(nodeName, epName, l.getUnderlaySubInterface(i, networkDesign, id))
+		r.devices.AddNetworkInstanceSubInterface(nodeName, netwv1alpha1.DefaultNetwork, &netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+			Name: epName,
+			ID:   id,
+		})
+		// BFD needs to be enabled on the protocols first
+		// we ignore BFD enabled on underlay
+		if networkDesign.IsBFDEnabled() {
+			bfdParmas := l.getBFDLinkParameters(i, networkDesign)
+			if bfdParmas.Enabled != nil && *bfdParmas.Enabled {
+				r.devices.AddBFDInterface(nodeName, &netwv1alpha1.NetworkDeviceBFDInterface{
+					SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{Name: epName, ID: id},
+					BFD:              *bfdParmas,
+				})
+			}
+		}
+		if networkDesign.IsOSPFEnabled() {
+			r.updateUnderlayOSPFDeviceConfig(i, nodeName, epName, niName, id, networkDesign, l)
+		}
+		if networkDesign.IsISISEnabled() {
+			r.updateUnderlayISISDeviceConfig(i, nodeName, epName, niName, id, networkDesign, l)
+		}
+
+	}
+	return nil
+}
+
+func (r *DeviceBuilder) updateUnderlayOSPFDeviceConfig(i uint, nodeName, epName, niName string, id uint32, networkDesign *netwv1alpha1.NetworkDesign, l *link) {
+	instanceName := networkDesign.GetOSPFInstanceName()
+	r.devices.AddNetworkInstanceProtocolsOSPFInstance(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstance{
+		Name:    instanceName,
+		Version: networkDesign.GetOSPFVersion(),
+		//RouterID:     routerID,
+		MaxECMPPaths: networkDesign.GetOSPFGetMaxECMPLPaths(),
+		//ASBR: nd.Spec.Protocols.OSPF.ASBR, TODO
+	})
+	area := l.getOSPFArea(i, networkDesign)
+	r.devices.AddNetworkInstanceProtocolsOSPFInstanceArea(nodeName, niName, instanceName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea{
+		Name: area,
+		NSSA: nil, // TODO
+		Stub: nil, // TODO
+	})
+	r.devices.AddNetworkInstanceProtocolsOSPFInstanceAreaInterface(nodeName, niName, instanceName, area, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface{
+		SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{
+			Name: epName,
+			ID:   id,
+		},
+		NetworkType: infrabev1alpha1.NetworkTypeP2P,
+		Passive:     l.getOSPFPassive(i, networkDesign),
+		BFD:         l.getOSPFBFD(i, networkDesign),
+	})
+}
+
+func (r *DeviceBuilder) updateUnderlayISISDeviceConfig(i uint, nodeName, epName, niName string, id uint32, networkDesign *netwv1alpha1.NetworkDesign, l *link) {
+	instanceName := networkDesign.GetISISInstanceName()
+	r.devices.AddNetworkInstanceProtocolsISISInstance(nodeName, niName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstance{
+		Name:            instanceName,
+		LevelCapability: networkDesign.GetISISLevel(),
+		Net:             getISISNetIDs(networkDesign.GetISISAreas(), l.getSystemID(i)),
+		MaxECMPPaths:    networkDesign.GetISISGetMaxECMPLPaths(),
+		AddressFamilies: networkDesign.GetIGPAddressFamilies(),
+	})
+	r.devices.AddNetworkInstanceProtocolsISISInstanceInterface(nodeName, niName, instanceName, l.getISISInterface(i, networkDesign, id))
+}
+
+func (r *DeviceBuilder) BuildOverlay(ctx context.Context, network *netwv1alpha1.Network, networkDesign *netwv1alpha1.NetworkDesign) error {
+	return nil
 }
 
 func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nd *netwv1alpha1.NetworkDesign) error {
@@ -76,7 +221,6 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nd 
 
 		for _, n := range nodes {
 			nodeName := n.Spec.NodeID.Node
-
 			r.devices.AddProvider(nodeName, n.Spec.Provider)
 			if nd.IsVXLANEnabled() {
 				r.devices.AddTunnelInterface(nodeName, &netwv1alpha1.NetworkDeviceTunnelInterface{
@@ -146,13 +290,12 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nd 
 		}
 	} else {
 		bd2NodeName := map[string]sets.Set[string]{}
-
-		for _, bd := range cr.Spec.Bridges {
-			bd2NodeName[bd.Name] = sets.New[string]()
+		for _, bridge := range cr.Spec.Bridges {
+			bd2NodeName[bridge.Name] = sets.New[string]()
 			// add bridge domain
-			bdName := fmt.Sprintf("%s.%s", networkName, bd.Name)
-			id := uint32(bd.NetworkID)
-			for _, itfce := range bd.Interfaces {
+			bdName := fmt.Sprintf("%s.%s", networkName, bridge.Name)
+			id := uint32(bridge.NetworkID)
+			for _, itfce := range bridge.Interfaces {
 				if !itfce.IsDynamic() {
 					// static interface
 					// check if the endpoint exists in the inventory
@@ -174,7 +317,7 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nd 
 					if err != nil {
 						return err
 					}
-					bd2NodeName[bd.Name].Insert(nodeName)
+					bd2NodeName[bridge.Name].Insert(nodeName)
 
 					r.devices.AddProvider(itfce.Node, ep.Spec.Provider)
 
@@ -221,10 +364,10 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nd 
 				}
 			}
 		}
-		for _, ni := range cr.Spec.Routers {
-			niName := fmt.Sprintf("%s.%s", networkName, ni.Name)
-			id := uint32(ni.NetworkID)
-			for _, itfce := range ni.Interfaces {
+		for _, router := range cr.Spec.Routers {
+			niName := fmt.Sprintf("%s.%s", networkName, router.Name)
+			id := uint32(router.NetworkID)
+			for _, itfce := range router.Interfaces {
 				if !itfce.IsDynamic() {
 					if itfce.Bridge == nil && itfce.EndPoint == nil {
 						return fmt.Errorf("cannot create an rt interface w/o a bridgedomain or endpoint specified")
@@ -357,7 +500,6 @@ func (r *DeviceBuilder) Build(ctx context.Context, cr *netwv1alpha1.Network, nd 
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -387,9 +529,6 @@ func (r *DeviceBuilder) UpdateNodeAS(ctx context.Context, nodeName, niName strin
 }
 
 func (r *DeviceBuilder) UpdateNodeIP(ctx context.Context, nodeName, niName, systemID string, nd *netwv1alpha1.NetworkDesign) error {
-	//nodeID := infrabev1alpha1.String2NodeGroupNodeID(n.GetName())
-	//nodeName := nodeID.Node
-	//networkName := cr.GetNetworkName()
 	ipv4 := []string{}
 	ipv6 := []string{}
 	routerID := ""
@@ -536,7 +675,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 					return err
 				}
 			}
-			if nd.IsISLIPv4Numbered() {
+			if nd.IsUnderlayIPv4Numbered() {
 				localEPNodeName := fmt.Sprintf("%s.%s.%s.ipv4", r.nsn.Name, nodeName, epName)
 
 				usedipv4[i], err = r.getIPClaim(ctx, types.NamespacedName{
@@ -547,7 +686,7 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 					return err
 				}
 			}
-			if nd.IsISLIPv6Numbered() {
+			if nd.IsUnderlayIPv6Numbered() {
 				localEPNodeName := fmt.Sprintf("%s.%s.%s.ipv6", r.nsn.Name, nodeName, epName)
 
 				usedipv6[i], err = r.getIPClaim(ctx, types.NamespacedName{
@@ -579,20 +718,20 @@ func (r *DeviceBuilder) UpdateInterfaces(ctx context.Context, niName string, nd 
 				ID:       0,
 				Type:     netwv1alpha1.SubInterfaceType_Routed,
 			}
-			if nd.IsISLIPv4Numbered() {
+			if nd.IsUnderlayIPv4Numbered() {
 				si.IPv4 = &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv4{
 					Addresses: []string{usedipv4[i]},
 				}
 			}
-			if nd.IsISLIPv4UnNumbered() {
+			if nd.IsUnderlayIPv4UnNumbered() {
 				si.IPv4 = &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv4{}
 			}
-			if nd.IsISLIPv6Numbered() {
+			if nd.IsUnderlayIPv6Numbered() {
 				si.IPv6 = &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv6{
 					Addresses: []string{usedipv6[i]},
 				}
 			}
-			if nd.IsISLIPv6UnNumbered() {
+			if nd.IsUnderlayIPv6UnNumbered() {
 				si.IPv6 = &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv6{}
 			}
 			r.devices.AddSubInterface(nodeName, epName, si)

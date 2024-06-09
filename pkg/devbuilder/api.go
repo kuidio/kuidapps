@@ -51,12 +51,12 @@ func (r *DeviceBuilder) GetNodes(ctx context.Context, cr *netwv1alpha1.Network) 
 	return nodes, nil
 }
 
-func (r *DeviceBuilder) GetLinks(ctx context.Context, cr *netwv1alpha1.Network) ([]*infrabev1alpha1.Link, error) {
+func (r *DeviceBuilder) GetLinks(ctx context.Context, network *netwv1alpha1.Network) ([]*infrabev1alpha1.Link, error) {
 	links := make([]*infrabev1alpha1.Link, 0)
-	topology := cr.Spec.Topology
+	topology := network.Spec.Topology
 
 	opts := []client.ListOption{
-		client.InNamespace(cr.Namespace),
+		client.InNamespace(network.Namespace),
 	}
 	linkList := &infrabev1alpha1.LinkList{}
 	if err := r.Client.List(ctx, linkList, opts...); err != nil {

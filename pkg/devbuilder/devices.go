@@ -87,6 +87,16 @@ func (r *Devices) AddNetworkInstanceProtocolsBGPAddressFamilies(nodeName, niName
 	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().AddressFamilies = afs
 }
 
+func (r *Devices) AddBFDInterface(nodeName string, x *netwv1alpha1.NetworkDeviceBFDInterface) {
+	r.m.Lock()
+	defer r.m.Unlock()
+	if _, ok := r.devices[nodeName]; !ok {
+		r.devices[nodeName] = netwv1alpha1.NewDevice(r.nsn, nodeName)
+	}
+	d := r.devices[nodeName]
+	d.GetOrCreateBFD().AddOrUpdateBFDInterface(x)
+}
+
 func (r *Devices) AddInterface(nodeName string, x *netwv1alpha1.NetworkDeviceInterface) {
 	r.m.Lock()
 	defer r.m.Unlock()
@@ -125,17 +135,6 @@ func (r *Devices) AddSubInterface(nodeName, ifName string, x *netwv1alpha1.Netwo
 	si.PeerName = x.PeerName
 	si.VLAN = x.VLAN
 	si.Type = x.Type
-
-	/*
-		if len(ipv4) != 0 {
-			sort.Strings(ipv4)
-			si.GetOrCreateIPv4().Addresses = ipv4
-		}
-		if len(ipv6) != 0 {
-			sort.Strings(ipv6)
-			si.GetOrCreateIPv6().Addresses = ipv6
-		}
-	*/
 }
 
 func (r *Devices) AddTunnelSubInterface(nodeName, ifName string, x *netwv1alpha1.NetworkDeviceTunnelInterfaceSubInterface) {

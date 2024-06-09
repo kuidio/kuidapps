@@ -70,47 +70,6 @@ spec:
                 description: Interfaces define the interface parameters of the network
                   design
                 properties:
-                  isl:
-                    properties:
-                      addressing:
-                        default: dualstack
-                        description: Addressing defines the addressing used in this
-                          network
-                        enum:
-                        - dualstack
-                        - ipv4only
-                        - ipv6only
-                        - ipv4unnumbered
-                        - ipv6unnumbered
-                        type: string
-                      bfd:
-                        description: BFD defines if BFD is enabled on the interfaces
-                          or not
-                        type: boolean
-                      prefixes:
-                        description: |-
-                          Prefixes defines the prefixes belonging to this network config
-                          prefixLength would be indicated by a label
-                        items:
-                          properties:
-                            labels:
-                              additionalProperties:
-                                type: string
-                              description: Labels as user defined labels
-                              type: object
-                            prefix:
-                              description: Prefix defines the ip cidr in prefix notation.
-                              pattern: (([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])/(([0-9])|([1-2][0-9])|(3[0-2]))|((:|[0-9a-fA-F]{0,4}):)([0-9a-fA-F]{0,4}:){0,5}((([0-9a-fA-F]{0,4}:)?(:|[0-9a-fA-F]{0,4}))|(((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])))(/(([0-9])|([0-9]{2})|(1[0-1][0-9])|(12[0-8])))
-                              type: string
-                          required:
-                          - prefix
-                          type: object
-                        type: array
-                      vlanTagging:
-                        description: VLANTagging defines if VLAN tagging should be
-                          used or not
-                        type: boolean
-                    type: object
                   loopback:
                     properties:
                       addressing:
@@ -144,6 +103,82 @@ spec:
                           type: object
                         type: array
                     type: object
+                  underlay:
+                    properties:
+                      addressing:
+                        default: dualstack
+                        description: Addressing defines the addressing used in this
+                          network
+                        enum:
+                        - dualstack
+                        - ipv4only
+                        - ipv6only
+                        - ipv4unnumbered
+                        - ipv6unnumbered
+                        type: string
+                      bfd:
+                        description: BFD defines the bfd parameters on the interface
+                        properties:
+                          disabled:
+                            description: Disabled defines if bfd is disabled or not
+                            type: boolean
+                          minEchoRx:
+                            default: 0
+                            description: MinEchoRx defines the echo function timer,
+                              in msec.
+                            format: int32
+                            type: integer
+                          minRx:
+                            default: 1000
+                            description: MinTx defines the required minimal interval
+                              for receiving BFD packets, in msec.
+                            format: int32
+                            type: integer
+                          minTx:
+                            default: 1000
+                            description: MinTx defines the desired minimal interval
+                              for sending BFD packets, in msec.
+                            format: int32
+                            type: integer
+                          multiplier:
+                            default: 5
+                            description: Multiplier defines the number of missed packets
+                              before the session is considered down
+                            format: int32
+                            type: integer
+                          ttl:
+                            default: 1
+                            description: TTL defines the time to live on the outgoing
+                              BFD packet
+                            format: int32
+                            maximum: 255
+                            minimum: 1
+                            type: integer
+                        type: object
+                      prefixes:
+                        description: |-
+                          Prefixes defines the prefixes belonging to this network config
+                          prefixLength would be indicated by a label
+                        items:
+                          properties:
+                            labels:
+                              additionalProperties:
+                                type: string
+                              description: Labels as user defined labels
+                              type: object
+                            prefix:
+                              description: Prefix defines the ip cidr in prefix notation.
+                              pattern: (([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])/(([0-9])|([1-2][0-9])|(3[0-2]))|((:|[0-9a-fA-F]{0,4}):)([0-9a-fA-F]{0,4}:){0,5}((([0-9a-fA-F]{0,4}:)?(:|[0-9a-fA-F]{0,4}))|(((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])))(/(([0-9])|([0-9]{2})|(1[0-1][0-9])|(12[0-8])))
+                              type: string
+                          required:
+                          - prefix
+                          type: object
+                        type: array
+                      vlanTagging:
+                        description: VLANTagging defines if VLAN tagging should be
+                          used or not
+                        type: boolean
+                    type: object
                 type: object
               protocols:
                 description: Protocols define the network wide protocol parameters
@@ -164,6 +199,9 @@ spec:
                     properties:
                       asPool:
                         type: string
+                      bfd:
+                        description: BFD defines if BFD is enabled globally on EBGP
+                        type: boolean
                     type: object
                   ibgp:
                     properties:
@@ -184,10 +222,13 @@ spec:
                         items:
                           type: string
                         type: array
+                      bfd:
+                        description: BFD defines if BFD is enabled globally on ISIS
+                        type: boolean
                       instance:
                         description: Instance defines the name of the ISIS instance
                         type: string
-                      levelCapability:
+                      level:
                         default: L2
                         description: LevelCapability defines the level capability
                           of the ISIS in the topology
@@ -213,6 +254,9 @@ spec:
                         description: Area defines the default area used if not further
                           refined on the interface.
                         type: string
+                      bfd:
+                        description: BFD defines if BFD is enabled globally on OSPF
+                        type: boolean
                       instance:
                         description: Instance defines the name of the OSPF instance
                         type: string
