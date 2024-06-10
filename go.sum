@@ -246,6 +246,10 @@ github.com/kuidio/kuid v0.0.6-0.20240609134549-f9d5fbde6735 h1:zETgm9R30XRrUnxff
 github.com/kuidio/kuid v0.0.6-0.20240609134549-f9d5fbde6735/go.mod h1:sisGpfUq0JtxD507lx65KdVgG0STQNCdSAfYilg+DCg=
 github.com/kuidio/kuid v0.0.6-0.20240609162432-75e455982ca5 h1:iUZORJ8miEwOgwAndIVlyHhoHRa8y9YS5jFm6xmyxAI=
 github.com/kuidio/kuid v0.0.6-0.20240609162432-75e455982ca5/go.mod h1:sisGpfUq0JtxD507lx65KdVgG0STQNCdSAfYilg+DCg=
+github.com/kuidio/kuid v0.0.6-0.20240609165939-1b66afe73d36 h1:uy++iwkykV/HtW73+cZ2dm+ilB4loTlvMMPjLFtQ2+M=
+github.com/kuidio/kuid v0.0.6-0.20240609165939-1b66afe73d36/go.mod h1:sisGpfUq0JtxD507lx65KdVgG0STQNCdSAfYilg+DCg=
+github.com/kuidio/kuid v0.0.6-0.20240610081735-bb457eb467ae h1:83MKTVo5b0Et/f+jUzWatZPzHXhHrKR9XWxfhKjcJ3o=
+github.com/kuidio/kuid v0.0.6-0.20240610081735-bb457eb467ae/go.mod h1:sisGpfUq0JtxD507lx65KdVgG0STQNCdSAfYilg+DCg=
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=

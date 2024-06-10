@@ -58,8 +58,24 @@ func TestDeviceBuilder(t *testing.T) {
 		expectedErr error
 	}{
 		/*
-			"3nodeDefaultDualStackOSPF": {
-				path: "data/3node-dualstack-ospf",
+		"3nodeDefaultDualStackOSPF": {
+			path: "data/3node-dualstack-ospf",
+			network: netwv1alpha1.BuildNetwork(
+				v1.ObjectMeta{
+					Name:      "topo3nodesrl.default",
+					Namespace: "default",
+				},
+				&netwv1alpha1.NetworkSpec{
+					Topology: "topo3nodesrl",
+				},
+				nil,
+			),
+			expectedErr: nil,
+		},
+		*/
+		/*
+			"3nodeDefaultDualStackEBGP": {
+				path: "data/3node-dualstack-ebgp",
 				network: netwv1alpha1.BuildNetwork(
 					v1.ObjectMeta{
 						Name:      "topo3nodesrl.default",
@@ -74,22 +90,7 @@ func TestDeviceBuilder(t *testing.T) {
 			},
 		*/
 
-		"3nodeDefaultDualStackEBGP": {
-			path: "data/3node-dualstack-ebgp",
-			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
-
-		/*
+	
 			"3nodeDefaultDualStackISIS": {
 				path: "data/3node-dualstack-isis",
 				network: netwv1alpha1.BuildNetwork(
@@ -104,7 +105,7 @@ func TestDeviceBuilder(t *testing.T) {
 				),
 				expectedErr: nil,
 			},
-		*/
+
 		/*
 			"3nodeDefaultIpv6Unnumbered": {
 				path: "data/3node-ipv6unnumbered",
@@ -178,7 +179,7 @@ func TestDeviceBuilder(t *testing.T) {
 				t.Errorf("cannot initialize test environment, err: %s", err.Error())
 				return
 			}
-			nc := tctx.getNetworkDesign()
+			nd := tctx.getNetworkDesign()
 
 			ipclaimList := &ipambev1alpha1.IPClaimList{}
 			err = tctx.getClient().List(ctx, ipclaimList)
@@ -204,8 +205,8 @@ func TestDeviceBuilder(t *testing.T) {
 				}
 			}
 
-			b := New(tctx.getClient(), types.NamespacedName{Namespace: tc.network.Namespace, Name: tc.network.Name})
-			err = b.Build(ctx, tc.network, nc)
+			b := New(tctx.getClient(), tc.network, nd)
+			err = b.BuildNew(ctx)
 			assert.NoError(t, err, "cannot build network configs")
 			for _, nd := range b.GetNetworkDeviceConfigs() {
 				b, err := yaml.Marshal(nd)

@@ -25,18 +25,16 @@ import (
 	infrabev1alpha1 "github.com/kuidio/kuid/apis/backend/infra/v1alpha1"
 	ipambev1alpha1 "github.com/kuidio/kuid/apis/backend/ipam/v1alpha1"
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
-	netwv1alpha1 "github.com/kuidio/kuidapps/apis/network/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *DeviceBuilder) GetNodes(ctx context.Context, cr *netwv1alpha1.Network) ([]*infrabev1alpha1.Node, error) {
+func (r *DeviceBuilder) GetNodes(ctx context.Context) ([]*infrabev1alpha1.Node, error) {
 	nodes := make([]*infrabev1alpha1.Node, 0)
-	topology := cr.Spec.Topology
 
 	opts := []client.ListOption{
-		client.InNamespace(cr.Namespace),
+		client.InNamespace(r.network.Namespace),
 	}
 	nodeList := &infrabev1alpha1.NodeList{}
 	if err := r.Client.List(ctx, nodeList, opts...); err != nil {
@@ -44,19 +42,17 @@ func (r *DeviceBuilder) GetNodes(ctx context.Context, cr *netwv1alpha1.Network) 
 	}
 
 	for _, n := range nodeList.Items {
-		if topology == n.Spec.NodeGroup {
+		if r.network.Spec.Topology == n.Spec.NodeGroup {
 			nodes = append(nodes, &n)
 		}
 	}
 	return nodes, nil
 }
 
-func (r *DeviceBuilder) GetLinks(ctx context.Context, network *netwv1alpha1.Network) ([]*infrabev1alpha1.Link, error) {
+func (r *DeviceBuilder) GetLinks(ctx context.Context) ([]*infrabev1alpha1.Link, error) {
 	links := make([]*infrabev1alpha1.Link, 0)
-	topology := network.Spec.Topology
-
 	opts := []client.ListOption{
-		client.InNamespace(network.Namespace),
+		client.InNamespace(r.network.Namespace),
 	}
 	linkList := &infrabev1alpha1.LinkList{}
 	if err := r.Client.List(ctx, linkList, opts...); err != nil {
@@ -72,7 +68,7 @@ func (r *DeviceBuilder) GetLinks(ctx context.Context, network *netwv1alpha1.Netw
 			continue
 		}
 		for _, ep := range l.Spec.Endpoints {
-			if ep.NodeGroup != topology {
+			if ep.NodeGroup != r.network.Spec.Topology {
 				continue
 			}
 		}
@@ -115,7 +111,7 @@ func (r *DeviceBuilder) getEndpoint(ctx context.Context, nsn types.NamespacedNam
 		return nil, err
 	}
 	return ep, nil
-	
+
 }
 
 func (r *DeviceBuilder) getNode(ctx context.Context, nsn types.NamespacedName) (*infrabev1alpha1.Node, error) {
@@ -124,5 +120,5 @@ func (r *DeviceBuilder) getNode(ctx context.Context, nsn types.NamespacedName) (
 		return nil, err
 	}
 	return n, nil
-	
+
 }

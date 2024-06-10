@@ -37,8 +37,11 @@ const (
 	VXLANInterfaceName       = "vxlan0"
 	IRBInterfaceName         = "irb0"
 	SystemInterfaceName      = "system0"
+	UnderlaySubInterfaceID   = uint32(0)
 	BGPUnderlayPeerGroupName = "underlay"
+	UnderlayPolicyName       = BGPUnderlayPeerGroupName
 	BGPOverlayPeerGroupName  = "overlay"
+	OverlayPolicyName        = BGPOverlayPeerGroupName
 	DefaultIGPInstance       = "i1"
 )
 

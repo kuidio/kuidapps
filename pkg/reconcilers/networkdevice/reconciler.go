@@ -197,22 +197,22 @@ func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.Network, 
 	}
 }
 
-func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network, nd *netwv1alpha1.NetworkDesign) error {
+func (r *reconciler) apply(ctx context.Context, network *netwv1alpha1.Network, networkDesign *netwv1alpha1.NetworkDesign) error {
 	res := resources.New(r.Client, resources.Config{
 		Owns: []schema.GroupVersionKind{
 			netwv1alpha1.SchemeGroupVersion.WithKind(netwv1alpha1.NetworkDeviceKind),
 		},
 	})
 
-	b := devbuilder.New(r.Client, types.NamespacedName{Namespace: cr.Namespace, Name: cr.Name})
-	if err := b.Build(ctx, cr, nd); err != nil {
+	b := devbuilder.New(r.Client, network, networkDesign)
+	if err := b.BuildNew(ctx); err != nil {
 		return err
 	}
-	for _, nd := range b.GetNetworkDeviceConfigs() {
-		res.AddNewResource(ctx, cr, nd)
+	for _, networkDeviceConfig := range b.GetNetworkDeviceConfigs() {
+		res.AddNewResource(ctx, network, networkDeviceConfig)
 	}
 
-	if err := res.APIApply(ctx, cr); err != nil {
+	if err := res.APIApply(ctx, network); err != nil {
 		return err
 	}
 	return nil

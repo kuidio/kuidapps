@@ -16,7 +16,9 @@ spec:
       prefixes:    
       - prefix: 192.0.0.0/16
       - prefix: 1192::/56
-      bfd: true
+      bfd: 
+        minRx: 1000
+        minTx: 1000
   protocols:
     ibgp:
       as: 65535
@@ -27,6 +29,7 @@ spec:
       instance: i1
       area: "0.0.0.0"
       version: v2
+      bfd: true
     bgpEVPN: {}
   encapsulation: 
     vxlan: {}

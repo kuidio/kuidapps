@@ -226,9 +226,9 @@ type NetworkDeviceNetworkInstanceProtocolISISInstanceInterface struct {
 }
 
 type NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel struct {
-	Metric            *uint32 `json:"metric,omitempty" yaml:"metric,omitempty" protobuf:"bytes,1,opt,name=metric"`
-	MetricIPv6Unicast *uint32 `json:"metricIPv6Unicast,omitempty" yaml:"metricIPv6Unicast,omitempty" protobuf:"bytes,2,opt,name=metricIPv6Unicast"`
-	Disable           bool    `json:"disable" yaml:"disable" protobuf:"bytes,3,opt,name=disable"`
+	Metric            uint32 `json:"metric" yaml:"metric" protobuf:"bytes,1,opt,name=metric"`
+	MetricIPv6Unicast uint32 `json:"metricIPv6Unicast" yaml:"metricIPv6Unicast" protobuf:"bytes,2,opt,name=metricIPv6Unicast"`
+	Disable           bool   `json:"disable" yaml:"disable" protobuf:"bytes,3,opt,name=disable"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv4 struct {

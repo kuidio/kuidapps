@@ -22,6 +22,7 @@ import (
 
 	conditionv1alpha1 "github.com/kuidio/kuid/apis/condition/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // GetCondition returns the condition based on the condition kind
@@ -58,6 +59,10 @@ func BuildNetwork(meta metav1.ObjectMeta, spec *NetworkSpec, status *NetworkStat
 		Spec:       aspec,
 		Status:     astatus,
 	}
+}
+
+func (r *Network) GetNamespacedName() types.NamespacedName {
+	return types.NamespacedName{Namespace: r.Namespace, Name: r.Name}
 }
 
 func (r *Network) GetNetworkName() string {

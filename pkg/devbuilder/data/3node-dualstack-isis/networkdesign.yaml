@@ -16,7 +16,9 @@ spec:
       prefixes:    
       - prefix: 192.0.0.0/16
       - prefix: 1192::/56
-      bfd: true
+      bfd: 
+        minRx: 1000
+        minTx: 1000
   protocols:
     ibgp:
       as: 65535
@@ -28,6 +30,7 @@ spec:
       levelCapability: L2
       areas: 
       - "49.0001"
+      bfd: true
     bgpEVPN: {}
   encapsulation: 
     vxlan: {}

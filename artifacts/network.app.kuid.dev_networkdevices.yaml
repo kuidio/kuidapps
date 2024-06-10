@@ -109,6 +109,7 @@ spec:
                           - name
                           type: object
                       required:
+                      - bfd
                       - subInterfaceName
                       type: object
                     type: array
@@ -349,10 +350,40 @@ spec:
                                           required:
                                           - bfd
                                           type: object
-                                        level:
-                                          description: Level defines the ISIS interface
-                                            level
-                                          type: string
+                                        level1:
+                                          description: Level1 defines the ISIS interface
+                                            level1
+                                          properties:
+                                            disable:
+                                              type: boolean
+                                            metric:
+                                              format: int32
+                                              type: integer
+                                            metricIPv6Unicast:
+                                              format: int32
+                                              type: integer
+                                          required:
+                                          - disable
+                                          - metric
+                                          - metricIPv6Unicast
+                                          type: object
+                                        level2:
+                                          description: Level2 defines the ISIS interface
+                                            level2
+                                          properties:
+                                            disable:
+                                              type: boolean
+                                            metric:
+                                              format: int32
+                                              type: integer
+                                            metricIPv6Unicast:
+                                              format: int32
+                                              type: integer
+                                          required:
+                                          - disable
+                                          - metric
+                                          - metricIPv6Unicast
+                                          type: object
                                         networkType:
                                           description: NetworkType defines the type
                                             of network on the interface
@@ -379,10 +410,29 @@ spec:
                                           - name
                                           type: object
                                       required:
-                                      - level
+                                      - level1
+                                      - level2
                                       - subInterfaceName
                                       type: object
                                     type: array
+                                  level1:
+                                    description: Level1 defines the ISIS interface
+                                      level1
+                                    properties:
+                                      metricStryle:
+                                        type: string
+                                    required:
+                                    - metricStryle
+                                    type: object
+                                  level2:
+                                    description: Level2 defines the ISIS interface
+                                      level2
+                                    properties:
+                                      metricStryle:
+                                        type: string
+                                    required:
+                                    - metricStryle
+                                    type: object
                                   levelCapability:
                                     description: LevelCapability defines the level
                                       capability of the intermediate system (router)
@@ -405,6 +455,8 @@ spec:
                                     type: array
                                 required:
                                 - interfaces
+                                - level1
+                                - level2
                                 - levelCapability
                                 - name
                                 - net

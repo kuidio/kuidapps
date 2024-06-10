@@ -26,11 +26,8 @@ import (
 
 type link struct {
 	l        *infrabev1alpha1.Link
-	nodeID   []infrabev1alpha1.NodeID
 	nodeName []string
 	epName   []string
-	systemID []string
-	provider []string
 	as       []uint32
 	ipv4     []string
 	ipv6     []string
@@ -39,29 +36,12 @@ type link struct {
 func newLink(l *infrabev1alpha1.Link) *link {
 	return &link{
 		l:        l,
-		nodeID:   make([]infrabev1alpha1.NodeID, 2),
 		nodeName: make([]string, 2),
 		epName:   make([]string, 2),
-		systemID: make([]string, 2),
-		provider: make([]string, 2),
 		as:       make([]uint32, 2),
 		ipv4:     make([]string, 2),
 		ipv6:     make([]string, 2),
 	}
-}
-
-func (r *link) getNodeID(idx uint) infrabev1alpha1.NodeID {
-	if idx > 1 {
-		return infrabev1alpha1.NodeID{}
-	}
-	return r.nodeID[idx]
-}
-
-func (r *link) addNodeID(idx uint, nodeID infrabev1alpha1.NodeID) {
-	if idx > 1 {
-		return
-	}
-	r.nodeID[idx] = nodeID
 }
 
 func (r *link) getNodeName(idx uint) string {
@@ -90,34 +70,6 @@ func (r *link) addEPName(idx uint, node string) {
 		return
 	}
 	r.epName[idx] = node
-}
-
-func (r *link) getSystemID(idx uint) string {
-	if idx > 1 {
-		return ""
-	}
-	return r.systemID[idx]
-}
-
-func (r *link) addSystemID(idx uint, systemID string) {
-	if idx > 1 {
-		return
-	}
-	r.systemID[idx] = systemID
-}
-
-func (r *link) getProvider(idx uint) string {
-	if idx > 1 {
-		return ""
-	}
-	return r.provider[idx]
-}
-
-func (r *link) AddProvider(idx uint, provider string) {
-	if idx > 1 {
-		return
-	}
-	r.provider[idx] = provider
 }
 
 func (r *link) getAS(idx uint) uint32 {
@@ -152,7 +104,7 @@ func (r *link) getIpv6(idx uint) string {
 	if idx > 1 {
 		return ""
 	}
-	return r.ipv4[idx]
+	return r.ipv6[idx]
 }
 
 func (r *link) addIpv6(idx uint, ipv6 string) {
@@ -188,9 +140,9 @@ func (r *link) getUnderlaySubInterface(idx uint, networkDesign *netwv1alpha1.Net
 	return si
 }
 
-func (r *link) getBFDLinkParameters(idx uint, networkDesign *netwv1alpha1.NetworkDesign) *infrabev1alpha1.BFDLinkParameters {
+func (r *link) getBFDLinkParameters(networkDesign *netwv1alpha1.NetworkDesign) *infrabev1alpha1.BFDLinkParameters {
 	bfdParams := networkDesign.GetUnderlayBFDParameters()
-	bfdParams.Enabled = ptr.To[bool](true) // we ignore the enabled flag uin underlay
+	bfdParams.Enabled = ptr.To[bool](true) // we ignore the enabled flag in the underlay
 	// we override the link
 	if r.l.Spec.BFD != nil {
 		if r.l.Spec.BFD.Enabled != nil {
@@ -208,11 +160,14 @@ func (r *link) getBFDLinkParameters(idx uint, networkDesign *netwv1alpha1.Networ
 		if r.l.Spec.BFD.Multiplier != nil {
 			*bfdParams.Multiplier = *r.l.Spec.BFD.Multiplier
 		}
+		if r.l.Spec.BFD.TTL != nil {
+			*bfdParams.TTL = *r.l.Spec.BFD.TTL
+		}
 	}
 	return bfdParams
 }
 
-func (r *link) getOSPFArea(idx uint, networkDesign *netwv1alpha1.NetworkDesign) string {
+func (r *link) getOSPFArea(networkDesign *netwv1alpha1.NetworkDesign) string {
 	area := networkDesign.GetOSPFArea()
 	if r.l.Spec.OSPF != nil &&
 		r.l.Spec.OSPF.Area != nil {
@@ -221,7 +176,7 @@ func (r *link) getOSPFArea(idx uint, networkDesign *netwv1alpha1.NetworkDesign) 
 	return area
 }
 
-func (r *link) getOSPFPassive(idx uint, networkDesign *netwv1alpha1.NetworkDesign) bool {
+func (r *link) getOSPFPassive() bool {
 	if r.l.Spec.OSPF != nil &&
 		r.l.Spec.OSPF.Passive != nil {
 		return *r.l.Spec.OSPF.Passive
@@ -229,7 +184,15 @@ func (r *link) getOSPFPassive(idx uint, networkDesign *netwv1alpha1.NetworkDesig
 	return false
 }
 
-func (r *link) getOSPFBFD(idx uint, networkDesign *netwv1alpha1.NetworkDesign) bool {
+func (r *link) getOSPFNetworkType() infrabev1alpha1.NetworkType {
+	if r.l.Spec.OSPF != nil &&
+		r.l.Spec.OSPF.NetworkType != nil {
+		return *r.l.Spec.OSPF.NetworkType
+	}
+	return infrabev1alpha1.NetworkTypeP2P // default network type
+}
+
+func (r *link) getOSPFBFD(networkDesign *netwv1alpha1.NetworkDesign) bool {
 	if !networkDesign.IsOSPFBFDEnabled() {
 		return false
 	}
@@ -237,7 +200,18 @@ func (r *link) getOSPFBFD(idx uint, networkDesign *netwv1alpha1.NetworkDesign) b
 		r.l.Spec.OSPF.BFD != nil {
 		return *r.l.Spec.OSPF.BFD
 	}
-	return true // if BFD is gloabbly enabled and not disabled per interface we return true
+	return true // if BFD is globally enabled and not disabled per interface we return true
+}
+
+func (r *link) getISISBFD(networkDesign *netwv1alpha1.NetworkDesign) bool {
+	if !networkDesign.IsISISBFDEnabled() {
+		return false
+	}
+	if r.l.Spec.ISIS != nil &&
+		r.l.Spec.ISIS.BFD != nil {
+		return *r.l.Spec.ISIS.BFD
+	}
+	return true // if BFD is globally enabled and not disabled per interface we return true
 }
 
 func (r *link) getISISInterface(idx uint, networkDesign *netwv1alpha1.NetworkDesign, id uint32) *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceInterface {
@@ -248,44 +222,61 @@ func (r *link) getISISInterface(idx uint, networkDesign *netwv1alpha1.NetworkDes
 		},
 	}
 
-	if r.l.Spec.ISIS != nil &&
-		r.l.Spec.ISIS.Passive != nil {
-		isisItfce.Passive = *r.l.Spec.ISIS.Passive
-	}
-	if isisItfce.Passive {
+	if r.l.GetISISPassive() {
 		// if passive, set the network type to unknown
 		isisItfce.NetworkType = infrabev1alpha1.NetworkTypeUnknown
+		isisItfce.Passive = true
 	} else {
 		isisItfce.NetworkType = infrabev1alpha1.NetworkTypeP2P
-		if r.l.Spec.ISIS != nil &&
-			r.l.Spec.ISIS.NetworkType != nil {
-			isisItfce.NetworkType = *r.l.Spec.ISIS.NetworkType
+		if r.l.GetISISNetworkType() != infrabev1alpha1.NetworkTypeUnknown {
+			isisItfce.NetworkType = r.l.GetISISNetworkType()
 		}
 	}
 
 	switch networkDesign.GetISISLevel() {
 	case infrabev1alpha1.ISISLevelL1:
-		
+		linkLevel := r.l.GetISISLevel()
+		if linkLevel == infrabev1alpha1.ISISLevelL2 {
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel1().Disable = true
+		}
+		metric := r.l.GetISISMetric()
+		if metric != 0 {
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel1().Metric = metric
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel1().MetricIPv6Unicast = metric
+		}
 	case infrabev1alpha1.ISISLevelL2:
-
+		linkLevel := r.l.GetISISLevel()
+		if linkLevel == infrabev1alpha1.ISISLevelL1 {
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel2().Disable = true
+		}
+		metric := r.l.GetISISMetric()
+		if metric != 0 {
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel2().Metric = metric
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel2().MetricIPv6Unicast = metric
+		}
 	case infrabev1alpha1.ISISLevelL1L2:
-
-	}
-
-
-
-	isisItfce.Level = 2
-	if nd.Spec.Protocols.ISIS.LevelCapability == netwv1alpha1.NetworkDesignProtocolsISISLevelCapabilityL1 {
-		isisItfce.Level = 1
-	}
-	if nd.IsISLIPv4Enabled() {
-		isisItfce.IPv4 = &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv4{
-			BFD: nd.Spec.Interfaces.ISL.BFD,
+		linkLevel := r.l.GetISISLevel()
+		if linkLevel == infrabev1alpha1.ISISLevelL1 {
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel2().Disable = true
+		}
+		if linkLevel == infrabev1alpha1.ISISLevelL2 {
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel1().Disable = true
+		}
+		metric := r.l.GetISISMetric()
+		if metric != 0 {
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel1().Metric = metric
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel1().MetricIPv6Unicast = metric
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel2().Metric = metric
+			isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceLevel2().MetricIPv6Unicast = metric
 		}
 	}
-	if nd.IsISLIPv6Enabled() {
-		isisItfce.IPv6 = &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv6{
-			BFD: nd.Spec.Interfaces.ISL.BFD,
-		}
+
+	if networkDesign.IsUnderlayIPv4Enabled() {
+		isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceIPv4().BFD = r.getISISBFD(networkDesign)
+
 	}
+	if networkDesign.IsUnderlayIPv6Enabled() {
+		isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceIPv6().BFD = r.getISISBFD(networkDesign)
+	}
+	return isisItfce
 }
