@@ -27,7 +27,7 @@ spec:
       - topo3nodesrl.default.core01.ipv4
     isis: 
       instance: i1
-      levelCapability: L2
+      level: L1L2
       areas: 
       - "49.0001"
       bfd: true

@@ -142,6 +142,7 @@ func (r *link) getUnderlaySubInterface(idx uint, networkDesign *netwv1alpha1.Net
 
 func (r *link) getBFDLinkParameters(networkDesign *netwv1alpha1.NetworkDesign) *infrabev1alpha1.BFDLinkParameters {
 	bfdParams := networkDesign.GetUnderlayBFDParameters()
+	fmt.Println("bfdParams", bfdParams)
 	bfdParams.Enabled = ptr.To[bool](true) // we ignore the enabled flag in the underlay
 	// we override the link
 	if r.l.Spec.BFD != nil {
@@ -279,4 +280,15 @@ func (r *link) getISISInterface(idx uint, networkDesign *netwv1alpha1.NetworkDes
 		isisItfce.GetOrCreateNetworkInstanceProtocolISISInstanceInterfaceIPv6().BFD = r.getISISBFD(networkDesign)
 	}
 	return isisItfce
+}
+
+func (r *link) getBGPBFD(networkDesign *netwv1alpha1.NetworkDesign) bool {
+	if !networkDesign.IsEBGPBFDEnabled() {
+		return false
+	}
+	if r.l.Spec.BGP != nil &&
+		r.l.Spec.BGP.BFD != nil {
+		return *r.l.Spec.BGP.BFD
+	}
+	return true // if BFD is globally enabled and not disabled per interface we return true
 }

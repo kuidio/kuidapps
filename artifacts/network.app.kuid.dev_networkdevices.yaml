@@ -58,7 +58,7 @@ spec:
                         bfd:
                           description: BFD defines the bfd parameters of the interface
                           properties:
-                            disabled:
+                            enabled:
                               description: Disabled defines if bfd is disabled or
                                 not
                               type: boolean
@@ -240,6 +240,8 @@ spec:
                             neighbors:
                               items:
                                 properties:
+                                  bfd:
+                                    type: boolean
                                   localAS:
                                     format: int32
                                     type: integer
@@ -253,6 +255,7 @@ spec:
                                   peerGroup:
                                     type: string
                                 required:
+                                - bfd
                                 - localAS
                                 - localAddress
                                 - peerAS

@@ -280,6 +280,7 @@ type NetworkDeviceNetworkInstanceProtocolBGPNeighbor struct {
 	PeerGroup    string `json:"peerGroup" yaml:"peerGroup" protobuf:"bytes,3,opt,name=peerGroup"`
 	LocalAS      uint32 `json:"localAS" yaml:"localAS" protobuf:"bytes,4,opt,name=localAS"`
 	LocalAddress string `json:"localAddress" yaml:"localAddress" protobuf:"bytes,5,opt,name=localAddress"`
+	BFD          bool   `json:"bfd" yaml:"bfd" protobuf:"bytes,6,opt,name=bfd"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors struct {

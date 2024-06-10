@@ -416,7 +416,7 @@ func (r *DeviceBuilder) updateUnderlayOSPFNodeDeviceConfig(nodeName, routerID st
 		//ASBR: nd.Spec.Protocols.OSPF.ASBR, TODO
 	})
 	r.devices.AddNetworkInstanceProtocolsOSPFInstanceArea(nodeName, r.network.GetNetworkName(), instanceName, &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolOSPFInstanceArea{
-		Name: r.networkDesign.GetOSPFInstanceName(),
+		Name: r.networkDesign.GetOSPFArea(),
 		NSSA: nil, // TODO
 		Stub: nil, // TODO
 	})
@@ -459,6 +459,28 @@ func (r *DeviceBuilder) updateUnderlayOSPFInterfaceDeviceConfig(nodeName, ifName
 
 func (r *DeviceBuilder) updateUnderlayISISNodeDeviceConfig(nodeName, systemID string) {
 	instanceName := r.networkDesign.GetISISInstanceName()
+
+	var level1 *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceLevel
+	var level2 *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceLevel
+
+	switch r.networkDesign.GetISISLevel() {
+	case infrabev1alpha1.ISISLevelL1:
+		level1 = &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceLevel{
+			MetricStyle: infrabev1alpha1.ISISMetricStyleNarrow,
+		}
+	case infrabev1alpha1.ISISLevelL2:
+		level2 = &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceLevel{
+			MetricStyle: infrabev1alpha1.ISISMetricStyleNarrow,
+		}
+	case infrabev1alpha1.ISISLevelL1L2:
+		level1 = &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceLevel{
+			MetricStyle: infrabev1alpha1.ISISMetricStyleNarrow,
+		}
+		level2 = &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceLevel{
+			MetricStyle: infrabev1alpha1.ISISMetricStyleNarrow,
+		}
+	}
+
 	r.devices.AddNetworkInstanceProtocolsISISInstance(
 		nodeName,
 		r.network.GetNetworkName(),
@@ -468,6 +490,8 @@ func (r *DeviceBuilder) updateUnderlayISISNodeDeviceConfig(nodeName, systemID st
 			Net:             getISISNetIDs(r.networkDesign.GetISISAreas(), systemID),
 			MaxECMPPaths:    r.networkDesign.GetISISGetMaxECMPLPaths(),
 			AddressFamilies: r.networkDesign.GetIGPAddressFamilies(),
+			Level1:          level1,
+			Level2:          level2,
 		})
 	r.devices.AddNetworkInstanceProtocolsISISInstanceInterface(
 		nodeName,
@@ -521,6 +545,7 @@ func (r *DeviceBuilder) updateUnderlayEBGPInterfaceDeviceConfig(nodeName, ifName
 				PeerGroup:    netwv1alpha1.BGPUnderlayPeerGroupName,
 				LocalAS:      l.getAS(i),
 				PeerAS:       l.getAS(j),
+				BFD:          l.getBGPBFD(r.networkDesign),
 			})
 		} else {
 			r.devices.AddNetworkInstanceprotocolsBGPDynamicNeighbor(nodeName, r.network.GetNetworkName(), &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighborsInterface{

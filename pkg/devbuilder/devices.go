@@ -209,6 +209,8 @@ func (r *Devices) AddNetworkInstanceProtocolsISISInstance(nodeName, niName strin
 	isisInstance.LevelCapability = instance.LevelCapability
 	isisInstance.MaxECMPPaths = instance.MaxECMPPaths
 	isisInstance.Net = instance.Net
+	isisInstance.Level1 = instance.Level1
+	isisInstance.Level2 = instance.Level2
 }
 
 func (r *Devices) AddNetworkInstanceProtocolsISISInstanceInterface(nodeName, niName, instanceName string, itfce *netwv1alpha1.NetworkDeviceNetworkInstanceProtocolISISInstanceInterface) {

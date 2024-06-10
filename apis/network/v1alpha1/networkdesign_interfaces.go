@@ -688,7 +688,8 @@ func (r *NetworkDesign) IsBFDEnabled() bool {
 func (r *NetworkDesign) GetUnderlayBFDParameters() *infrabev1alpha1.BFDLinkParameters {
 	bfdParams := &infrabev1alpha1.BFDLinkParameters{}
 	if r.Spec.Interfaces != nil &&
-		r.Spec.Interfaces.Underlay != nil {
+		r.Spec.Interfaces.Underlay != nil &&
+		r.Spec.Interfaces.Underlay.BFD != nil {
 		return r.Spec.Interfaces.Underlay.BFD
 	}
 	return bfdParams

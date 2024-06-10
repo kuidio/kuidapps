@@ -533,6 +533,7 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdateNetworkInstanceProt
 	x.PeerAS = new.PeerAS
 	x.PeerAddress = new.PeerAddress
 	x.PeerGroup = new.PeerGroup
+	x.BFD = new.BFD
 
 }
 

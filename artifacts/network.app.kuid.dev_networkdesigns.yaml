@@ -119,7 +119,7 @@ spec:
                       bfd:
                         description: BFD defines the bfd parameters on the interface
                         properties:
-                          disabled:
+                          enabled:
                             description: Disabled defines if bfd is disabled or not
                             type: boolean
                           minEchoRx:
