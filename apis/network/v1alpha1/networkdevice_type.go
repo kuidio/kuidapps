@@ -214,15 +214,15 @@ type NetworkDeviceNetworkInstanceProtocolISISInstanceInterface struct {
 	// +kubebuilder:validation:Enum=pointToPoint;broadcast;unknown
 	NetworkType infrabev1alpha1.NetworkType `json:"networkType,omitempty" yaml:"networkType,omitempty" protobuf:"bytes,2,opt,name=networkType"`
 	// Level1 defines the ISIS interface level1
-	Level1 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel `json:"level1" yaml:"level1" protobuf:"bytes,3,opt,name=level1"`
+	Level1 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel `json:"level1,omitempty" yaml:"level1,omitempty" protobuf:"bytes,3,opt,name=level1"`
 	// Level2 defines the ISIS interface level2
-	Level2 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel `json:"level2" yaml:"level2" protobuf:"bytes,3,opt,name=level2"`
+	Level2 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel `json:"level2,omitempty" yaml:"level2,omitempty" protobuf:"bytes,4,opt,name=level2"`
 	// IPv4 define the ipv4 interface parameters
-	IPv4 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv4 `json:"ipv4,omitempty" yaml:"ipv4,omitempty" protobuf:"bytes,4,opt,name=ipv4"`
+	IPv4 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv4 `json:"ipv4,omitempty" yaml:"ipv4,omitempty" protobuf:"bytes,5,opt,name=ipv4"`
 	// IPv6 define the ipv6 interface parameters
-	IPv6 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv6 `json:"ipv6,omitempty" yaml:"ipv6,omitempty" protobuf:"bytes,5,opt,name=ipv6"`
+	IPv6 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceIPv6 `json:"ipv6,omitempty" yaml:"ipv6,omitempty" protobuf:"bytes,6,opt,name=ipv6"`
 	// Passive allow interface to be advertised as an ISIS interface without running the ISIS protocol
-	Passive bool `json:"passive,omitempty" yaml:"passive,omitempty" protobuf:"bytes,6,opt,name=passive"`
+	Passive bool `json:"passive,omitempty" yaml:"passive,omitempty" protobuf:"bytes,7,opt,name=passive"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel struct {

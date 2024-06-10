@@ -414,8 +414,6 @@ spec:
                                           - name
                                           type: object
                                       required:
-                                      - level1
-                                      - level2
                                       - subInterfaceName
                                       type: object
                                     type: array
