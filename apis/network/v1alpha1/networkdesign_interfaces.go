@@ -756,7 +756,7 @@ func (r *NetworkDesign) GetISISGetMaxECMPLPaths() uint32 {
 	if r.Spec.Protocols != nil &&
 		r.Spec.Protocols.ISIS != nil &&
 		r.Spec.Protocols.ISIS.MaxECMPPaths != nil {
-		return *r.Spec.Protocols.OSPF.MaxECMPPaths
+		return *r.Spec.Protocols.ISIS.MaxECMPPaths
 	}
 	return 1
 }
