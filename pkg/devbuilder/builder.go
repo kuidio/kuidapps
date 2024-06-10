@@ -303,8 +303,7 @@ func (r *DeviceBuilder) gatherNodeInfo(ctx context.Context, nodeID infrabev1alph
 			return err
 		}
 		node.as = as
-	}
-	if r.networkDesign.IsIBGPEnabled() {
+	} else {
 		node.as = r.networkDesign.GetIBGPAS()
 	}
 	netwworkDeviceType, ok := n.Spec.UserDefinedLabels.Labels[backend.KuidINVNetworkDeviceType]
@@ -348,7 +347,7 @@ func (r *DeviceBuilder) updateBaseDeviceConfig(l *link) {
 				IPv4: &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv4{Addresses: ipv4},
 				IPv6: &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv6{Addresses: ipv6},
 			})
-			
+
 			// add vxlan interface if vxlan is enabled
 			if r.networkDesign.IsVXLANEnabled() {
 				r.devices.AddTunnelInterface(nodeName, &netwv1alpha1.NetworkDeviceTunnelInterface{
