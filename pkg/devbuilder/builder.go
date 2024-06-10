@@ -270,8 +270,8 @@ func (r *DeviceBuilder) gatherNodeInfo(ctx context.Context, nodeID infrabev1alph
 		if err != nil {
 			return err
 		}
+		node.ipv4 = ip
 		pi, _ := iputil.New(ip)
-		node.ipv4 = pi.GetIPAddress().String()
 		node.routerID = pi.GetIPAddress().String()
 	} else {
 		ip, err := r.getIPClaim(ctx, types.NamespacedName{
@@ -292,8 +292,7 @@ func (r *DeviceBuilder) gatherNodeInfo(ctx context.Context, nodeID infrabev1alph
 		if err != nil {
 			return err
 		}
-		pi, _ := iputil.New(ip)
-		node.ipv6 = pi.GetIPAddress().String()
+		node.ipv6 = ip
 	}
 	if r.networkDesign.IsEBGPEnabled() {
 		as, err := r.getASClaim(ctx, types.NamespacedName{
