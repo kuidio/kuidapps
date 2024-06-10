@@ -8,7 +8,7 @@ require (
 	github.com/henderiw/resource v0.0.0-20231228040228-cf28542fa2c6
 	github.com/henderiw/store v0.0.0-20240513051819-0202d08d7b42
 	github.com/kform-dev/kform v0.0.10-0.20240526044419-ef44918d1d50
-	github.com/kuidio/kuid v0.0.6-0.20240610123304-66a514138045
+	github.com/kuidio/kuid v0.0.7
 	github.com/pkg/errors v0.9.1
 	github.com/pkgserver-dev/pkgserver v0.0.4
 	github.com/sdcio/config-server v0.0.22
