@@ -168,7 +168,7 @@ type NetworkDeviceNetworkInstanceProtocolOSPFInstanceAreaInterface struct {
 	// SubInterfaceName defines the name and id of the sub interface
 	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
 	// Type defines the type of interface
-	// +kubebuilder:validation:Enum=pointToPoint;broadcast
+	// +kubebuilder:validation:Enum=pointToPoint;broadcast;unknown
 	// +kubebuilder:default=pointToPoint
 	NetworkType infrabev1alpha1.NetworkType `json:"networkType,omitempty" yaml:"networkType,omitempty" protobuf:"bytes,2,opt,name=networkType"`
 	// Passive allow interface to be advertised as an interface without running the OSPF protocol
@@ -211,7 +211,7 @@ type NetworkDeviceNetworkInstanceProtocolISISInstanceInterface struct {
 	// SubInterfaceName defines the name and id of the sub interface
 	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
 	// NetworkType defines the type of network on the interface
-	// +kubebuilder:validation:Enum=pointToPoint;broadcast
+	// +kubebuilder:validation:Enum=pointToPoint;broadcast;unknown
 	NetworkType infrabev1alpha1.NetworkType `json:"networkType,omitempty" yaml:"networkType,omitempty" protobuf:"bytes,2,opt,name=networkType"`
 	// Level1 defines the ISIS interface level1
 	Level1 *NetworkDeviceNetworkInstanceProtocolISISInstanceInterfaceLevel `json:"level1" yaml:"level1" protobuf:"bytes,3,opt,name=level1"`

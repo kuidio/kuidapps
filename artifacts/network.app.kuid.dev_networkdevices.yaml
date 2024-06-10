@@ -393,6 +393,7 @@ spec:
                                           enum:
                                           - pointToPoint
                                           - broadcast
+                                          - unknown
                                           type: string
                                         passive:
                                           description: Passive allow interface to
@@ -494,6 +495,7 @@ spec:
                                                 enum:
                                                 - pointToPoint
                                                 - broadcast
+                                                - unknown
                                                 type: string
                                               passive:
                                                 description: Passive allow interface

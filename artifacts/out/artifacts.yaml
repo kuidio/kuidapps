@@ -719,6 +719,7 @@ spec:
                                           enum:
                                           - pointToPoint
                                           - broadcast
+                                          - unknown
                                           type: string
                                         passive:
                                           description: Passive allow interface to be advertised as an ISIS interface without running the ISIS protocol
@@ -809,6 +810,7 @@ spec:
                                                 enum:
                                                 - pointToPoint
                                                 - broadcast
+                                                - unknown
                                                 type: string
                                               passive:
                                                 description: Passive allow interface to be advertised as an interface without running the OSPF protocol
