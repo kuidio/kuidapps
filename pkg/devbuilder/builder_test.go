@@ -35,10 +35,10 @@ import (
 	"github.com/kuidio/kuidapps/pkg/clab"
 	"github.com/kuidio/kuidapps/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -61,7 +61,7 @@ func TestDeviceBuilder(t *testing.T) {
 			"3nodeDefaultDualStackOSPF": {
 				path: "data/3node-dualstack-ospf",
 				network: netwv1alpha1.BuildNetwork(
-					v1.ObjectMeta{
+					metav1.ObjectMeta{
 						Name:      "topo3nodesrl.default",
 						Namespace: "default",
 					},
@@ -77,7 +77,7 @@ func TestDeviceBuilder(t *testing.T) {
 		"3nodeDefaultDualStackEBGP": {
 			path: "data/3node-dualstack-ebgp",
 			network: netwv1alpha1.BuildNetwork(
-				v1.ObjectMeta{
+				metav1.ObjectMeta{
 					Name:      "topo3nodesrl.default",
 					Namespace: "default",
 				},
@@ -93,7 +93,7 @@ func TestDeviceBuilder(t *testing.T) {
 			"3nodeDefaultDualStackISIS": {
 				path: "data/3node-dualstack-isis",
 				network: netwv1alpha1.BuildNetwork(
-					v1.ObjectMeta{
+					metav1.ObjectMeta{
 						Name:      "topo3nodesrl.default",
 						Namespace: "default",
 					},
@@ -109,7 +109,7 @@ func TestDeviceBuilder(t *testing.T) {
 			"3nodeDefaultIpv6Unnumbered": {
 				path: "data/3node-ipv6unnumbered",
 				network: netwv1alpha1.BuildNetwork(
-					v1.ObjectMeta{
+					metav1.ObjectMeta{
 						Name:      "topo3nodesrl.default",
 						Namespace: "default",
 					},
@@ -120,11 +120,12 @@ func TestDeviceBuilder(t *testing.T) {
 				),
 				expectedErr: nil,
 			},
-			/*
+		*/
+		/*
 			"3nodeDefaultIpv4Unnumbered": {
 				path: "data/3node-ipv4unnumbered",
 				network: netwv1alpha1.BuildNetwork(
-					v1.ObjectMeta{
+					metav1.ObjectMeta{
 						Name:      "topo3nodesrl.default",
 						Namespace: "default",
 					},
@@ -140,7 +141,7 @@ func TestDeviceBuilder(t *testing.T) {
 			"3nodeDefaultIpv4only": {
 				path: "data/3node-ipv4only",
 				network: netwv1alpha1.BuildNetwork(
-					v1.ObjectMeta{
+					metav1.ObjectMeta{
 						Name:      "topo3nodesrl.default",
 						Namespace: "default",
 					},
@@ -156,7 +157,7 @@ func TestDeviceBuilder(t *testing.T) {
 			"3nodeDefaultIpv6only": {
 				path: "data/3node-ipv6only",
 				network: netwv1alpha1.BuildNetwork(
-					v1.ObjectMeta{
+					metav1.ObjectMeta{
 						Name:      "topo3nodesrl.default",
 						Namespace: "default",
 					},

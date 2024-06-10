@@ -499,6 +499,7 @@ func (r *NetworkDeviceNetworkInstanceProtocolBGP) AddOrUpdateNetworkInstanceProt
 	x := r.GetOrCreateNetworkInstanceProtocolBGPPeerGroup(new.Name)
 	x.AddressFamilies = new.AddressFamilies
 	x.RouteReflector = new.RouteReflector
+	x.BFD = new.BFD
 }
 
 func (r *NetworkDeviceNetworkInstanceProtocolBGP) GetOrCreateNetworkInstanceProtocolBGPPeerGroup(name string) *NetworkDeviceNetworkInstanceProtocolBGPPeerGroup {

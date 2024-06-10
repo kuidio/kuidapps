@@ -568,6 +568,7 @@ func (r *DeviceBuilder) updateUnderlayEBGPInterfaceDeviceConfig(nodeName, ifName
 				PeerGroup:    netwv1alpha1.BGPUnderlayPeerGroupName,
 				LocalAS:      l.getAS(i),
 				PeerAS:       l.getAS(j),
+				BFD:          l.getBGPBFD(r.networkDesign),
 			})
 
 		} else {
@@ -584,6 +585,7 @@ func (r *DeviceBuilder) updateUnderlayEBGPInterfaceDeviceConfig(nodeName, ifName
 	r.devices.AddNetworkInstanceprotocolsBGPPeerGroup(nodeName, r.network.GetNetworkName(), &netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPPeerGroup{
 		Name:            netwv1alpha1.BGPUnderlayPeerGroupName,
 		AddressFamilies: r.networkDesign.GetUnderlayAddressFamiliesToBeDisabled(),
+		BFD:             l.getBGPBFD(r.networkDesign),
 	})
 }
 
