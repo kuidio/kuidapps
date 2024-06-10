@@ -250,7 +250,6 @@ spec:
                                   peerGroup:
                                     type: string
                                 required:
-                                - bfd
                                 - localAS
                                 - localAddress
                                 - peerAS
@@ -267,6 +266,8 @@ spec:
                                     items:
                                       type: string
                                     type: array
+                                  bfd:
+                                    type: boolean
                                   name:
                                     type: string
                                   routeReflector:
