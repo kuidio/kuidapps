@@ -332,6 +332,24 @@ func (r *DeviceBuilder) updateBaseDeviceConfig(l *link) {
 			r.devices.AddInterface(nodeName, &netwv1alpha1.NetworkDeviceInterface{
 				Name: netwv1alpha1.IRBInterfaceName,
 			})
+			r.devices.AddInterface(nodeName, &netwv1alpha1.NetworkDeviceInterface{
+				Name: netwv1alpha1.SystemInterfaceName,
+			})
+			ipv4 := []string{}
+			if node.ipv4 != "" {
+				ipv4 = append(ipv4, node.ipv4)
+			}
+			ipv6 := []string{}
+			if node.ipv6 != "" {
+				ipv6 = append(ipv6, node.ipv6)
+			}
+			r.devices.AddSubInterface(nodeName, netwv1alpha1.SystemInterfaceName, &netwv1alpha1.NetworkDeviceInterfaceSubInterface{
+				ID: 0,
+				//SubInterfaceType: netwv1alpha1.SubInterfaceType_Routed, A type is not possible here
+				IPv4: &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv4{Addresses: ipv4},
+				IPv6: &netwv1alpha1.NetworkDeviceInterfaceSubInterfaceIPv6{Addresses: ipv6},
+			})
+			
 			// add vxlan interface if vxlan is enabled
 			if r.networkDesign.IsVXLANEnabled() {
 				r.devices.AddTunnelInterface(nodeName, &netwv1alpha1.NetworkDeviceTunnelInterface{
