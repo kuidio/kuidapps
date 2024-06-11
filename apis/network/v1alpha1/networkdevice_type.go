@@ -56,7 +56,7 @@ type NetworkDeviceBFDInterface struct {
 	// SubInterfaceName defines the name and id of the sub interface
 	SubInterfaceName NetworkDeviceNetworkInstanceInterface `json:"subInterfaceName" yaml:"subInterfaceName" protobuf:"bytes,1,opt,name=subInterfaceName"`
 	// BFD defines the bfd parameters of the interface
-	BFD infrabev1alpha1.BFDLinkParameters `json:"bfd" yaml:"bfd" protobuf:"bytes,2,opt,name=bfd"`
+	infrabev1alpha1.BFDLinkParameters `json:",inline" yaml:",inline" protobuf:"bytes,2,opt,name=bfd"`
 }
 
 type NetworkDeviceRoutingPolicy struct {
@@ -249,7 +249,11 @@ type NetworkDeviceNetworkInstanceProtocolBGP struct {
 	Neighbors        []*NetworkDeviceNetworkInstanceProtocolBGPNeighbor       `json:"neighbors,omitempty" yaml:"neighbors,omitempty" protobuf:"bytes,4,opt,name=neighbors"`
 	DynamicNeighbors *NetworkDeviceNetworkInstanceProtocolBGPDynamicNeighbors `json:"dynamicNeighbors,omitempty" yaml:"dynamicNeighbors,omitempty" protobuf:"bytes,5,opt,name=dynamicNeighbors"`
 	// AddressFamilies defines the address families that need to be enabled globally
-	AddressFamilies []string `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,6,rep,name=addressFamilies"`
+	AddressFamilies []*NetworkDeviceNetworkInstanceProtocolBGPAddressFamily `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,6,rep,name=addressFamilies"`
+}
+type NetworkDeviceNetworkInstanceProtocolBGPAddressFamily struct {
+	Name    string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
+	RFC5549 bool   `json:"rfc5549,omitempty" yaml:"rfc5549,omitempty" protobuf:"bytes,2,rep,name=rfc5549"`
 }
 
 type NetworkDeviceNetworkInstanceProtocolBGPEVPN struct {
@@ -266,7 +270,7 @@ type NetworkDeviceNetworkInstanceProtocolBGPVPN struct {
 type NetworkDeviceNetworkInstanceProtocolBGPPeerGroup struct {
 	Name string `json:"name" yaml:"name" protobuf:"bytes,1,opt,name=name"`
 	// Address families define the address families to be disabled
-	AddressFamilies []string                                                        `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,2,rep,name=addressFamilies"`
+	AddressFamilies []*NetworkDeviceNetworkInstanceProtocolBGPAddressFamily         `json:"addressFamilies,omitempty" yaml:"addressFamilies,omitempty" protobuf:"bytes,2,rep,name=addressFamilies"`
 	RouteReflector  *NetworkDeviceNetworkInstanceProtocolBGPPeerGroupRouteReflector `json:"routeReflector,omitempty" yaml:"routeReflector,omitempty" protobuf:"bytes,3,opt,name=routeReflector"`
 	BFD             bool                                                            `json:"bfd,omitempty" yaml:"bfd,omitempty" protobuf:"bytes,4,opt,name=bfd"`
 }

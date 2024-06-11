@@ -36,8 +36,8 @@ type Addressing string
 
 const (
 	Addressing_DualStack      Addressing = "dualstack"
-	Addressing_IPv4Only       Addressing = "ipv4only"
-	Addressing_IPv6Only       Addressing = "ipv6only"
+	Addressing_IPv4Numbered   Addressing = "ipv4numbered"
+	Addressing_IPv6Numbered   Addressing = "ipv6numbered"
 	Addressing_IPv6Unnumbered Addressing = "ipv6unnumbered"
 	Addressing_IPv4Unnumbered Addressing = "ipv4unnumbered"
 )

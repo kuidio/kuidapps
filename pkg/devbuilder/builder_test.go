@@ -35,10 +35,10 @@ import (
 	"github.com/kuidio/kuidapps/pkg/clab"
 	"github.com/kuidio/kuidapps/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -73,22 +73,22 @@ func TestDeviceBuilder(t *testing.T) {
 				expectedErr: nil,
 			},
 		*/
-
-		"3nodeDefaultDualStackEBGP": {
-			path: "data/3node-dualstack-ebgp",
-			network: netwv1alpha1.BuildNetwork(
-				metav1.ObjectMeta{
-					Name:      "topo3nodesrl.default",
-					Namespace: "default",
-				},
-				&netwv1alpha1.NetworkSpec{
-					Topology: "topo3nodesrl",
-				},
-				nil,
-			),
-			expectedErr: nil,
-		},
-
+		/*
+			"3nodeDefaultDualStackEBGP": {
+				path: "data/3node-dualstack-ebgp",
+				network: netwv1alpha1.BuildNetwork(
+					metav1.ObjectMeta{
+						Name:      "topo3nodesrl.default",
+						Namespace: "default",
+					},
+					&netwv1alpha1.NetworkSpec{
+						Topology: "topo3nodesrl",
+					},
+					nil,
+				),
+				expectedErr: nil,
+			},
+		*/
 		/*
 			"3nodeDefaultDualStackISIS": {
 				path: "data/3node-dualstack-isis",
@@ -105,22 +105,22 @@ func TestDeviceBuilder(t *testing.T) {
 				expectedErr: nil,
 			},
 		*/
-		/*
-			"3nodeDefaultIpv6Unnumbered": {
-				path: "data/3node-ipv6unnumbered",
-				network: netwv1alpha1.BuildNetwork(
-					metav1.ObjectMeta{
-						Name:      "topo3nodesrl.default",
-						Namespace: "default",
-					},
-					&netwv1alpha1.NetworkSpec{
-						Topology: "topo3nodesrl",
-					},
-					nil,
-				),
-				expectedErr: nil,
-			},
-		*/
+
+		"3nodeDefaultIpv6Unnumbered": {
+			path: "data/3node-ipv6unnumbered",
+			network: netwv1alpha1.BuildNetwork(
+				metav1.ObjectMeta{
+					Name:      "topo3nodesrl.default",
+					Namespace: "default",
+				},
+				&netwv1alpha1.NetworkSpec{
+					Topology: "topo3nodesrl",
+				},
+				nil,
+			),
+			expectedErr: nil,
+		},
+
 		/*
 			"3nodeDefaultIpv4Unnumbered": {
 				path: "data/3node-ipv4unnumbered",

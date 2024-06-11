@@ -77,7 +77,7 @@ func (r *Devices) AddNetworkInstanceProtocolsBGPRouterID(nodeName, niName string
 	d.GetOrCreateNetworkInstance(niName).GetOrCreateNetworkInstanceProtocols().GetOrCreateNetworkInstanceProtocolsBGP().RouterID = routerID
 }
 
-func (r *Devices) AddNetworkInstanceProtocolsBGPAddressFamilies(nodeName, niName string, afs []string) {
+func (r *Devices) AddNetworkInstanceProtocolsBGPAddressFamilies(nodeName, niName string, afs []*netwv1alpha1.NetworkDeviceNetworkInstanceProtocolBGPAddressFamily) {
 	r.m.Lock()
 	defer r.m.Unlock()
 	if _, ok := r.devices[nodeName]; !ok {

@@ -154,26 +154,38 @@ func (r *NetworkDesign) GetASClaims() []*asbev1alpha1.ASClaim {
 func (r *NetworkDesign) IsLoopbackIPv4Enabled() bool {
 	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Loopback != nil &&
 		(r.Spec.Interfaces.Loopback.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.Loopback.Addressing == Addressing_IPv4Only)
+			r.Spec.Interfaces.Loopback.Addressing == Addressing_IPv4Numbered)
 }
 
 func (r *NetworkDesign) IsLoopbackIPv6Enabled() bool {
 	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Loopback != nil &&
 		(r.Spec.Interfaces.Loopback.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.Loopback.Addressing == Addressing_IPv6Only)
+			r.Spec.Interfaces.Loopback.Addressing == Addressing_IPv6Numbered)
+}
+
+func (r *NetworkDesign) IsUnderlayIPv6Only() bool {
+	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
+		(r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Numbered ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Unnumbered)
+}
+
+func (r *NetworkDesign) IsUnderlayIPv4Only() bool {
+	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
+		(r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Numbered ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Unnumbered)
 }
 
 func (r *NetworkDesign) IsUnderlayIPv4Enabled() bool {
 	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
 		(r.Spec.Interfaces.Underlay.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Only ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Numbered ||
 			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Unnumbered)
 }
 
 func (r *NetworkDesign) IsUnderlayIPv4Numbered() bool {
 	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
 		(r.Spec.Interfaces.Underlay.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Only)
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv4Numbered)
 }
 
 func (r *NetworkDesign) IsUnderlayIPv4UnNumbered() bool {
@@ -184,14 +196,14 @@ func (r *NetworkDesign) IsUnderlayIPv4UnNumbered() bool {
 func (r *NetworkDesign) IsUnderlayIPv6Enabled() bool {
 	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
 		(r.Spec.Interfaces.Underlay.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Only ||
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Numbered ||
 			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Unnumbered)
 }
 
 func (r *NetworkDesign) IsUnderlayIPv6Numbered() bool {
 	return r.Spec.Interfaces != nil && r.Spec.Interfaces.Underlay != nil &&
 		(r.Spec.Interfaces.Underlay.Addressing == Addressing_DualStack ||
-			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Only)
+			r.Spec.Interfaces.Underlay.Addressing == Addressing_IPv6Numbered)
 }
 
 func (r *NetworkDesign) IsUnderlayIPv6UnNumbered() bool {
@@ -556,47 +568,65 @@ func (r *NetworkDesign) GetOverlayProtocols() []string {
 }
 */
 
-func (r *NetworkDesign) GetUnderlayAddressFamiliesToBeDisabled() []string {
-	afs := []string{}
-	if r.IsISISEnabled() || r.IsOSPFEnabled() {
-	} else {
-		if !r.IsUnderlayIPv4Enabled() || !r.IsLoopbackIPv4Enabled() {
-			afs = append(afs, "ipv4-unicast")
+func (r *NetworkDesign) GetUnderlayAddressFamiliesToBeDisabled() []*NetworkDeviceNetworkInstanceProtocolBGPAddressFamily {
+	afs := []*NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{}
+	if !(r.IsISISEnabled() || r.IsOSPFEnabled()) {
+		if !(r.IsUnderlayIPv4Enabled() || r.IsLoopbackIPv4Enabled()) {
+			afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+				Name: "ipv4-unicast",
+			})
 		}
-		if !r.IsUnderlayIPv6Enabled() || !r.IsLoopbackIPv6Enabled() {
-			afs = append(afs, "ipv6-unicast")
+		if !(r.IsUnderlayIPv6Enabled() || !r.IsLoopbackIPv6Enabled()) {
+			afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+				Name: "ipv6-unicast",
+			})
 		}
 	}
 	if r.IsBGPEVPNEnabled() {
-		afs = append(afs, "evpn")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "evpn",
+		})
 	}
 	if r.IsBGPIPVPNv4Enabled() {
-		afs = append(afs, "l3vpn-ipv4-unicast")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "l3vpn-ipv4-unicast",
+		})
 	}
 	if r.IsBGPIPVPNv6Enabled() {
-		afs = append(afs, "l3vpn-ipv6-unicast")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "l3vpn-ipv6-unicast",
+		})
 	}
 	if r.IsBGPRouteTargetEnabled() {
-		afs = append(afs, "route-target")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "route-target",
+		})
 	}
 	if r.IsBGPLabelUnicastv4Enabled() {
-		afs = append(afs, "ipv4-labeled-unicast")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "ipv4-labeled-unicast",
+		})
 	}
 	if r.IsBGPLabelUnicastv6Enabled() {
-		afs = append(afs, "ipv6-labeled-unicast")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "ipv6-labeled-unicast",
+		})
 	}
 	return afs
 }
 
-func (r *NetworkDesign) GetOverlayAddressFamiliesToBeDisabled() []string {
-	afs := []string{}
-	if r.IsISISEnabled() || r.IsOSPFEnabled() {
-	} else {
+func (r *NetworkDesign) GetOverlayAddressFamiliesToBeDisabled() []*NetworkDeviceNetworkInstanceProtocolBGPAddressFamily {
+	afs := []*NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{}
+	if !(r.IsISISEnabled() || r.IsOSPFEnabled()) {
 		if r.IsUnderlayIPv4Enabled() || r.IsLoopbackIPv4Enabled() {
-			afs = append(afs, "ipv4-unicast")
+			afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+				Name: "ipv4-unicast",
+			})
 		}
 		if r.IsUnderlayIPv6Enabled() || r.IsLoopbackIPv6Enabled() {
-			afs = append(afs, "ipv6-unicast")
+			afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+				Name: "ipv6-unicast",
+			})
 		}
 	}
 	// we dont need to disable the specific overlay address families
@@ -604,31 +634,56 @@ func (r *NetworkDesign) GetOverlayAddressFamiliesToBeDisabled() []string {
 }
 
 // GetAllAddressFamilies retrun all address families enabled in the network design
-func (r *NetworkDesign) GetAllEnabledAddressFamilies() []string {
-	afs := []string{}
-	if !r.IsISISEnabled() && !r.IsOSPFEnabled() && (r.IsUnderlayIPv4Enabled() || r.IsLoopbackIPv4Enabled()) {
-		afs = append(afs, "ipv4-unicast")
+func (r *NetworkDesign) GetAllEnabledAddressFamilies() []*NetworkDeviceNetworkInstanceProtocolBGPAddressFamily {
+	afs := []*NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{}
+	if !(r.IsISISEnabled() || r.IsOSPFEnabled()) {
+		if r.IsUnderlayIPv4Enabled() || r.IsLoopbackIPv4Enabled() {
+			rfc5549 := false
+			if r.IsUnderlayIPv6Only() {
+				rfc5549 = true
+			}
+
+			afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+				Name:    "ipv4-unicast",
+				RFC5549: rfc5549,
+			})
+		}
+		if r.IsUnderlayIPv6Enabled() || r.IsLoopbackIPv6Enabled() {
+			afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+				Name: "ipv6-unicast",
+			})
+		}
 	}
-	if !r.IsISISEnabled() && !r.IsOSPFEnabled() && (r.IsUnderlayIPv6Enabled() || r.IsLoopbackIPv6Enabled()) {
-		afs = append(afs, "ipv6-unicast")
-	}
+
 	if r.IsBGPEVPNEnabled() {
-		afs = append(afs, "evpn")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "evpn",
+		})
 	}
 	if r.IsBGPIPVPNv4Enabled() {
-		afs = append(afs, "l3vpn-ipv4-unicast")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "l3vpn-ipv4-unicast",
+		})
 	}
 	if r.IsBGPIPVPNv6Enabled() {
-		afs = append(afs, "l3vpn-ipv6-unicast")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "l3vpn-ipv6-unicast",
+		})
 	}
 	if r.IsBGPRouteTargetEnabled() {
-		afs = append(afs, "route-target")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "route-target",
+		})
 	}
 	if r.IsBGPLabelUnicastv4Enabled() {
-		afs = append(afs, "ipv4-labeled-unicast")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "ipv4-labeled-unicast",
+		})
 	}
 	if r.IsBGPLabelUnicastv6Enabled() {
-		afs = append(afs, "ipv6-labeled-unicast")
+		afs = append(afs, &NetworkDeviceNetworkInstanceProtocolBGPAddressFamily{
+			Name: "ipv6-labeled-unicast",
+		})
 	}
 	return afs
 }

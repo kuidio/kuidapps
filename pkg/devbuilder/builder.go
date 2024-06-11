@@ -394,8 +394,8 @@ func (r *DeviceBuilder) updateUnderlayInterfaceDeviceConfig(l *link) {
 			bfdParmas := l.getBFDLinkParameters(r.networkDesign)
 			if bfdParmas.Enabled != nil && *bfdParmas.Enabled {
 				r.devices.AddBFDInterface(nodeName, &netwv1alpha1.NetworkDeviceBFDInterface{
-					SubInterfaceName: netwv1alpha1.NetworkDeviceNetworkInstanceInterface{Name: epName, ID: netwv1alpha1.UnderlaySubInterfaceID},
-					BFD:              *bfdParmas,
+					SubInterfaceName:  netwv1alpha1.NetworkDeviceNetworkInstanceInterface{Name: epName, ID: netwv1alpha1.UnderlaySubInterfaceID},
+					BFDLinkParameters: *bfdParmas,
 				})
 			}
 		}
@@ -541,7 +541,11 @@ func (r *DeviceBuilder) updateUnderlayBGPNodeDeviceConfig(nodeName, routerID str
 	}
 	if r.networkDesign.IsIBGPEnabled() {
 		r.devices.AddRoutingPolicy(nodeName, netwv1alpha1.OverlayPolicyName, nil, nil)
-		r.devices.AddNetworkInstanceProtocolsBGPAddressFamilies(nodeName, r.network.GetNetworkName(), r.networkDesign.GetAllEnabledAddressFamilies())
+		r.devices.AddNetworkInstanceProtocolsBGPAddressFamilies(
+			nodeName,
+			r.network.GetNetworkName(),
+			r.networkDesign.GetAllEnabledAddressFamilies(),
+		)
 
 	}
 	if r.networkDesign.IsBGPEVPNEnabled() {

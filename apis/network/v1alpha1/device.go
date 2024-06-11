@@ -71,7 +71,7 @@ func (r *NetworkDeviceBFD) AddOrUpdateBFDInterface(new *NetworkDeviceBFDInterfac
 		return
 	}
 	x := r.GetOrCreateBFDInterface(new.SubInterfaceName)
-	x.BFD = new.BFD
+	x.BFDLinkParameters = new.BFDLinkParameters
 }
 
 func (r *NetworkDeviceBFD) GetOrCreateBFDInterface(siName NetworkDeviceNetworkInstanceInterface) *NetworkDeviceBFDInterface {
