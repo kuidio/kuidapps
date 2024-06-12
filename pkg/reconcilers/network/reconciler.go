@@ -81,9 +81,9 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 				ObjList: &netwv1alpha1.NetworkList{},
 			}).
 		Watches(&netwv1alpha1.NetworkDesign{},
-			&eventhandler.NetworkDeviceForNetworkEventHandler{
-				Client:  mgr.GetClient(),
-				ObjList: &netwv1alpha1.NetworkList{},
+			&eventhandler.NetworkDesignForNetworkEventHandler{
+				Client:      mgr.GetClient(),
+				NetworkList: &netwv1alpha1.NetworkList{},
 			}).
 		Complete(r)
 }

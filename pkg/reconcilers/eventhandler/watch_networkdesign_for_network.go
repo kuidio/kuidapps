@@ -31,7 +31,7 @@ import (
 
 type NetworkDesignForNetworkEventHandler struct {
 	Client  client.Client
-	ObjList *netwv1alpha1.NetworkList
+	NetworkList *netwv1alpha1.NetworkList
 }
 
 // Create enqueues a request
@@ -67,22 +67,19 @@ func (r *NetworkDesignForNetworkEventHandler) add(ctx context.Context, obj runti
 	opts := []client.ListOption{
 		client.InNamespace(nd.Namespace),
 	}
-	objList := r.ObjList
-	if err := r.Client.List(ctx, objList, opts...); err != nil {
+	networkList := r.NetworkList
+	if err := r.Client.List(ctx, networkList, opts...); err != nil {
 		log.Error("cannot list object", "error", err)
 		return
 	}
 	// walk over the links
 	// if endpoint has the same endpointID -> retrigger
 	// if the ownerref is link retrigger
-	for _, obj := range objList.Items {
-		// check if the connection profile is referenced in the discoveryProfile
-		//log.Info("event", "objOwnerRef", obj.GetOwnerReference().String(), "crOwnerRef", cr.GetOwnerReference().String())
-
-		if obj.Name == nd.Name {
+	for _, network := range networkList.Items {
+		if  network.Spec.Topology == nd.Spec.Topology {
 			key := types.NamespacedName{
-				Namespace: obj.GetNamespace(),
-				Name:      obj.GetName()}
+				Namespace: network.GetNamespace(),
+				Name:      network.GetName()}
 			log.Info("event requeue", "key", key.String())
 			queue.Add(reconcile.Request{NamespacedName: key})
 			continue
