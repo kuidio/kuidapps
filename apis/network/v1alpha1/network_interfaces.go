@@ -46,7 +46,7 @@ func (r *Network) SetOverallStatus() {
 		ready = false
 		msg = fmt.Sprintf("network parameters not ready: %s", condition.Message)
 	}
-	condition = r.GetCondition(conditionv1alpha1.ConditionTypeDeviceConfigReady)
+	condition = r.GetCondition(ConditionTypeNetworkDeviceReady)
 	if ready && condition.Status == metav1.ConditionFalse {
 		ready = false
 		msg = fmt.Sprintf("device configs for network not ready: %s", condition.Message)
