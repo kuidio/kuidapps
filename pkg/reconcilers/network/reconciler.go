@@ -160,8 +160,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		// a network design for the default network is mandatory
 		// we do not release resources at this stage -> decision do far is no
 		r.handleError(ctx, cr, "cannot reconcile a network without a default network design", nil)
-		//return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
 	// determine changes
@@ -180,6 +179,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		} else {
 			cr.SetConditions(conditionv1alpha1.Processing(cr.GetProcessingMessage()))
 		}
+		cr.SetOverallStatus()
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 	// All precondiitons are met so we can deploy
@@ -202,10 +202,12 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		} else {
 			cr.SetConditions(conditionv1alpha1.Processing("some devices are still processing"))
 		}
+		cr.SetOverallStatus()
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
 	cr.SetConditions(conditionv1alpha1.Ready())
+	cr.SetOverallStatus()
 	r.recorder.Eventf(cr, corev1.EventTypeNormal, crName, "ready")
 	return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 }
@@ -221,6 +223,7 @@ func (r *reconciler) handleError(ctx context.Context, cr *netwv1alpha1.Network, 
 		log.Error(msg, "error", err)
 		r.recorder.Eventf(cr, corev1.EventTypeWarning, crName, fmt.Sprintf("%s, err: %s", msg, err.Error()))
 	}
+	cr.SetOverallStatus()
 }
 
 func (r *reconciler) apply(ctx context.Context, cr *netwv1alpha1.Network) error {

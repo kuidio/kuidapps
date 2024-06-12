@@ -131,6 +131,8 @@ type NetworkStatusUsedReferences struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="PARAM-READY",type="string",JSONPath=".status.conditions[?(@.type=='NetworkPararmReady')].status"
 // +kubebuilder:printcolumn:name="DEVICES-READY",type="string",JSONPath=".status.conditions[?(@.type=='NetworkDeviceReady')].status"
+// +kubebuilder:printcolumn:name="REASON",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
+
 // +kubebuilder:resource:categories={kuid, net}
 // Network is the Network for the Network API
 // +k8s:openapi-gen=true

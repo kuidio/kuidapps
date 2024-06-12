@@ -27,6 +27,9 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='NetworkDeviceReady')].status
       name: DEVICES-READY
       type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
+      name: REASON
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:

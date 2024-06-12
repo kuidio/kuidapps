@@ -38,6 +38,26 @@ func (r *Network) SetConditions(c ...conditionv1alpha1.Condition) {
 	r.Status.SetConditions(c...)
 }
 
+func (r *Network) SetOverallStatus() {
+	ready := true
+	msg := ""
+	condition := r.GetCondition(ConditionTypeNetworkParamReady)
+	if ready && condition.Status == metav1.ConditionFalse {
+		ready = false
+		msg = fmt.Sprintf("network parameters not ready: %s", condition.Message)
+	}
+	condition = r.GetCondition(conditionv1alpha1.ConditionTypeDeviceConfigReady)
+	if ready && condition.Status == metav1.ConditionFalse {
+		ready = false
+		msg = fmt.Sprintf("device configs for network not ready: %s", condition.Message)
+	}
+	if ready {
+		r.Status.SetConditions(conditionv1alpha1.Ready())
+	} else {
+		r.Status.SetConditions(conditionv1alpha1.Failed(msg))
+	}
+}
+
 func (r *Network) Validate() error {
 	return nil
 }
