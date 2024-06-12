@@ -206,7 +206,7 @@ func TestDeviceBuilder(t *testing.T) {
 			}
 
 			b := New(tctx.getClient(), tc.network, nd)
-			err = b.BuildNew(ctx)
+			err = b.Build(ctx)
 			assert.NoError(t, err, "cannot build network configs")
 			for _, nd := range b.GetNetworkDeviceConfigs() {
 				b, err := yaml.Marshal(nd)

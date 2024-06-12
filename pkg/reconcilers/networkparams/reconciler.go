@@ -33,9 +33,9 @@ import (
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/eventhandler"
-	"github.com/kuidio/kuidapps/pkg/reconcilers/lease"
 	perrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -77,11 +77,13 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 		For(&netwv1alpha1.Network{}).
 		Owns(&ipambev1alpha1.IPClaim{}).
 		Owns(&asbev1alpha1.ASClaim{}).
-		Watches(&netwv1alpha1.NetworkDesign{},
-			&eventhandler.NetworkDesignForNetworkEventHandler{
-				Client:  mgr.GetClient(),
-				ObjList: &netwv1alpha1.NetworkList{},
-			}).
+		/*
+			Watches(&netwv1alpha1.NetworkDesign{},
+				&eventhandler.NetworkDesignForNetworkEventHandler{
+					Client:  mgr.GetClient(),
+					ObjList: &netwv1alpha1.NetworkList{},
+				}).
+		*/
 		Watches(&infrabev1alpha1.Node{},
 			&eventhandler.NodeForNetworkEventHandler{
 				Client:  mgr.GetClient(),
@@ -116,24 +118,25 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 		return ctrl.Result{}, nil
 	}
-	key := types.NamespacedName{
-		Namespace: cr.GetNamespace(),
-		Name:      cr.GetName(),
-	}
 	cr = cr.DeepCopy()
 
-	l := lease.New(r.Client, key)
-	if err := l.AcquireLease(ctx, controllerName); err != nil {
-		log.Debug("cannot acquire lease", "key", key.String(), "error", err.Error())
+	/*
+		key := types.NamespacedName{
+			Namespace: cr.GetNamespace(),
+			Name:      cr.GetName(),
+		}
+		l := lease.New(r.Client, key)
+		if err := l.AcquireLease(ctx, controllerName); err != nil {
+			log.Debug("cannot acquire lease", "key", key.String(), "error", err.Error())
+			r.recorder.Eventf(cr, corev1.EventTypeWarning,
+				"lease", "error %s", err.Error())
+			return ctrl.Result{Requeue: true, RequeueAfter: lease.RequeueInterval}, nil
+		}
 		r.recorder.Eventf(cr, corev1.EventTypeWarning,
-			"lease", "error %s", err.Error())
-		return ctrl.Result{Requeue: true, RequeueAfter: lease.RequeueInterval}, nil
-	}
-	r.recorder.Eventf(cr, corev1.EventTypeWarning,
-		"lease", "acquired")
+			"lease", "acquired")
+	*/
 
 	if !cr.GetDeletionTimestamp().IsZero() {
-
 		if err := r.delete(ctx, cr); err != nil {
 			r.handleError(ctx, cr, "canot delete resources", err)
 			return reconcile.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
@@ -147,29 +150,38 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, nil
 	}
 
+	// if the condition was met we dont need to act any longer -> the uber network reconciler will change
+	// the condition if a change was detected
+	if cr.GetCondition(netwv1alpha1.ConditionTypeNetworkParamReady).Status == metav1.ConditionTrue {
+		return ctrl.Result{}, nil
+	}
+
 	if err := r.finalizer.AddFinalizer(ctx, cr); err != nil {
 		r.handleError(ctx, cr, "cannot add finalizer", err)
 		return ctrl.Result{Requeue: true}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
-	nc, err := r.getNetworkDesign(ctx, cr)
+	// always use default network to fetch the SRE config
+	nd, err := r.getNetworkDesign(ctx, types.NamespacedName{
+		Namespace: cr.GetNamespace(),
+		Name:      fmt.Sprintf("%s.%s", cr.Spec.Topology, netwv1alpha1.DefaultNetwork),
+	})
 	if err != nil {
-		if cr.IsDefaultNetwork() {
-			// a network design for the default network is mandatory
-			// we do not release resources at this stage -> decision do far is no
-			r.handleError(ctx, cr, "cannot reconcile a network without a network design", nil)
-			return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
-		}
+		// a network design for the default network is mandatory
+		// we do not release resources at this stage -> decision do far is no
+		r.handleError(ctx, cr, "cannot reconcile a network without a default network design", nil)
+		//return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	if cr.IsDefaultNetwork() {
-		if err := r.applyDefaultNetwork(ctx, cr, nc); err != nil {
+		if err := r.applyDefaultNetwork(ctx, cr, nd); err != nil {
 			// The delete is not needed as the condition will indicate this is not ready and the resources will not be picked
 			r.handleError(ctx, cr, "cannot apply resource", err)
 			return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		}
 	} else {
-		if err := r.applyNetwork(ctx, cr, nc); err != nil {
+		if err := r.applyNetwork(ctx, cr, nd); err != nil {
 			// The delete is not needed as the condition will indicate this is not ready and the resources will not be picked
 			r.handleError(ctx, cr, "cannot apply resource", err)
 			return ctrl.Result{RequeueAfter: 2 * time.Second}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
@@ -258,12 +270,8 @@ func (r *reconciler) delete(ctx context.Context, cr *netwv1alpha1.Network) error
 	return nil
 }
 
-func (r *reconciler) getNetworkDesign(ctx context.Context, cr *netwv1alpha1.Network) (*netwv1alpha1.NetworkDesign, error) {
+func (r *reconciler) getNetworkDesign(ctx context.Context, key types.NamespacedName) (*netwv1alpha1.NetworkDesign, error) {
 	//log := log.FromContext((ctx))
-	key := types.NamespacedName{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}
 
 	o := &netwv1alpha1.NetworkDesign{}
 	if err := r.Client.Get(ctx, key, o); err != nil {

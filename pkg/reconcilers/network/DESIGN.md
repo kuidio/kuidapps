@@ -1,7 +1,7 @@
 # design
 
 utlimately the network reconciler is the uber reconciler
-it checks the network devicex and check the differencex -> this indicates there was a change
+it checks the network devices and check the differences -> this indicates there was a change
 
 Now the question remains:
 - what to do here?

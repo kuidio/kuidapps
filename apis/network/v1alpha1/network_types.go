@@ -105,12 +105,21 @@ type NetworkStatus struct {
 
 	DevicesConfigStatus []*NetworkStatusDeviceStatus `json:"devicesConfigStatus,omitempty" yaml:"devicesConfigStatus,omitempty" protobuf:"bytes,2,opt,name=devicesConfigStatus"`
 	DevicesDeployStatus []*NetworkStatusDeviceStatus `json:"devicesDeployStatus,omitempty" yaml:"devicesDeployStatus,omitempty" protobuf:"bytes,3,opt,name=devicesDeployStatus"`
+
+	// UsedReferences track the resource used to determine if a change to the resources was identified
+	// If a change is detected a reconcile will be triggered and the child status will be reset
+	UsedReferences *NetworkStatusUsedReferences `json:"usedReferences,omitempty" yaml:"usedReferences,omitempty" protobuf:"bytes,4,opt,name=usedReferences"`
 }
 
 type NetworkStatusDeviceStatus struct {
 	Node   string  `json:"node" yaml:"node" protobuf:"bytes,1,opt,name=node"`
 	Ready  bool    `json:"ready" yaml:"ready" protobuf:"bytes,2,opt,name=ready"`
 	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
+}
+
+type NetworkStatusUsedReferences struct {
+	NetworkResourceVersion       string `json:"networkResourceVersion" yaml:"networkResourceVersion" protobuf:"bytes,1,opt,name=networkResourceVersion"`
+	NetworkDesignResourceVersion string `json:"networkDesignResourceVersion" yaml:"networkDesignResourceVersion" protobuf:"bytes,2,opt,name=networkDesignResourceVersion"`
 }
 
 // +kubebuilder:object:root=true

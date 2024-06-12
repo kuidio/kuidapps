@@ -32,8 +32,6 @@ import (
 	"github.com/kuidio/kuidapps/pkg/devbuilder"
 	"github.com/kuidio/kuidapps/pkg/reconcilers"
 	"github.com/kuidio/kuidapps/pkg/reconcilers/ctrlconfig"
-	"github.com/kuidio/kuidapps/pkg/reconcilers/eventhandler"
-	"github.com/kuidio/kuidapps/pkg/reconcilers/lease"
 	perrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,11 +75,13 @@ func (r *reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, c i
 		Named(controllerName).
 		For(&netwv1alpha1.Network{}).
 		Owns(&netwv1alpha1.NetworkDevice{}).
-		Watches(&netwv1alpha1.NetworkDesign{},
-			&eventhandler.NetworkDesignForNetworkEventHandler{
-				Client:  mgr.GetClient(),
-				ObjList: &netwv1alpha1.NetworkList{},
-			}).
+		/*
+			Watches(&netwv1alpha1.NetworkDesign{},
+				&eventhandler.NetworkDesignForNetworkEventHandler{
+					Client:  mgr.GetClient(),
+					ObjList: &netwv1alpha1.NetworkList{},
+				}).
+		*/
 		Complete(r)
 }
 
@@ -106,22 +106,24 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 		return ctrl.Result{}, nil
 	}
-	key := types.NamespacedName{
-		Namespace: cr.GetNamespace(),
-		Name:      cr.GetName(),
-	}
+
 	cr = cr.DeepCopy()
 
-	l := lease.New(r.Client, key)
-	if err := l.AcquireLease(ctx, controllerName); err != nil {
-		log.Debug("cannot acquire lease", "key", key.String(), "error", err.Error())
+	/*
+		key := types.NamespacedName{
+			Namespace: cr.GetNamespace(),
+			Name:      cr.GetName(),
+		}
+		l := lease.New(r.Client, key)
+		if err := l.AcquireLease(ctx, controllerName); err != nil {
+			log.Debug("cannot acquire lease", "key", key.String(), "error", err.Error())
+			r.recorder.Eventf(cr, corev1.EventTypeWarning,
+				"lease", "error %s", err.Error())
+			return ctrl.Result{Requeue: true, RequeueAfter: lease.RequeueInterval}, nil
+		}
 		r.recorder.Eventf(cr, corev1.EventTypeWarning,
-			"lease", "error %s", err.Error())
-		return ctrl.Result{Requeue: true, RequeueAfter: lease.RequeueInterval}, nil
-	}
-	r.recorder.Eventf(cr, corev1.EventTypeWarning,
-		"lease", "acquired")
-
+			"lease", "acquired")
+	*/
 	if !cr.GetDeletionTimestamp().IsZero() {
 		if err := r.delete(ctx, cr); err != nil {
 			r.handleError(ctx, cr, "canot delete resources", err)
@@ -143,8 +145,14 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// check if the processing was done properly of the network parameter controller
 	if cr.GetCondition(netwv1alpha1.ConditionTypeNetworkParamReady).Status == metav1.ConditionFalse {
-		cr.SetConditions(netwv1alpha1.NetworkDeviceProcessing("network parameter controller not ready"))
-		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		//cr.SetConditions(netwv1alpha1.NetworkDeviceProcessing("network parameter controller not ready"))
+		//return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		return ctrl.Result{}, nil
+	}
+	// if the condition was met we dont need to act any longer -> the uber network reconciler will change
+	// the condition if a change was detected
+	if cr.GetCondition(netwv1alpha1.ConditionTypeNetworkDeviceReady).Status == metav1.ConditionTrue {
+		return ctrl.Result{}, nil
 	}
 
 	// always use default network to fetch the SRE config
@@ -174,6 +182,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if !allDevicesready {
 		if failures {
 			cr.SetConditions(netwv1alpha1.NetworkDeviceFailed("some devices failed, see device status list"))
+			return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 		}
 		cr.SetConditions(netwv1alpha1.NetworkDeviceProcessing("some devices are still processing"))
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
@@ -205,7 +214,7 @@ func (r *reconciler) apply(ctx context.Context, network *netwv1alpha1.Network, n
 	})
 
 	b := devbuilder.New(r.Client, network, networkDesign)
-	if err := b.BuildNew(ctx); err != nil {
+	if err := b.Build(ctx); err != nil {
 		return err
 	}
 	for _, networkDeviceConfig := range b.GetNetworkDeviceConfigs() {

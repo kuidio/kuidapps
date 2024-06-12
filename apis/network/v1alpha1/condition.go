@@ -68,6 +68,19 @@ func NetworkParamFailed(msg string) conditionv1alpha1.Condition {
 		}}
 }
 
+// NetworkParamFailed returns a condition that indicates the resource is
+// not satisfying this condition
+func NetworkParamProcessing(msg string) conditionv1alpha1.Condition {
+	return conditionv1alpha1.Condition{
+		Condition: metav1.Condition{
+			Type:               string(ConditionTypeNetworkParamReady),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(conditionv1alpha1.ConditionReasonProcessing),
+			Message:            msg,
+		}}
+}
+
 // NetworkDeviceReady returns a condition that indicates the resource is
 // satofying this condition
 func NetworkDeviceReady() conditionv1alpha1.Condition {
