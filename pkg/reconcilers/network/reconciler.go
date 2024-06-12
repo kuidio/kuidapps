@@ -18,6 +18,7 @@ package network
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -357,15 +358,20 @@ func (r *reconciler) getNetworkDesign(ctx context.Context, key types.NamespacedN
 }
 
 func (r *reconciler) hasConfigChanged(_ context.Context, network *netwv1alpha1.Network, networkDesign *netwv1alpha1.NetworkDesign) bool {
+	newSpecHash, err := network.CalculateHash()
+	if err != nil {
+		return true
+	}
 	if network.Status.UsedReferences != nil {
-		if network.Status.UsedReferences.NetworkResourceVersion == network.ResourceVersion &&
+
+		if network.Status.UsedReferences.NetworkSpecHash == base64.StdEncoding.EncodeToString(newSpecHash[:]) &&
 			network.Status.UsedReferences.NetworkDesignResourceVersion == networkDesign.ResourceVersion {
 			// no change detected
 			return false
 		}
 	}
 	network.Status.UsedReferences = &netwv1alpha1.NetworkStatusUsedReferences{
-		NetworkResourceVersion:       network.ResourceVersion,
+		NetworkSpecHash:              base64.StdEncoding.EncodeToString(newSpecHash[:]),
 		NetworkDesignResourceVersion: networkDesign.ResourceVersion,
 	}
 	return true

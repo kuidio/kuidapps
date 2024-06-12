@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -139,4 +141,15 @@ func (r *Network) AreChildConditionsReady() bool {
 		}
 	}
 	return true
+}
+
+func (r *Network) CalculateHash() ([sha1.Size]byte, error) {
+	// Convert the struct to JSON
+	jsonData, err := json.Marshal(r.Spec)
+	if err != nil {
+		return [sha1.Size]byte{}, err
+	}
+
+	// Calculate SHA-1 hash
+	return sha1.Sum(jsonData), nil
 }

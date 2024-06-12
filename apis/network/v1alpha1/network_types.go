@@ -118,7 +118,7 @@ type NetworkStatusDeviceStatus struct {
 }
 
 type NetworkStatusUsedReferences struct {
-	NetworkResourceVersion       string `json:"networkResourceVersion" yaml:"networkResourceVersion" protobuf:"bytes,1,opt,name=networkResourceVersion"`
+	NetworkSpecHash       string `json:"networkSpecHash" yaml:"networkSpecHash" protobuf:"bytes,1,opt,name=networkSpecHash"`
 	NetworkDesignResourceVersion string `json:"networkDesignResourceVersion" yaml:"networkDesignResourceVersion" protobuf:"bytes,2,opt,name=networkDesignResourceVersion"`
 }
 

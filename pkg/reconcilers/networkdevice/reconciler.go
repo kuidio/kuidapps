@@ -182,9 +182,9 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if !allDevicesready {
 		if failures {
 			cr.SetConditions(netwv1alpha1.NetworkDeviceFailed("some devices failed, see device status list"))
-			return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
+		} else {
+			cr.SetConditions(netwv1alpha1.NetworkDeviceProcessing("some devices are still processing"))
 		}
-		cr.SetConditions(netwv1alpha1.NetworkDeviceProcessing("some devices are still processing"))
 		return ctrl.Result{}, perrors.Wrap(r.Client.Status().Update(ctx, cr), errUpdateStatus)
 	}
 
