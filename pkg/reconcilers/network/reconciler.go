@@ -366,7 +366,6 @@ func (r *reconciler) hasConfigChanged(_ context.Context, network *netwv1alpha1.N
 		return true
 	}
 	if network.Status.UsedReferences != nil {
-
 		if network.Status.UsedReferences.NetworkSpecHash == base64.StdEncoding.EncodeToString(newSpecHash[:]) &&
 			network.Status.UsedReferences.NetworkDesignResourceVersion == networkDesign.ResourceVersion {
 			// no change detected
